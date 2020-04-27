@@ -1,0 +1,74 @@
+
+---
+title: "Interface with other single-cell analysis toolkits"
+author: "Suoqin Jin"
+output: html_document
+mainfont: Arial
+vignette: >
+  %\VignetteIndexEntry{Inference and analysis of cell-cell communication using CellChat}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+
+This vignette shows how to extract the CellChat input files from other existing single-cell analysis toolkits, including [Seurat](https://satijalab.org/seurat/) and [Scanpy](https://icb-scanpy.readthedocs-hosted.com/en/stable/tutorials.html). 
+
+
+## Data input required in CellChat
+CellChat requires two user inputs: one is the gene expression data of cells, and the other is either user assigned cell labels (i.e., label-based mode) or a low-dimensional representation of the single-cell data (i.e., label-free mode). For the latter, CellChat automatically groups cells by building a shared neighbor graph based on the cell-cell distance in the low-dimensional space or the pseudotemporal trajectory space. 
+
+### Data format
+*For the gene expression data matrix*, genes should be in rows with rownames and cells in columns with colnames. Normalized data is required as input for CellChat analysis. If user provides count data, we provide a `normalizeData` function to account for library size. 
+
+*For the cell group information*, a dataframe with rownames is required as input for CellChat. 
+
+## Extract the CellChat input files from a Seurat V3 object
+The normalized count data and cell group information can be obtained from the Seurat object by
+```{r}
+data.input <- GetAssayData(seurat_object, assay = "RNA", slot = "data") # normalized data matrix
+labels <- Idents(seurat_object)
+identity <- data.frame(group = labels, row.names = names(labels)) # create a dataframe of the cell labels
+```
+
+## Extract the CellChat input files from a Seurat V2 object
+The normalized count data and cell group information can be obtained from the Seurat object by
+```{r}
+data.input <- seurat_object@data # normalized data matrix
+labels <- seurat_object@idents
+identity <- data.frame(group = labels, row.names = names(labels)) # create a dataframe of the cell labels
+```
+
+## Extract the CellChat input files from a Scanpy object
+anndata provides a python class that can be used to store single-cell data. This data format is also use for storage in the scanpy package. We first read the data into R using the reticulate package to import the anndata module.
+```{r}
+library(reticulate)
+ad <- import("anndata", convert = FALSE)
+ad_object <- ad$read_h5ad("scanpy_object.h5ad")
+# access normalized data matrix
+data.input <- t(py_to_r(ad_object$X))
+rownames(data.input) <- rownames(py_to_r(ad_object$var))
+colnames(data.input) <- rownames(py_to_r(ad_object$obs))
+# access meta data
+meta.data <- py_to_r(ad_object$obs)
+identity <- meta.data
+```
+
+
+Upon extracting the required CellChat input files, then create a CellChat object and start the analysis.
+
+## Create a CellChat object
+```{r}
+cellchat <- createCellChat(data = data.input)
+```
+
+## Add cell information into *meta* slot of the object
+```{r}
+cellchat <- addMeta(cellchat, meta = identity, meta.name = "labels")
+cellchat <- setIdent(cellchat, ident.use = "labels") # set "labels" as default cell identity
+levels(cellchat@idents) # show factor levels of the cell labels
+```
+

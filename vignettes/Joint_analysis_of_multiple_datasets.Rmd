@@ -1,0 +1,71 @@
+
+---
+title: "Joint analysis of multiple datasets using CellChat"
+author: "Suoqin Jin"
+output: html_document
+mainfont: Arial
+vignette: >
+  %\VignetteIndexEntry{Inference and analysis of cell-cell communication using CellChat}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+
+This vignette shows how to apply CellChat to identify the conserved and context-specific signaling by joint manifold learning and quantitative contrasts of multiple cell-cell communication networks. 
+
+CellChat performs joint manifold learning and classification of the inferred communication networks based on their functional and topological similarity.
+
+**Functional similarity**: High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles. **NB**: Functional similarity analysis is not applicable to multiple datsets with different cell type composition. 
+
+**Structural similarity**: A structural similarity was used to compare their signaling network structure, without considering the similarity of senders and receivers. **NB**: Structural similarity analysis is applicable to multiple datsets with the same cell type composition or the vastly different cell type composition. 
+
+Load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(CellChat)
+library(ggplot2)
+```
+
+## Create a directory to save figures
+```{r}
+data.dir <- './comparison'
+dir.create(data.dir)
+setwd(data.dir)
+```
+
+## Load CellChat object of each dataset and then merge together
+```{r}
+cellchat.obj1 <- readRDS("cellchat_obj1.rds")
+cellchat.obj2 <- readRDS("cellchat_obj2.rds")
+cellchat <- mergeCellChat(list(cellchat.obj1, cellchat.obj2), add.names = c("Dataset1","Dataset2"))
+```
+
+## Run manifold and classification learning analysis
+Here we run the manifold and classification learning analysis based on the structural similarity. User can also run it based on the functional similarity if the two datasets have the the same cell type composition. 
+```{r}
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "structural")
+cellchat <- netEmbedding(cellchat, type = "structural")
+cellchat <- netClustering(cellchat, type = "structural")
+# Visualization
+netVisual_embeddingPairwise(cellchat, type = "structural")
+netVisual_embeddingPairwiseZoomIn(cellchat, type = "structural")
+```
+
+## Compute and visualize the pathway distance in the learned joint manifold
+```{r}
+rankSimilarity(cellchat, type = "structural")
+```
+
+## Identify and visualize the conserved and context-specific signaling pathways
+```{r}
+rankNet(cellchat, mode = "comparison")
+```
+
+## Save the joint CellChat object
+```{r}
+saveRDS(cellchat, file = "cellchat_comparisonAnalysis_Dataset1_vs_Dataset2.rds")
+```
+
