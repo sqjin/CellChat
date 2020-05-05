@@ -84,23 +84,27 @@ createCellChat <- function(data, do.sparse = T) {
 }
 
 
+
 #' Merge CellChat objects
 #'
-#' @param object1 CellChat object of dataset 1
-#' @param object2 CellChat object of dataset 2
-#' @param add.names the names of each dataset
+#' @param object.list  A list of multiple CellChat objects
+#' @param add.names A vector containing the name of each dataset
 #' @importFrom methods slot new
 #'
 #' @return
 #' @export
 #'
 #' @examples
-mergeCellChat <- function(object1, object2, add.names = NULL) {
+mergeCellChat <- function(object.list, add.names = NULL) {
   slot.name <- c("net", "netP", "idents" ,"LR")
   slot.combined <- vector("list", length(slot.name))
   names(slot.combined) <- slot.name
   for (i in 1:length(slot.name)) {
-    slot.combined[[i]] <- list(slot(object1, slot.name[i]), slot(object2, slot.name[i]))
+    object.slot <- vector("list", length(object.list))
+    for (j in 1:length(object.list)) {
+      object.slot[[j]] <- slot(object.list[[j]], slot.name[i])
+    }
+    slot.combined[[i]] <- object.slot
     if (!is.null(add.names)) {
       names(slot.combined[[i]]) <- add.names
     }
@@ -111,6 +115,5 @@ mergeCellChat <- function(object1, object2, add.names = NULL) {
     netP = slot.combined$netP,
     idents = slot.combined$idents,
     LR = slot.combined$LR)
-
   return(merged.object)
 }
