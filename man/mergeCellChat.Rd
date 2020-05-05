@@ -4,14 +4,12 @@
 \alias{mergeCellChat}
 \title{Merge CellChat objects}
 \usage{
-mergeCellChat(object1, object2, add.names = NULL)
+mergeCellChat(object.list, add.names = NULL)
 }
 \arguments{
-\item{object1}{CellChat object of dataset 1}
+\item{object.list}{A list of multiple CellChat objects}
 
-\item{object2}{CellChat object of dataset 2}
-
-\item{add.names}{the names of each dataset}
+\item{add.names}{A vector containing the name of each dataset}
 }
 \value{
 
