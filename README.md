@@ -26,6 +26,7 @@ CellChat R package can be easily installed from Github using devtools:
 ```
 devtools::install_github("sqjin/CellChat")
 ```
+It takes 1 min to install the package on a normal computer. 
 
 ## Vignettes
 Please check the vignettes directory of the repo.
@@ -33,6 +34,14 @@ Please check the vignettes directory of the repo.
 - [Basic commands tutorial](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/CellChat-vignette.html)
 - [Joint analysis of multiple datasets](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Joint_analysis_of_multiple_datasets.html)
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Interface_with_other_single-cell_analysis_toolkits.html)
+
+## System Requirements
+### Hardware requirements
+CellChat package requires only a standard computer with enough RAM to support the in-memory operations.
+
+### Software requirements
+This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5). 
+Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. 
 
 ## Help
 If you have any problems, comments or suggestions, please contact us at Suoqin Jin (suoqin.jin@uci.edu).
