@@ -21,12 +21,13 @@ In addition to infer the intercellular communication from any given scRNA-seq da
 
 
 ## Installation
+
 CellChat R package can be easily installed from Github using devtools:  
 
 ```
 devtools::install_github("sqjin/CellChat")
 ```
-It takes 1 min to install the package on a normal computer. 
+It takes 1 min to install the package on a normal computer. You might need to manually intall [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if it is not automtically installed. 
 
 ## Vignettes
 Please check the vignettes directory of the repo.
@@ -41,6 +42,7 @@ CellChat package requires only a standard computer with enough RAM to support th
 
 ### Software requirements
 This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5). 
+
 Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. 
 
 ## Help
