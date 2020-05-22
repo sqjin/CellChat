@@ -27,7 +27,7 @@ CellChat R package can be easily installed from Github using devtools:
 ```
 devtools::install_github("sqjin/CellChat")
 ```
-It takes 1 min to install the package on a normal computer. You might need to manually intall the dependencies [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if it is not automtically installed. 
+It takes 1 min to install the package on a normal computer. You might need to manually intall the dependencies [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if it is not automatically installed. 
 
 ## Vignettes
 Please check the vignettes directory of the repo.
