@@ -371,11 +371,13 @@ summary {
 <p>This vignette outlines the steps of inference, analysis and visualization of cell-cell communication network using CellChat.</p>
 <p>CellChat requires gene expression data of cells as the user input and models the probability of cell-cell communication by integrating gene expression with prior knowledge of the interactions between signaling ligands, receptors and their cofactors.</p>
 <p>Upon infering the intercellular communication network, CellChat provides functionality for further data exploration, analysis, and visualization.</p>
-<p>Load the required libraries</p>
+<div id="load-the-required-libraries" class="section level2">
+<h2>Load the required libraries</h2>
 <pre class="r"><code>library(CellChat)
 library(ggplot2)
 library(ggalluvial)
 options(stringsAsFactors = FALSE)</code></pre>
+</div>
 <div id="part-i-data-input-processing-and-initialization-of-cellchat-object" class="section level1">
 <h1>Part I: Data input &amp; processing and initialization of CellChat object</h1>
 <p>CellChat requires two user inputs: one is the gene expression data of cells, and the other is either user assigned cell labels (i.e., label-based mode) or a low-dimensional representation of the single-cell data (i.e., label-free mode). For the latter, CellChat automatically groups cells by building a shared neighbor graph based on the cell-cell distance in the low-dimensional space or the pseudotemporal trajectory space.</p>
@@ -384,8 +386,8 @@ options(stringsAsFactors = FALSE)</code></pre>
 <p><em>For the gene expression data matrix</em>, genes should be in rows with rownames and cells in columns with colnames. Normalized data is required as input for CellChat analysis. If user provides count data, we provide a <code>normalizeData</code> function to account for library size. <em>For the cell group information</em>, a dataframe with rownames is required as input for CellChat.</p>
 <pre class="r"><code>load(&quot;data_input.rda&quot;)
 data.input = data_input$data # normalized data matrix
-identity = data.frame(group = data_input$labels, row.names = names(data_input$labels)) # create a dataframe of the cell labels
-unique(identity$group) # show the cell labels</code></pre>
+identity = data.frame(group = data_input$labels, row.names = names(data_input$labels)) # create a dataframe consisting of the cell labels
+unique(identity$group) # check the cell labels</code></pre>
 </div>
 <div id="create-a-cellchat-object" class="section level2">
 <h2>Create a CellChat object</h2>
@@ -408,11 +410,11 @@ dplyr::glimpse(CellChatDB$interaction)
 CellChatDB.use &lt;- subsetDB(CellChatDB, search = &quot;Secreted Signaling&quot;) # use Secreted Signaling for cell-cell communication analysis
 cellchat@DB &lt;- CellChatDB.use # set the used database in the object</code></pre>
 </div>
-<div id="preprocessing-the-data-for-cell-cell-communication-analysis" class="section level2">
-<h2>Preprocessing the data for cell-cell communication analysis</h2>
-<p>We first identify over-expressed ligands/receptors and pairs, and then project gene expression data onto protein-protein interaction (PPI) network.</p>
+<div id="preprocessing-the-expression-data-for-cell-cell-communication-analysis" class="section level2">
+<h2>Preprocessing the expression data for cell-cell communication analysis</h2>
+<p>We first identify over-expressed ligands or receptors in one cell group, and then project gene expression data onto protein-protein interaction (PPI) network. The over-expressed ligand-receptor interactions are identified if either the ligand or receptor is over-expressed.</p>
 <pre class="r"><code>cellchat &lt;- subsetData(cellchat) # subset the expression data of signaling genes for saving computation cost
-future::plan(&quot;multiprocess&quot;, workers = 4) # parallel
+future::plan(&quot;multiprocess&quot;, workers = 4) # do parallel
 cellchat &lt;- identifyOverExpressedGenes(cellchat)
 cellchat &lt;- identifyOverExpressedInteractions(cellchat)
 cellchat &lt;- projectData(cellchat, PPI.mouse)</code></pre>
@@ -420,51 +422,67 @@ cellchat &lt;- projectData(cellchat, PPI.mouse)</code></pre>
 </div>
 <div id="part-ii-inference-of-cell-cell-communication-network" class="section level1">
 <h1>Part II: Inference of cell-cell communication network</h1>
-<p>CellChat models the probability of cell-cell communication by integrating gene expression with prior known knowledge of the interactions between signaling ligands, receptors and their cofactors using the law of mass action. ## Compute the communication probability and infer cellular communication network</p>
+<p>CellChat infers the biologically significant cell-cell communication by assigning each interaction with a probability value and peforming a permutation test. CellChat models the probability of cell-cell communication by integrating gene expression with prior known knowledge of the interactions between signaling ligands, receptors and their cofactors using the law of mass action.</p>
+<div id="compute-the-communication-probability-and-infer-cellular-communication-network" class="section level2">
+<h2>Compute the communication probability and infer cellular communication network</h2>
 <pre class="r"><code>cellchat &lt;- computeCommunProb(cellchat)</code></pre>
-<div id="compute-communications-on-signaling-pathway-level" class="section level2">
-<h2>Compute communications on signaling pathway level</h2>
-<p>CellChat computes the communication probability on signaling pathway level by summarizing all related ligands/receptors.</p>
+</div>
+<div id="infer-the-cell-cell-communication-at-a-signaling-pathway-level" class="section level2">
+<h2>Infer the cell-cell communication at a signaling pathway level</h2>
+<p>CellChat computes the communication probability on signaling pathway level by summarizing the communication probabilities of all ligands-receptors interactions associated with each signaling pathway.</p>
+<p>NB: The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.</p>
 <pre class="r"><code>cellchat &lt;- computeCommunProbPathway(cellchat)</code></pre>
 </div>
-<div id="calculate-the-aggregated-network" class="section level2">
-<h2>Calculate the aggregated network</h2>
-<p>We can calculate the aggregated network by counting the number of links or summarizing the communication probability</p>
+<div id="calculate-the-aggregated-cell-cell-communication-network" class="section level2">
+<h2>Calculate the aggregated cell-cell communication network</h2>
+<p>We can calculate the aggregated cell-cell communication network by counting the number of links or summarizing the communication probability</p>
 <pre class="r"><code>cellchat &lt;- aggregateNet(cellchat)</code></pre>
 </div>
 </div>
-<div id="part-iii-systems-analysis-and-visualization-of-cell-cell-communication-network" class="section level1">
-<h1>Part III: Systems analysis and visualization of cell-cell communication network</h1>
+<div id="part-iii-visualization-and-systems-analysis-of-cell-cell-communication-network" class="section level1">
+<h1>Part III: Visualization and systems analysis of cell-cell communication network</h1>
 <p>Upon infering the cell-cell communication network, CellChat provides various functionality for further data exploration, analysis, and visualization.</p>
+<ul>
+<li><p>It can quantitatively characterize and compare the inferred cell-cell communication networks using an integrated approach by combining social network analysis, pattern recognition, and manifold learning approaches.</p></li>
+<li><p>It provides an easy-to-use tool for extracting and visualizing high-order information of the inferred networks. For example, it allows ready prediction of major signaling inputs and outputs for all cell populations and how these populations and signals coordinate together for functions.</p></li>
+</ul>
 <div id="create-a-directory-to-save-figures" class="section level2">
 <h2>Create a directory to save figures</h2>
-<p>data.dir &lt;- ‘/Users/example/results’ dir.create(data.dir) setwd(data.dir)</p>
-</div>
-<div id="identify-signaling-roles-of-cell-groups" class="section level2">
-<h2>Identify signaling roles of cell groups</h2>
-<p>We identify dominant senders, receivers, mediators and influencers in the intercellular communication network by computing the several network centrality measures.</p>
-<pre class="r"><code>cellchat &lt;- netAnalysis_signalingRole(cellchat, slot.name = &quot;netP&quot;)</code></pre>
+<pre class="r"><code>data.dir &lt;- '/Users/example/results'
+dir.create(data.dir)
+setwd(data.dir)</code></pre>
 </div>
 <div id="visualize-each-signaling-pathway-using-hierarchy-plot-or-circle-plot" class="section level2">
 <h2>Visualize each signaling pathway using hierarchy plot or circle plot</h2>
+<p>If visualizing the communication network using hierarchy plot, please define <code>vertex.receiver</code>, which is a numeric vector giving the index of the cell groups as targets in the first hierarchy plot. One can visualize the inferred communication network of signaling pathways using <code>netVisual_aggregate</code>, and visualize the inferred communication networks of individual L-R pairs associated with that signaling pathway using <code>netVisual_individual</code>.</p>
+<p>In the hierarchy plot, solid and open circles represent source and target, respectively. Circle sizes are proportional to the number of cells in each cell group. Edge colors are consistent with the signaling source. Thicker line indicates a stronger signal.</p>
 <p>Here we take input of one signaling pathway as an example:</p>
 <pre class="r"><code>pathways.show &lt;- c(&quot;TGFb&quot;) 
-vertex.receiver = seq(1,9)
+vertex.receiver = seq(1,9) # a numeric vector
 # Hierarchy plot
 netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver, vertex.size = groupSize)
 # Circle plot
-netVisual_aggregate(cellchat, signaling = pathways.show, layout = &quot;circle&quot;, vertex.receiver = vertex.receiver, vertex.size = groupSize)</code></pre>
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = &quot;circle&quot;, vertex.size = groupSize)</code></pre>
 </div>
-<div id="contribution-of-each-l-r-pair-to-overall-signaling" class="section level2">
-<h2>Contribution of each L-R pair to overall signaling</h2>
+<div id="compute-and-visualize-the-contribution-of-each-ligand-receptor-pair-to-the-overall-signaling-pathway" class="section level2">
+<h2>Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway</h2>
 <pre class="r"><code>netAnalysis_contribution(cellchat, signaling = pathways.show)</code></pre>
 </div>
-<div id="visualize-the-signaling-roles-of-cell-groups-using-heatmap" class="section level2">
-<h2>Visualize the signaling roles of cell groups using heatmap</h2>
+<div id="identify-signaling-roles-of-cell-groups" class="section level2">
+<h2>Identify signaling roles of cell groups</h2>
+<p>CellChat allows ready identification of dominant senders, receivers, mediators and influencers in the intercellular communication network by computing several network centrality measures for each cell group.</p>
+<pre class="r"><code>cellchat &lt;- netAnalysis_signalingRole(cellchat, slot.name = &quot;netP&quot;) # the slot 'netP' means the inferred intercellular communication network of signaling pathways</code></pre>
+</div>
+<div id="visualize-the-signaling-roles-of-cell-groups" class="section level2">
+<h2>Visualize the signaling roles of cell groups</h2>
 <pre class="r"><code>netVisual_signalingRole(cellchat, signaling = pathways.show)</code></pre>
 </div>
-<div id="identify-and-visualize-outgoing-communication-pattern-of-secreating-cells" class="section level2">
-<h2>Identify and visualize outgoing communication pattern of secreating cells</h2>
+<div id="identify-global-communication-patterns-and-major-signals-for-specific-cell-groups" class="section level2">
+<h2>Identify global communication patterns and major signals for specific cell groups</h2>
+<p>In addition to exploring detailed communications for individual pathways, an important question is how multiple cell groups and signaling pathways coordinate to function. CellChat employs a pattern recognition method to identify the global communication patterns as well as the key signals for each cell group.</p>
+<div id="identify-and-visualize-outgoing-communication-pattern-of-secreting-cells" class="section level3">
+<h3>Identify and visualize outgoing communication pattern of secreting cells</h3>
+<p>As the number of patterns increases, there might be redundant patterns, making it difficult to interpret the communication patterns. We chose five patterns as default. Generally, it is biologically meaningful with the number of patterns greater than 2.</p>
 <pre class="r"><code>nPatterns = 5
 cellchat &lt;- identifyCommunicationPatterns(cellchat, pattern = &quot;outgoing&quot;, k = nPatterns)
 # river plot
@@ -472,8 +490,8 @@ netAnalysis_river(cellchat, pattern = &quot;outgoing&quot;)
 # dot plot
 netAnalysis_dot(cellchat, pattern = &quot;outgoing&quot;)</code></pre>
 </div>
-<div id="identify-and-visualize-incoming-communication-pattern-of-target-cells" class="section level2">
-<h2>Identify and visualize incoming communication pattern of target cells</h2>
+<div id="identify-and-visualize-incoming-communication-pattern-of-target-cells" class="section level3">
+<h3>Identify and visualize incoming communication pattern of target cells</h3>
 <pre class="r"><code>nPatterns = 5
 cellchat &lt;- identifyCommunicationPatterns(cellchat, pattern = &quot;incoming&quot;, k = nPatterns)
 # river plot
@@ -481,10 +499,14 @@ netAnalysis_river(cellchat, pattern = &quot;incoming&quot;)
 # dot plot
 netAnalysis_dot(cellchat, pattern = &quot;incoming&quot;)</code></pre>
 </div>
+</div>
 <div id="manifold-and-classification-learning-analysis-of-signaling-networks" class="section level2">
 <h2>Manifold and classification learning analysis of signaling networks</h2>
-<div id="compute-and-visualize-functional-similarity" class="section level3">
-<h3>Compute and visualize functional similarity</h3>
+<p>Further, CellChat is able to quantify the similarity between all significant signaling pathways and then group them based on their cellular communication network similarity. Grouping can be done either based on the functional or structural similarity.</p>
+<p><strong>Functional similarity</strong>: High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles.</p>
+<p><strong>Structural similarity</strong>: A structural similarity was used to compare their signaling network structure, without considering the similarity of senders and receivers.</p>
+<div id="identify-signaling-groups-based-on-their-functional-similarity" class="section level3">
+<h3>Identify signaling groups based on their functional similarity</h3>
 <pre class="r"><code>cellchat &lt;- computeNetSimilarity(cellchat, type = &quot;functional&quot;)
 cellchat &lt;- netEmbedding(cellchat, type = &quot;functional&quot;)
 cellchat &lt;- netClustering(cellchat, type = &quot;functional&quot;)
@@ -492,8 +514,8 @@ cellchat &lt;- netClustering(cellchat, type = &quot;functional&quot;)
 netVisual_embedding(cellchat, type = &quot;functional&quot;)
 netVisual_embeddingZoomIn(cellchat, type = &quot;functional&quot;)</code></pre>
 </div>
-<div id="compute-and-visualize-structural-similarity" class="section level3">
-<h3>Compute and visualize structural similarity</h3>
+<div id="identify-signaling-groups-based-on-structure-similarity" class="section level3">
+<h3>Identify signaling groups based on structure similarity</h3>
 <pre class="r"><code>cellchat &lt;- computeNetSimilarity(cellchat, type = &quot;structural&quot;)
 cellchat &lt;- netEmbedding(cellchat, type = &quot;structural&quot;)
 cellchat &lt;- netClustering(cellchat, type = &quot;structural&quot;)
@@ -502,10 +524,10 @@ netVisual_embedding(cellchat, type = &quot;structural&quot;)
 netVisual_embeddingZoomIn(cellchat, type = &quot;structural&quot;)</code></pre>
 </div>
 </div>
-</div>
-<div id="part-iv-save-the-cellchat-object" class="section level1">
-<h1>Part IV: Save the CellChat object</h1>
+<div id="part-iv-save-the-cellchat-object" class="section level2">
+<h2>Part IV: Save the CellChat object</h2>
 <pre class="r"><code>saveRDS(cellchat, file = &quot;cellchat_example.rds&quot;)</code></pre>
+</div>
 </div>
 
 

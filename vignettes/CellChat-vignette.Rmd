@@ -27,7 +27,7 @@ CellChat requires gene expression data of cells as the user input and models the
 Upon infering the intercellular communication network, CellChat provides functionality for further data exploration, analysis, and visualization. 
 
 
-Load the required libraries
+## Load the required libraries
 ```{r message=FALSE,warning=FALSE}
 library(CellChat)
 library(ggplot2)
@@ -44,8 +44,8 @@ CellChat requires two user inputs: one is the gene expression data of cells, and
 ```{r}
 load("data_input.rda")
 data.input = data_input$data # normalized data matrix
-identity = data.frame(group = data_input$labels, row.names = names(data_input$labels)) # create a dataframe of the cell labels
-unique(identity$group) # show the cell labels
+identity = data.frame(group = data_input$labels, row.names = names(data_input$labels)) # create a dataframe consisting of the cell labels
+unique(identity$group) # check the cell labels
 ```
 
 ## Create a CellChat object
@@ -72,72 +72,90 @@ CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling") # use Secr
 cellchat@DB <- CellChatDB.use # set the used database in the object
 ```
 
-## Preprocessing the data for cell-cell communication analysis
-We first identify over-expressed ligands/receptors and pairs, and then project gene expression data onto protein-protein interaction (PPI) network. 
+## Preprocessing the expression data for cell-cell communication analysis
+We first identify over-expressed ligands or receptors in one cell group, and then project gene expression data onto protein-protein interaction (PPI) network. The over-expressed ligand-receptor interactions are identified if either the ligand or receptor is over-expressed. 
 ```{r}
 cellchat <- subsetData(cellchat) # subset the expression data of signaling genes for saving computation cost
-future::plan("multiprocess", workers = 4) # parallel
+future::plan("multiprocess", workers = 4) # do parallel
 cellchat <- identifyOverExpressedGenes(cellchat)
 cellchat <- identifyOverExpressedInteractions(cellchat)
 cellchat <- projectData(cellchat, PPI.mouse)
 ```
 
 # Part II: Inference of cell-cell communication network
-CellChat models the probability of cell-cell communication by integrating gene expression with prior known knowledge of the interactions between signaling ligands, receptors and their cofactors using the law of mass action. 
+CellChat infers the biologically significant cell-cell communication by assigning each interaction with a probability value and peforming a permutation test. CellChat models the probability of cell-cell communication by integrating gene expression with prior known knowledge of the interactions between signaling ligands, receptors and their cofactors using the law of mass action. 
+
 ## Compute the communication probability and infer cellular communication network
 ```{r}
 cellchat <- computeCommunProb(cellchat)
 ```
 
-## Compute communications on signaling pathway level
-CellChat computes the communication probability on signaling pathway level by summarizing all related ligands/receptors.
+## Infer the cell-cell communication at a signaling pathway level
+CellChat computes the communication probability on signaling pathway level by summarizing the communication probabilities of all ligands-receptors interactions associated with each signaling pathway.  
+
+NB: The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot 'net' and 'netP', respectively.
+
 ```{r}
 cellchat <- computeCommunProbPathway(cellchat)
 ```
 
-## Calculate the aggregated network 
-We can calculate the aggregated network by counting the number of links or summarizing the communication probability
+## Calculate the aggregated cell-cell communication network 
+We can calculate the aggregated cell-cell communication network by counting the number of links or summarizing the communication probability
 ```{r}
 cellchat <- aggregateNet(cellchat)
 ```
 
-# Part III: Systems analysis and visualization of cell-cell communication network
+# Part III: Visualization and systems analysis of cell-cell communication network
 Upon infering the cell-cell communication network, CellChat provides various functionality for further data exploration, analysis, and visualization.
 
+* It can quantitatively characterize and compare the inferred cell-cell communication networks using an integrated approach by combining social network analysis, pattern recognition, and manifold learning approaches.
+
+* It provides an easy-to-use tool for extracting and visualizing high-order information of the inferred networks. For example, it allows ready prediction of major signaling inputs and outputs for all cell populations and how these populations and signals coordinate together for functions.
+
 ## Create a directory to save figures
+```{r}
 data.dir <- '/Users/example/results'
 dir.create(data.dir)
 setwd(data.dir)
-
-## Identify signaling roles of cell groups
-We identify dominant senders, receivers, mediators and influencers in the intercellular communication network by computing the several network centrality measures.
-
-```{r}
-cellchat <- netAnalysis_signalingRole(cellchat, slot.name = "netP")
 ```
 
 ## Visualize each signaling pathway using hierarchy plot or circle plot
+If visualizing the communication network using hierarchy plot, please define `vertex.receiver`, which is a numeric vector giving the index of the cell groups as targets in the first hierarchy plot. One can visualize the inferred communication network of signaling pathways using `netVisual_aggregate`, and visualize the inferred communication networks of individual L-R pairs associated with that signaling pathway using `netVisual_individual`.
+
+In the hierarchy plot, solid and open circles represent source and target, respectively. Circle sizes are proportional to the number of cells in each cell group. Edge colors are consistent with the signaling source. Thicker line indicates a stronger signal. 
+
 Here we take input of one signaling pathway as an example: 
 ```{r}
 pathways.show <- c("TGFb") 
-vertex.receiver = seq(1,9)
+vertex.receiver = seq(1,9) # a numeric vector
 # Hierarchy plot
 netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver, vertex.size = groupSize)
 # Circle plot
-netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle", vertex.receiver = vertex.receiver, vertex.size = groupSize)
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle", vertex.size = groupSize)
 ```
 
-## Contribution of each L-R pair to overall signaling
+## Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
 ```{r}
 netAnalysis_contribution(cellchat, signaling = pathways.show)
 ```
 
-## Visualize the signaling roles of cell groups using heatmap
+## Identify signaling roles of cell groups
+CellChat allows ready identification of dominant senders, receivers, mediators and influencers in the intercellular communication network by computing several network centrality measures for each cell group.
+
+```{r}
+cellchat <- netAnalysis_signalingRole(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+```
+
+## Visualize the signaling roles of cell groups
 ```{r}
 netVisual_signalingRole(cellchat, signaling = pathways.show)
 ```
 
-## Identify and visualize outgoing communication pattern of secreating cells
+## Identify global communication patterns and major signals for specific cell groups
+In addition to exploring detailed communications for individual pathways, an important question is how multiple cell groups and signaling pathways coordinate to function. CellChat employs a pattern recognition method to identify the global communication patterns as well as the key signals for each cell group. 
+
+### Identify and visualize outgoing communication pattern of secreting cells
+As the number of patterns increases, there might be redundant patterns, making it difficult to interpret the communication patterns. We chose five patterns as default. Generally, it is biologically meaningful with the number of patterns greater than 2. 
 ```{r}
 nPatterns = 5
 cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
@@ -147,7 +165,7 @@ netAnalysis_river(cellchat, pattern = "outgoing")
 netAnalysis_dot(cellchat, pattern = "outgoing")
 ```
 
-## Identify and visualize incoming communication pattern of target cells
+### Identify and visualize incoming communication pattern of target cells
 ```{r}
 nPatterns = 5
 cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
@@ -158,7 +176,13 @@ netAnalysis_dot(cellchat, pattern = "incoming")
 ```
 
 ## Manifold and classification learning analysis of signaling networks
-### Compute and visualize functional similarity
+Further, CellChat is able to quantify the similarity between all significant signaling pathways and then group them based on their cellular communication network similarity. Grouping can be done either based on the functional or structural similarity. 
+
+**Functional similarity**: High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles. 
+
+**Structural similarity**: A structural similarity was used to compare their signaling network structure, without considering the similarity of senders and receivers.
+
+### Identify signaling groups based on their functional similarity
 ```{r}
 cellchat <- computeNetSimilarity(cellchat, type = "functional")
 cellchat <- netEmbedding(cellchat, type = "functional")
@@ -168,7 +192,7 @@ netVisual_embedding(cellchat, type = "functional")
 netVisual_embeddingZoomIn(cellchat, type = "functional")
 ```
 
-### Compute and visualize structural similarity
+### Identify signaling groups based on structure similarity
 ```{r}
 cellchat <- computeNetSimilarity(cellchat, type = "structural")
 cellchat <- netEmbedding(cellchat, type = "structural")
@@ -178,7 +202,7 @@ netVisual_embedding(cellchat, type = "structural")
 netVisual_embeddingZoomIn(cellchat, type = "structural")
 ```
 
-# Part IV: Save the CellChat object
+## Part IV: Save the CellChat object
 ```{r}
 saveRDS(cellchat, file = "cellchat_example.rds")
 ```
