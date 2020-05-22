@@ -20,7 +20,7 @@ computeCommunProb(
 
 \item{trim}{the fraction (0 to 0.25) of observations to be trimmed from each end of x before the mean is computed; default using the robust Tukey's trimean}
 
-\item{nboot}{threshold of p-values}
+\item{nboot}{the total number of permutations}
 
 \item{seed.use}{set a random seed. By default, sets the seed to 1.}
 
