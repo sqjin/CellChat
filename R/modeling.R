@@ -4,7 +4,7 @@
 #' @param object CellChat object
 #' @param LR.use ligand-receptor interactions used in inferring communication network
 #' @param trim the fraction (0 to 0.25) of observations to be trimmed from each end of x before the mean is computed; default using the robust Tukey's trimean
-#' @param nboot threshold of p-values
+#' @param nboot the total number of permutations
 #' @param seed.use set a random seed. By default, sets the seed to 1.
 #' @param Kh parameter in Hill function
 #' @importFrom future nbrOfWorkers
