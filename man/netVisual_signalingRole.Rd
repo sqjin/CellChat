@@ -15,7 +15,7 @@ netVisual_signalingRole(
   width = 6.5,
   height = 1.4,
   font.size = 8,
-  font.size.title = 12,
+  font.size.title = 10,
   cluster.rows = FALSE,
   cluster.cols = FALSE
 )

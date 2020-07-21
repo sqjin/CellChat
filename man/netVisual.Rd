@@ -13,7 +13,10 @@ netVisual(
   vertex.size = 20,
   layout = c("hierarchy", "circle"),
   height = 5,
-  thresh = 0.05
+  thresh = 0.05,
+  pt.title = 12,
+  title.space = 6,
+  vertex.label.cex = 0.8
 )
 }
 \arguments{
@@ -34,6 +37,12 @@ netVisual(
 \item{height}{height of plot}
 
 \item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{pt.title}{font size of the text}
+
+\item{title.space}{the space between the title and plot}
+
+\item{vertex.label.cex}{The label size of vertex in the network}
 }
 \value{
 

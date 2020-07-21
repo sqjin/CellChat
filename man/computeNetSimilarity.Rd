@@ -9,7 +9,7 @@ computeNetSimilarity(
   slot.name = "netP",
   type = c("functional", "structural"),
   k = NULL,
-  thresh = 0
+  thresh = NULL
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ computeNetSimilarity(
 
 \item{k}{the number of nearest neighbors}
 
-\item{thresh}{a range of the number of patterns}
+\item{thresh}{the fraction (0 to 0.25) of interactions to be trimmed before computing network similarity}
 }
 \value{
 

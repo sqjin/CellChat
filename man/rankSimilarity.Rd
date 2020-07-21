@@ -9,6 +9,7 @@ rankSimilarity(
   slot.name = "netP",
   type = c("functional", "structural"),
   comparison = c(1, 2),
+  pathway.remove = NULL,
   x.rotation = 90,
   title = NULL,
   color.use = NULL,
@@ -24,6 +25,8 @@ rankSimilarity(
 \item{type}{"functional","structural"}
 
 \item{comparison}{a numerical vector giving the datasets for comparison}
+
+\item{pathway.remove}{a character vector defining the signaling to remove}
 
 \item{x.rotation}{rotation of x-labels}
 
