@@ -84,7 +84,6 @@ createCellChat <- function(data, do.sparse = T) {
 }
 
 
-
 #' Merge CellChat objects
 #'
 #' @param object.list  A list of multiple CellChat objects

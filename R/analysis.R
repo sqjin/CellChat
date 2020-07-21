@@ -352,7 +352,7 @@ identifyCommunicationPatterns <- function(object, slot.name = "netP", pattern = 
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param k the number of nearest neighbors
-#' @param thresh a range of the number of patterns
+#' @param thresh the fraction (0 to 0.25) of interactions to be trimmed before computing network similarity
 #' @importFrom methods slot
 
 #'
@@ -360,7 +360,7 @@ identifyCommunicationPatterns <- function(object, slot.name = "netP", pattern = 
 #' @export
 #'
 #' @examples
-computeNetSimilarity <- function(object, slot.name = "netP", type = c("functional","structural"), k = NULL, thresh = 0) {
+computeNetSimilarity <- function(object, slot.name = "netP", type = c("functional","structural"), k = NULL, thresh = NULL) {
   type <- match.arg(type)
   prob = methods::slot(object, slot.name)$prob
   if (is.null(k)) {
@@ -424,18 +424,18 @@ computeNetSimilarity <- function(object, slot.name = "netP", type = c("functiona
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param k the number of nearest neighbors
-#' @param thresh a range of the number of patterns
+#' @param thresh the fraction (0 to 0.25) of interactions to be trimmed before computing network similarity
 #' @importFrom methods slot
 #'
 #' @return
 #' @export
 #'
 #' @examples
-computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), k = NULL, thresh = 0.25) {
+computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), k = NULL, thresh = NULL) {
   type <- match.arg(type)
   net <- list()
   signalingAll <- c()
-  for (i in 1:length(methods::slot(object, slot.name))) {
+  for (i in 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))) {
     object.net <- methods::slot(object, slot.name)[[i]]
     net[[i]] = object.net$prob
     signalingAll <- c(signalingAll, dimnames(net[[i]])[[3]])
@@ -724,6 +724,7 @@ computeLaplacian <- function(CM, tol = 0.01) {
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param comparison a numerical vector giving the datasets for comparison
+#' @param pathway.remove a character vector defining the signaling to remove
 #' @param x.rotation rotation of x-labels
 #' @param title main title of the plot
 #' @param bar.w the width of bar plot
@@ -735,14 +736,29 @@ computeLaplacian <- function(CM, tol = 0.01) {
 #' @export
 #'
 #' @examples
-rankSimilarity <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = c(1,2), x.rotation = 90, title = NULL, color.use = NULL, bar.w = NULL, font.size = 8) {
+rankSimilarity <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = c(1,2),  pathway.remove = NULL,
+                           x.rotation = 90, title = NULL, color.use = NULL, bar.w = NULL, font.size = 8) {
   type <- match.arg(type)
   net <- list()
-  for (i in 1:length(methods::slot(object, slot.name))) {
+  for (i in 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))) {
     net[[i]] = methods::slot(object, slot.name)[[i]]$prob
   }
   net.dim <- sapply(net, dim)[3,]
   position <- cumsum(net.dim); position <- c(0,position)
+  if (is.null(pathway.remove)) {
+    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix
+    pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
+    pathway.remove.idx <- which(rownames(similarity) %in% pathway.remove)
+  }
+  if (length(pathway.remove.idx) > 0) {
+    for (i in 1:length(pathway.remove.idx)) {
+      idx <- which(position - pathway.remove.idx[i] > 0)
+      position[idx[1]] <- position[idx[1]] - 1
+      if (idx[1] == 2) {
+        position[3] <- position[3] - 1
+      }
+    }
+  }
 
   Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
   data1 <- Y[(position[comparison[1]]+1):position[comparison[1]+1], ]

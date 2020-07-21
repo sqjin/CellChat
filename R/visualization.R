@@ -62,6 +62,9 @@ scPalette <- function(n) {
 #' @param layout "hierarchy" or "circle"
 #' @param height height of plot
 #' @param thresh threshold of the p-value for determining significant interaction
+#' @param pt.title font size of the text
+#' @param title.space the space between the title and plot
+#' @param vertex.label.cex The label size of vertex in the network
 #' @importFrom svglite svglite
 #' @importFrom grDevices dev.off pdf
 #'
@@ -70,7 +73,7 @@ scPalette <- function(n) {
 #'
 #' @examples
 #'
-netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05) {
+netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8) {
   layout <- match.arg(layout)
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
 
@@ -115,17 +118,18 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       prob.i <- prob[,,i]
-      netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
-      netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
+      netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
     }
     dev.off()
 
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     svglite(file = paste0(signaling.name, "_hierarchy_aggregate.svg"), width = 7, height = 1*height)
-    par(mfrow=c(1,2))
-    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signaling.name)
-    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signaling.name)
+    par(mfrow=c(1,2), ps = pt.title)
+    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+    graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
     dev.off()
   } else if (layout == "circle") {
     svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = 4, height = nRow*4)
@@ -133,14 +137,14 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       prob.i <- prob[,,i]
-      netVisual_circle(prob.i, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
+      netVisual_circle(prob.i, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
     }
     dev.off()
 
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = 4, height = 1*4)
-    netVisual_circle(prob.sum, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signaling.name)
+    netVisual_circle(prob.sum, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
     dev.off()
   }
 
@@ -708,7 +712,7 @@ mycircle <- function(coords, v=NULL, params) {
 #' @examples
 netVisual_signalingRole <- function(object, signaling, slot.name = "netP", measure = c("outdeg","indeg","flowbet","info"), measure.name = c("Sender","Receiver","Mediator","Influencer"),
                              color.use = NULL, color.heatmap = "BuGn",
-                             width = 6.5, height = 1.4, font.size = 8, font.size.title = 12, cluster.rows = FALSE, cluster.cols = FALSE) {
+                             width = 6.5, height = 1.4, font.size = 8, font.size.title = 10, cluster.rows = FALSE, cluster.cols = FALSE) {
   centr <- slot(object, slot.name)$centr[signaling]
   for(i in 1:length(centr)) {
     centr0 <- centr[[i]]
@@ -740,7 +744,7 @@ netVisual_signalingRole <- function(object, signaling, slot.name = "netP", measu
                   row_names_side = "left",row_names_rot = 0,row_names_gp = gpar(fontsize = font.size),column_names_gp = gpar(fontsize = font.size),
                   width = unit(width, "cm"), height = unit(height, "cm"),
                   column_title = paste0(names(centr[i]), " signaling pathway network"),column_title_gp = gpar(fontsize = font.size.title),column_names_rot = 45,
-                  heatmap_legend_param = list(title = "Importance", title_gp = gpar(fontsize = 10, fontface = "plain"),title_position = "leftcenter-rot",
+                  heatmap_legend_param = list(title = "Importance", title_gp = gpar(fontsize = 8, fontface = "plain"),title_position = "leftcenter-rot",
                                               border = NA, at = c(round(min(mat, na.rm = T), digits = 1), round(max(mat, na.rm = T), digits = 1)),
                                               legend_height = unit(20, "mm"),labels_gp = gpar(fontsize = 8),grid_width = unit(2, "mm"))
     )
@@ -1364,9 +1368,9 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   type <- match.arg(type)
   Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
   clusters <- methods::slot(object, slot.name)$similarity[[type]]$group
-  object.names <- names(methods::slot(object, slot.name))
+  object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")
   prob <- list()
-  for (i in 1:length(methods::slot(object, slot.name))) {
+  for (i in 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))) {
     object.net <- methods::slot(object, slot.name)[[i]]
     prob[[i]] = object.net$prob
   }
@@ -1384,7 +1388,9 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
     for (i in 1:length(prob)) {
       probi <- prob[[i]]
       pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
-      probi <- probi[ , , -pathway.remove.idx]
+      if (length(pathway.remove.idx) > 0) {
+        probi <- probi[ , , -pathway.remove.idx]
+      }
       prob[[i]] <- probi
     }
   }
@@ -1470,9 +1476,9 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
   clusters <- methods::slot(object, slot.name)$similarity[[type]]$group
 
-  object.names <- names(methods::slot(object, slot.name))
+  object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")
   prob <- list()
-  for (i in 1:length(methods::slot(object, slot.name))) {
+  for (i in 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))) {
     object.net <- methods::slot(object, slot.name)[[i]]
     prob[[i]] = object.net$prob
   }
@@ -1490,7 +1496,9 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
     for (i in 1:length(prob)) {
       probi <- prob[[i]]
       pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
-      probi <- probi[ , , -pathway.remove.idx]
+      if (length(pathway.remove.idx) > 0) {
+        probi <- probi[ , , -pathway.remove.idx]
+      }
       prob[[i]] <- probi
     }
   }
@@ -1532,7 +1540,7 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
     idx <- match(unique(df2$group), levels(df$group), nomatch = 0)
     gg <- gg + scale_shape_manual(values= point.shape[idx])
     if (do.label) {
-        gg <- gg + ggrepel::geom_text_repel(mapping = aes(label = labels, colour = clusters, alpha=group), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5) + scale_alpha_discrete(range = c(1, 0.6))
+        gg <- gg + ggrepel::geom_text_repel(mapping = aes(label = labels), colour = color.use[clusterID], size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5) + scale_alpha_discrete(range = c(1, 0.6))
     }
 
     if (!show.legend) {
@@ -1565,17 +1573,17 @@ showDatabaseCategory <- function(CellChatDB, nrow = 1) {
   interaction_input <- CellChatDB$interaction
   geneIfo <- CellChatDB$geneInfo
   df <- interaction_input %>% group_by(annotation) %>% summarise(value=n())
-  df$group <- factor(df$annotation, levels = c("Secreted Signaling","ECM-Receptor","Cell-Cell Adhesion"))
+  df$group <- factor(df$annotation, levels = c("Secreted Signaling","ECM-Receptor","Cell-Cell Contact"))
   gg1 <- pieChart(df)
   binary <- (interaction_input$ligand %in% geneIfo$Symbol) & (interaction_input$receptor %in% geneIfo$Symbol)
-  df <- data.frame(group = rep("Heterodimers", dim(interaction_input)[1]))
+  df <- data.frame(group = rep("Heterodimers", dim(interaction_input)[1]),stringsAsFactors = FALSE)
   df$group[binary] <- rep("Others",sum(binary),1)
   df <- df %>% group_by(group) %>% summarise(value=n())
   df$group <- factor(df$group, levels = c("Heterodimers","Others"))
   gg2 <- pieChart(df)
 
   kegg <- grepl("KEGG", interaction_input$evidence)
-  df <- data.frame(group = rep("Literature", dim(interaction_input)[1]))
+  df <- data.frame(group = rep("Literature", dim(interaction_input)[1]),stringsAsFactors = FALSE)
   df$group[kegg] <- rep("KEGG",sum(kegg),1)
   df <- df %>% group_by(group) %>% summarise(value=n())
   df$group <- factor(df$group, levels = c("KEGG","Literature"))
