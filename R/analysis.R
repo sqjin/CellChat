@@ -297,7 +297,7 @@ identifyCommunicationPatterns <- function(object, slot.name = "netP", pattern = 
                                         show_legend = FALSE, show_annotation_name = FALSE,
                                         simple_anno_size = grid::unit(0.2, "cm"))
 
-    ht1 = Heatmap(net, col = color.heatmap, na_col = "white", name = "",
+    ht1 = Heatmap(net, col = color.heatmap, na_col = "white", name = "Contribution",
                   left_annotation = row_annotation,
                   cluster_rows = T,cluster_columns = F,clustering_method_rows = "average",
                   row_names_side = "left",row_names_rot = 0,row_names_gp = gpar(fontsize = font.size),column_names_gp = gpar(fontsize = font.size),
@@ -314,7 +314,7 @@ identifyCommunicationPatterns <- function(object, slot.name = "netP", pattern = 
 
     net <- t(H)
 
-    ht2 = Heatmap(net, col = color.heatmap, na_col = "white", name = "",
+    ht2 = Heatmap(net, col = color.heatmap, na_col = "white", name = "Contribution",
                   cluster_rows = T,cluster_columns = F,clustering_method_rows = "average",
                   row_names_side = "left",row_names_rot = 0,row_names_gp = gpar(fontsize = font.size),column_names_gp = gpar(fontsize = font.size),
                   width = unit(width, "cm"), height = unit(height, "cm"),
