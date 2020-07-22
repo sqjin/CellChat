@@ -14,7 +14,7 @@ netAnalysis_contribution(
   x.rotation = 0,
   title = "Contribution of each L-R pair",
   font.size = 10,
-  font.size.title = 12
+  font.size.title = 10
 )
 }
 \arguments{
