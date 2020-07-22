@@ -132,7 +132,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
     dev.off()
   } else if (layout == "circle") {
-    svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = 4, height = nRow*4)
+    svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
     par(mfrow=c(nRow,1))
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
@@ -143,7 +143,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
 
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
-    svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = 4, height = 1*4)
+    svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = height, height = 1*height)
     netVisual_circle(prob.sum, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
     dev.off()
   }
@@ -426,7 +426,7 @@ netVisual_hierarchy1 <-function(net, vertex.receiver, color.use = NULL, signalin
   shape::Arrows(arrow.pos2[1], arrow.pos2[2], arrow.pos2[3], arrow.pos2[4], col = "#2f6661",arr.lwd = 0.0001,arr.length = 0.2, lwd = 0.8,arr.type="triangle")
   if (!is.null(signaling.name)) {
     title.pos = c(space.h/8, space.v)
-    text(title.pos[1],title.pos[2],paste0(signaling.name, " signaling pathway network"), cex = 1)
+    text(title.pos[1],title.pos[2],paste0(signaling.name, " signaling network"), cex = 1)
   }
 }
 
@@ -545,7 +545,7 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, signalin
 
   if (!is.null(signaling.name)) {
     title.pos = c(space.h/8, space.v)
-    text(title.pos[1],title.pos[2],paste0(signaling.name, " signaling pathway network"), cex = 1)
+    text(title.pos[1],title.pos[2],paste0(signaling.name, " signaling network"), cex = 1)
   }
 }
 
