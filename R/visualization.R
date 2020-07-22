@@ -75,7 +75,7 @@ scPalette <- function(n) {
 #'
 netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8) {
   layout <- match.arg(layout)
-  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
+  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
   if (is.null(signaling.name)) {
     signaling.name <- signaling
@@ -116,7 +116,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     svglite(file = paste0(signaling.name, "_hierarchy_individual.svg"), width = 8, height = nRow*height)
     par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
     for (i in 1:length(pairLR.name.use)) {
-      signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+      signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
       netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
@@ -135,7 +135,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
     par(mfrow=c(nRow,1))
     for (i in 1:length(pairLR.name.use)) {
-      signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+      signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       netVisual_circle(prob.i, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
     }
@@ -250,7 +250,7 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex
 #'
 netVisual_individual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05) {
   layout <- match.arg(layout)
-  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
+  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
   if (is.null(signaling.name)) {
     signaling.name <- signaling
@@ -291,7 +291,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
   if (layout == "hierarchy") {
     par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
     for (i in 1:length(pairLR.name.use)) {
-      signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+      signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
       netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
@@ -300,7 +300,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
   } else if (layout == "circle") {
     par(mfrow=c(nRow,1))
     for (i in 1:length(pairLR.name.use)) {
-      signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+      signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       netVisual_circle(prob.i, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
     }
