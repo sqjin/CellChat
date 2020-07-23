@@ -20,11 +20,11 @@ In addition to infer the intercellular communication from any given scRNA-seq da
 - It provides several visualization outputs to facilitate intuitive user-guided data interpretation.
 
 <p align="center">
-  <img width="800"  src="https://github.com/sqjin/CellChat/blob/master/overview_CellChat.png">
+  <img width="700"  src="https://github.com/sqjin/CellChat/blob/master/overview_CellChat.png">
 </p>
 
 
-Check out [our preprint on bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.21.214387v1) for the detailed methods and applications.
+Check out [our preprint on bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.21.214387v1) for the detailed methods and applications, and a [short video](https://youtu.be/lag9UstpYhk) for introducing the key features of CellChat.
 
 
 ## Installation
