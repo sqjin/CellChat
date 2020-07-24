@@ -42,6 +42,7 @@ Please check the vignettes directory of the repo.
 - [Basic commands tutorial](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/CellChat-vignette.html)
 - [Joint analysis of multiple datasets](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Joint_analysis_of_multiple_datasets.html)
 - [Walkthrough - CellChat analysis of cell-cell communication in mouse skin wounds](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/walkthrough_wound.html)
+- [Example streamline for quick analysis and exploration](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/example_streamline_for_quick_analysis_and_exploration.html)
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Interface_with_other_single-cell_analysis_toolkits.html)
 
 
