@@ -369,7 +369,7 @@ computeExpr_antagonist <- function(data.use, pairLRsig, cofactor_input, group, i
     data.avg <- t(data.avg[,-1])
     data.antagonist <- apply(Kh/(Kh + data.avg), 2, prod)
   } else {
-    data.antagonist = matrix(1, nrow = 1, ncol = length(group))
+    data.antagonist = matrix(1, nrow = 1, ncol = length(unique(group)))
   }
   return(data.antagonist)
 }
