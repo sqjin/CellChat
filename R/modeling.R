@@ -338,7 +338,7 @@ computeExpr_agonist <- function(data.use, pairLRsig, cofactor_input, group, inde
     data.avg <- t(data.avg[,-1])
     data.agonist <- apply(1 + data.avg/(Kh + data.avg), 2, prod)
   } else {
-    data.agonist = matrix(1, nrow = 1, ncol = length(group))
+    data.agonist = matrix(1, nrow = 1, ncol = length(unique(group)))
   }
   return(data.agonist)
 }
