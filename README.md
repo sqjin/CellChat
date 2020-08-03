@@ -34,7 +34,7 @@ CellChat R package can be easily installed from Github using devtools:
 ```
 devtools::install_github("sqjin/CellChat")
 ```
-You might need to manually intall the dependencies [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if it is not automatically installed. 
+You might need to manually install the dependencies [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if it is not automatically installed. 
 
 ## Vignettes
 Please check the vignettes directory of the repo.
@@ -53,7 +53,7 @@ CellChat package requires only a standard computer with enough RAM to support th
 ### Software requirements
 This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5). 
 
-Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. 
+Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat package. 
 
 ## Help
 If you have any problems, comments or suggestions, please contact us at Suoqin Jin (suoqin.jin@uci.edu).
