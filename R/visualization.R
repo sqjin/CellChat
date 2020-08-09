@@ -770,6 +770,10 @@ netVisual_signalingRole <- function(object, signaling, slot.name = "netP", measu
 #'
 netVisual_bubble <- function(object, from, to, bidirection = FALSE, pairLR.use0 = NULL,  color.heatmap = viridis::viridis(50), thresh = 0.05){
   pairwiseLR <- object@net$pairwiseRank
+  if (is.null(pairwiseLR)) {
+    stop("The interactions between pairwise cell groups have not been extracted!
+         Please first run `object <- rankNetPairwise(object)`")
+  }
   group.names.all <- names(pairwiseLR)
   if (!is.numeric(from)) {
     from <- match(from, group.names.all)
