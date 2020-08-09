@@ -116,6 +116,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     svglite(file = paste0(signaling.name, "_hierarchy_individual.svg"), width = 8, height = nRow*height)
     par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
     for (i in 1:length(pairLR.name.use)) {
+      #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
@@ -135,6 +136,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
     par(mfrow=c(nRow,1))
     for (i in 1:length(pairLR.name.use)) {
+      #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       netVisual_circle(prob.i, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
@@ -250,7 +252,7 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex
 #'
 netVisual_individual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05) {
   layout <- match.arg(layout)
-  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
+  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
 
   if (is.null(signaling.name)) {
     signaling.name <- signaling
@@ -291,7 +293,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
   if (layout == "hierarchy") {
     par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
     for (i in 1:length(pairLR.name.use)) {
-      signalName_i <- pairLR$interaction_name_2[i]
+      signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       prob.i <- prob[,,i]
       netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
       netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
@@ -300,7 +302,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
   } else if (layout == "circle") {
     par(mfrow=c(nRow,1))
     for (i in 1:length(pairLR.name.use)) {
-      signalName_i <- pairLR$interaction_name_2[i]
+      signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       prob.i <- prob[,,i]
       netVisual_circle(prob.i, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
     }
@@ -756,8 +758,9 @@ netVisual_signalingRole <- function(object, signaling, slot.name = "netP", measu
 #' Show all the significant interactions (L-R pairs) from some cell groups to other cell groups
 #'
 #' @param object CellChat object
-#' @param from a vector giving the index of source cell groups
-#' @param to a vector giving the index of target cell groups
+#' @param from a vector giving the index or the name of source cell groups
+#' @param to a corresponding vector giving the index or the name of target cell groups. Note: The length of 'from' and 'to' must be the same, giving the corresponding pair of cell groups for communication.
+#' @param bidirection whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.
 #' @param pairLR.use0 ligand-receptor pairs to use; default is all the significant interactions
 #' @param color.heatmap color map
 #' @param thresh threshold of the p-value for determining significant interaction
@@ -765,31 +768,51 @@ netVisual_signalingRole <- function(object, signaling, slot.name = "netP", measu
 #' @return
 #' @export
 #'
-netVisual_bubble <-function(object, from, to, pairLR.use0 = NULL,  color.heatmap = viridis::viridis(50), thresh = 0.05){
+netVisual_bubble <- function(object, from, to, bidirection = FALSE, pairLR.use0 = NULL,  color.heatmap = viridis::viridis(50), thresh = 0.05){
   pairwiseLR <- object@net$pairwiseRank
+  group.names.all <- names(pairwiseLR)
+  if (!is.numeric(from)) {
+    from <- match(from, group.names.all)
+    if (sum(is.na(from)) > 0) {
+      message("Some input cell group names in 'from' do not exist!")
+      from <- from[!is.na(from)]
+    }
+  }
+  if (!is.numeric(to)) {
+    to <- match(to, group.names.all)
+    if (sum(is.na(to)) > 0) {
+      message("Some input cell group names in 'to' do not exist!")
+      to <- to[!is.na(to)]
+    }
+  }
+  if (length(from) != length(to)) {
+    stop("The length of 'from' and 'to' must be the same!")
+  }
+  if (bidirection) {
+    from <- c(from, to)
+    to <- c(to, from)
+  }
   if (is.null(pairLR.use0)) {
     k <- 0
     pairLR.use0 <- list()
     for (i in 1:length(from)){
-      for (j in 1:length(to)) {
-        pairwiseLR_ij <- pairwiseLR[[from[i]]][[to[j]]]
+        pairwiseLR_ij <- pairwiseLR[[from[i]]][[to[i]]]
         idx <- pairwiseLR_ij$pval < thresh
         if (length(idx) > 0) {
           k <- k +1
           pairLR.use0[[k]] <- pairwiseLR_ij[idx,]
         }
-      }
     }
     pairLR.use0 <- do.call(rbind, pairLR.use0)
   }
 
   k <- 0
-  pval <- matrix(nrow = length(rownames(pairLR.use0)), ncol = length(from) * length(to))
+  pval <- matrix(nrow = length(rownames(pairLR.use0)), ncol = length(from))
   prob <- pval
+  group.names <- c()
   for (i in 1:length(from)) {
-    for (j in 1:length(to)) {
       k <- k+1
-      pairwiseLR_ij <- pairwiseLR[[from[i]]][[to[j]]]
+      pairwiseLR_ij <- pairwiseLR[[from[i]]][[to[i]]]
       pairwiseLR_ij <- pairwiseLR_ij[rownames(pairLR.use0),]
       pval_ij <- pairwiseLR_ij$pval
       prob_ij <- pairwiseLR_ij$prob
@@ -798,7 +821,7 @@ netVisual_bubble <-function(object, from, to, pairLR.use0 = NULL,  color.heatmap
       pval_ij[pval_ij <= 0.01] = 3
       pval[,k] <- pval_ij
       prob[,k] <- prob_ij
-    }
+      group.names <- c(group.names, paste(group.names.all[from[i]], group.names.all[to[i]], sep = " - "))
   }
   prob[which(prob == 0)] <- NA
   # remove rows that are entirely NA
@@ -810,7 +833,7 @@ netVisual_bubble <-function(object, from, to, pairLR.use0 = NULL,  color.heatmap
   prob[is.infinite(prob) & prob < 0] <- max(prob+1)
 
   rownames(prob) <- as.character(pairwiseLR_ij[rownames(pairLR.use0),]$interaction_name_2)
-  colnames(prob) <- as.character(rep(names(pairwiseLR)[to],length(from)))
+  colnames(prob) <- group.names
   dimnames(pval) <- dimnames(prob)
 
   df.prob = reshape2::melt(prob, value.name = "probs")
