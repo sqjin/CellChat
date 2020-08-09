@@ -114,5 +114,6 @@ mergeCellChat <- function(object.list, add.names = NULL) {
     netP = slot.combined$netP,
     idents = slot.combined$idents,
     LR = slot.combined$LR)
+  message("This function only merges the slots of 'net', 'netP', 'idents' and 'LR'.")
   return(merged.object)
 }
