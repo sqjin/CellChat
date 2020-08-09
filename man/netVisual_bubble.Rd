@@ -8,6 +8,7 @@ netVisual_bubble(
   object,
   from,
   to,
+  bidirection = FALSE,
   pairLR.use0 = NULL,
   color.heatmap = viridis::viridis(50),
   thresh = 0.05
@@ -16,9 +17,11 @@ netVisual_bubble(
 \arguments{
 \item{object}{CellChat object}
 
-\item{from}{a vector giving the index of source cell groups}
+\item{from}{a vector giving the index or the name of source cell groups}
 
-\item{to}{a vector giving the index of target cell groups}
+\item{to}{a corresponding vector giving the index or the name of target cell groups. Note: The length of 'from' and 'to' must be the same, giving the corresponding pair of cell groups for communication.}
+
+\item{bidirection}{whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.}
 
 \item{pairLR.use0}{ligand-receptor pairs to use; default is all the significant interactions}
 
