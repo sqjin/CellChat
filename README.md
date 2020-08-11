@@ -51,7 +51,7 @@ Please check the vignettes directory of the repo.
 CellChat package requires only a standard computer with enough RAM to support the in-memory operations.
 
 ### Software requirements
-This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5). 
+This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. 
 
 Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. 
 
