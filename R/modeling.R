@@ -3,6 +3,9 @@
 #'
 #' @param object CellChat object
 #' @param LR.use ligand-receptor interactions used in inferring communication network
+#' @param population.size whether consider the proportion of cells in each group across all sequenced cells. Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the
+#' potential artifact of population size. Set population.size = TRUE if analyzing unsorted single-cell transcriptomes. We reason that abundant cell populations tend to
+#' send collectively stronger signals than the rare cell populations.
 #' @param trim the fraction (0 to 0.25) of observations to be trimmed from each end of x before the mean is computed; default using the robust Tukey's trimean
 #' @param nboot the total number of permutations
 #' @param seed.use set a random seed. By default, sets the seed to 1.
@@ -17,7 +20,7 @@
 #' @export
 #'
 #' @examples
-computeCommunProb <- function(object, LR.use = NULL, trim = NULL, nboot = 100, seed.use = 1L, Kh = 0.5) {
+computeCommunProb <- function(object, LR.use = NULL, population.size = TRUE, trim = NULL, nboot = 100, seed.use = 1L, Kh = 0.5) {
   data <- object@data.project
   if (is.null(LR.use)) {
     pairLR.use <- object@LR$LRsig
@@ -132,7 +135,11 @@ computeCommunProb <- function(object, LR.use = NULL, trim = NULL, nboot = 100, s
         P3 <- matrix(1, nrow = numCluster, ncol = numCluster)
       }
       # number of cells
-      P4 <- Matrix::crossprod(matrix(dataLavg2[i,], nrow = 1), matrix(dataRavg2[i,], nrow = 1))
+      if (population.size) {
+        P4 <- Matrix::crossprod(matrix(dataLavg2[i,], nrow = 1), matrix(dataRavg2[i,], nrow = 1))
+      } else {
+        P4 <- matrix(1, nrow = numCluster, ncol = numCluster)
+      }
 
       Pnull = P1*P2*P3*P4
       Prob[ , , i] <- Pnull
@@ -172,7 +179,11 @@ computeCommunProb <- function(object, LR.use = NULL, trim = NULL, nboot = 100, s
 
           dataRavg2B <- by(matrix(dataR2.i, ncol = 1), groupboot, sum)/nC
           dataRavg2B <- matrix(dataRavg2B, nrow = 1)
-          P4.boot = Matrix::crossprod(dataLavg2B, dataRavg2B)
+          if (population.size) {
+            P4.boot = Matrix::crossprod(dataLavg2B, dataRavg2B)
+          } else {
+            P4.boot = matrix(1, nrow = numCluster, ncol = numCluster)
+          }    
 
           Pboot = P1.boot*P2.boot*P3.boot*P4.boot
           return(as.vector(Pboot))
