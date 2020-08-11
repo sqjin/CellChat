@@ -7,6 +7,7 @@
 computeCommunProb(
   object,
   LR.use = NULL,
+  population.size = TRUE,
   trim = NULL,
   nboot = 100,
   seed.use = 1L,
@@ -18,9 +19,13 @@ computeCommunProb(
 
 \item{LR.use}{ligand-receptor interactions used in inferring communication network}
 
+\item{population.size}{whether consider the proportion of cells in each group across all sequenced cells. Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the
+potential artifact of population size. Set population.size = TRUE if analyzing unsorted single-cell transcriptomes. We reason that abundant cell populations tend to
+send collectively stronger signals than the rare cell populations.}
+
 \item{trim}{the fraction (0 to 0.25) of observations to be trimmed from each end of x before the mean is computed; default using the robust Tukey's trimean}
 
-\item{nboot}{the total number of permutations}
+\item{nboot}{threshold of p-values}
 
 \item{seed.use}{set a random seed. By default, sets the seed to 1.}
 
