@@ -39,7 +39,8 @@ Imports:
     forcats,
     reshape2,
     FNN,
-    shape
+    shape,
+    extrafont
 Remotes: jokergoo/ComplexHeatmap
 LinkingTo: Rcpp, RcppEigen
 Suggests:
