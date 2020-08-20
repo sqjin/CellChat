@@ -41,7 +41,7 @@ Imports:
     FNN,
     shape,
     extrafont
-Remotes: jokergoo/ComplexHeatmap
+Remotes: jokergoo/ComplexHeatmap, sqjin/NMF
 LinkingTo: Rcpp, RcppEigen
 Suggests:
     rmarkdown, knitr, roxygen2
