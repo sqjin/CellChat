@@ -23,7 +23,7 @@ In addition to infer the intercellular communication from any given scRNA-seq da
   <img width="700"  src="https://github.com/sqjin/CellChat/blob/master/overview_CellChat.png">
 </p>
 
-
+### Preprint
 Check out [our preprint on bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.21.214387v1) for the detailed methods and applications, and a [short video](https://youtu.be/lag9UstpYhk) for introducing the key features of CellChat.
 
 
@@ -34,7 +34,17 @@ CellChat R package can be easily installed from Github using devtools:
 ```
 devtools::install_github("sqjin/CellChat")
 ```
-You might need to manually intall the dependencies [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if it is not automatically installed. 
+
+### Installation of other dependencies
+- Install [NMF](https://github.com/sqjin/NMF) using `devtools::install_github("sqjin/NMF")` if you encounter any issue.
+- Install [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if you encounter any issue.
+- Install UMAP python pacakge for dimension reduction: ```pip install umap-learn```. Please check [here](https://github.com/lmcinnes/umap) if you encounter any issue. 
+
+Some users might have issues when installing CellChat pacakge due to different operating systems and new R version. Please check the following solutions:
+
+- **Installation on Mac OX with R > 3.6**: Please re-install [Xquartz](https://community.rstudio.com/t/imager-package-does-not-work-in-r-3-6-1/38119).
+- **Installation on Windows, Linux and Centos**: Please check the solution [here](https://github.com/sqjin/CellChat/issues/5).  
+
 
 ## Vignettes
 Please check the vignettes directory of the repo.
