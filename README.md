@@ -36,7 +36,7 @@ devtools::install_github("sqjin/CellChat")
 ```
 
 ### Installation of other dependencies
-- Install [NMF](https://github.com/sqjin/NMF) using `devtools::install_github("sqjin/NMF")` if you encounter any issue.
+- Install [NMF](https://github.com/sqjin/NMF) using `devtools::install_github("sqjin/NMF")`. Please check [here](https://github.com/sqjin/CellChat/issues/16) for other solutions if you encounter any issue.
 - Install [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if you encounter any issue.
 - Install UMAP python pacakge for dimension reduction: ```pip install umap-learn```. Please check [here](https://github.com/lmcinnes/umap) if you encounter any issue. 
 
