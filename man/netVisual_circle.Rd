@@ -6,6 +6,10 @@
 \usage{
 netVisual_circle(
   net,
+  from = NULL,
+  to = NULL,
+  bidirection = FALSE,
+  remove.isolate = FALSE,
   color.use = NULL,
   signaling.name = NULL,
   top = 1,
@@ -28,6 +32,14 @@ netVisual_circle(
 }
 \arguments{
 \item{net}{A weighted matrix representing the connections}
+
+\item{from}{a vector giving the index or the name of source cell groups}
+
+\item{to}{a vector giving the index or the name of target cell groups.}
+
+\item{bidirection}{whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.}
+
+\item{remove.isolate}{whether remove the isolate nodes in the communication network}
 
 \item{color.use}{Colors represent different cell groups}
 

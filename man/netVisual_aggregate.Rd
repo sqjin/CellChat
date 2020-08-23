@@ -10,6 +10,10 @@ netVisual_aggregate(
   signaling.name = NULL,
   vertex.receiver = NULL,
   color.use = NULL,
+  from = NULL,
+  to = NULL,
+  bidirection = FALSE,
+  remove.isolate = FALSE,
   vertex.size = 20,
   layout = c("hierarchy", "circle"),
   thresh = 0.05,
@@ -28,6 +32,14 @@ netVisual_aggregate(
 \item{vertex.receiver}{a numeric vector giving the index of the cell groups as targets in the first hierarchy plot}
 
 \item{color.use}{the character vector defining the color of each cell group}
+
+\item{from}{a vector giving the index or the name of source cell groups when using circle plot}
+
+\item{to}{a vector giving the index or the name of target cell groups.}
+
+\item{bidirection}{whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.}
+
+\item{remove.isolate}{whether remove the isolate nodes in the communication network}
 
 \item{vertex.size}{The size of vertex}
 
