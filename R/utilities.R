@@ -126,6 +126,10 @@ setIdent <- function(object, ident.use = NULL, levels = NULL){
   if (!is.null(levels)) {
     object@idents <- factor(object@idents, levels = levels)
   }
+  if (length(object@net) > 0) {
+    dimnames(object@net$prob) <- list(levels(object@idents), levels(object@idents), dimnames(object@net$prob)[[3]])
+    dimnames(object@net$pval) <- dimnames(object@net$prob)
+  }
   return(object)
 }
 
