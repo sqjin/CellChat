@@ -379,7 +379,8 @@ netVisual_hierarchy1 <-function(net, vertex.receiver, color.use = NULL, signalin
   vertex.size <- vertex.size/max(vertex.size)*15+7
   m <- length(vertex.receiver)
   net2 <- net
-  net2 <- net2[,vertex.receiver]
+  reorder.row <- c(vertex.receiver, setdiff(1:nrow(net),vertex.receiver))
+  net2 <- net2[reorder.row,vertex.receiver]
   # Expand out to symmetric (M+N)x(M+N) matrix
   m1 <- nrow(net2); n1 <- ncol(net2)
   net3 <- rbind(cbind(matrix(0, m1, m1), net2), matrix(0, n1, m1+n1))
@@ -497,7 +498,8 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, signalin
   m <- length(vertex.receiver)
   m0 <- nrow(net)-length(vertex.receiver)
   net2 <- net
-  net2 <- net2[,vertex.receiver]
+  reorder.row <- c(setdiff(1:nrow(net),vertex.receiver), vertex.receiver)
+  net2 <- net2[reorder.row,vertex.receiver]
   # Expand out to symmetric (M+N)x(M+N) matrix
   m1 <- nrow(net2); n1 <- ncol(net2)
   net3 <- rbind(cbind(matrix(0, m1, m1), net2), matrix(0, n1, m1+n1))
