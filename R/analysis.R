@@ -136,9 +136,10 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     title <- cowplot::ggdraw() + cowplot::draw_label(paste0("Contribution of each signaling in ", signaling.name, " pathway"), fontface='bold', size = 10)
     gg.combined <- cowplot::plot_grid(gg, gg1, gg2, nrow = 1)
     gg.combined <- cowplot::plot_grid(title, gg.combined, ncol = 1, rel_heights=c(0.1, 1))
-    gg.combined
+    gg <- gg.combined
+    gg
   }
-
+    return(list(LRpair = as.character(pair.name), gg.obj = gg))
 }
 
 
