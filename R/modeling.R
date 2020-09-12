@@ -420,3 +420,87 @@ triMean <- function(x, na.rm = TRUE) {
   mean(stats::quantile(x, probs = c(0.25, 0.50, 0.50, 0.75), na.rm = na.rm))
 }
 
+#' Identify all the significant interactions (L-R pairs) from some cell groups to other cell groups
+#'
+#' @param object CellChat object
+#' @param from a vector giving the index or the name of source cell groups
+#' @param to a corresponding vector giving the index or the name of target cell groups. Note: The length of 'from' and 'to' must be the same, giving the corresponding pair of cell groups for communication.
+#' @param bidirection whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.
+#' @param pair.only whether only return ligand-receptor pairs without pathway names and communication strength
+#' @param pairLR.use0 ligand-receptor pairs to use; default is all the significant interactions
+#' @param thresh threshold of the p-value for determining significant interaction
+#'
+#' @return
+#' @export
+#'
+identifyEnrichedInteractions <- function(object, from, to, bidirection = FALSE, pair.only = TRUE, pairLR.use0 = NULL, thresh = 0.05){
+  pairwiseLR <- object@net$pairwiseRank
+  if (is.null(pairwiseLR)) {
+    stop("The interactions between pairwise cell groups have not been extracted!
+         Please first run `object <- rankNetPairwise(object)`")
+  }
+  group.names.all <- names(pairwiseLR)
+  if (!is.numeric(from)) {
+    from <- match(from, group.names.all)
+    if (sum(is.na(from)) > 0) {
+      message("Some input cell group names in 'from' do not exist!")
+      from <- from[!is.na(from)]
+    }
+  }
+  if (!is.numeric(to)) {
+    to <- match(to, group.names.all)
+    if (sum(is.na(to)) > 0) {
+      message("Some input cell group names in 'to' do not exist!")
+      to <- to[!is.na(to)]
+    }
+  }
+  if (length(from) != length(to)) {
+    stop("The length of 'from' and 'to' must be the same!")
+  }
+  if (bidirection) {
+    from2 <- c(from, to)
+    to <- c(to, from)
+    from <- from2
+  }
+  if (is.null(pairLR.use0)) {
+    k <- 0
+    pairLR.use0 <- list()
+    for (i in 1:length(from)){
+      pairwiseLR_ij <- pairwiseLR[[from[i]]][[to[i]]]
+      idx <- pairwiseLR_ij$pval < thresh
+      if (length(idx) > 0) {
+        k <- k +1
+        pairLR.use0[[k]] <- pairwiseLR_ij[idx,]
+      }
+    }
+    pairLR.use0 <- do.call(rbind, pairLR.use0)
+  }
+
+  k <- 0
+  pval <- matrix(nrow = length(rownames(pairLR.use0)), ncol = length(from))
+  prob <- pval
+  group.names <- c()
+  for (i in 1:length(from)) {
+    k <- k+1
+    pairwiseLR_ij <- pairwiseLR[[from[i]]][[to[i]]]
+    pairwiseLR_ij <- pairwiseLR_ij[rownames(pairLR.use0),]
+    pval_ij <- pairwiseLR_ij$pval
+    prob_ij <- pairwiseLR_ij$prob
+    pval_ij[pval_ij > 0.05] = 1
+    pval_ij[pval_ij > 0.01 & pval_ij <= 0.05] = 2
+    pval_ij[pval_ij <= 0.01] = 3
+    prob_ij[pval_ij ==1] <- 0
+    pval[,k] <- pval_ij
+    prob[,k] <- prob_ij
+    group.names <- c(group.names, paste(group.names.all[from[i]], group.names.all[to[i]], sep = " - "))
+  }
+  prob[which(prob == 0)] <- NA
+  # remove rows that are entirely NA
+  pval <- pval[rowSums(is.na(prob)) != ncol(prob), ,drop = FALSE]
+  pairLR.use0 <- pairLR.use0[rowSums(is.na(prob)) != ncol(prob), ,drop = FALSE]
+  prob <- prob[rowSums(is.na(prob)) != ncol(prob), ,drop = FALSE]
+  if (pair.only) {
+    pairLR.use0 <- dplyr::select(pairLR.use0, ligand, receptor)
+  }
+  return(pairLR.use0)
+}
