@@ -3,6 +3,7 @@
 #'
 #' @param object CellChat object
 #' @param LR.use ligand-receptor interactions used in inferring communication network
+#' @param raw.use whether use the raw data or the projected data
 #' @param population.size whether consider the proportion of cells in each group across all sequenced cells. Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the
 #' potential artifact of population size. Set population.size = TRUE if analyzing unsorted single-cell transcriptomes. We reason that abundant cell populations tend to
 #' send collectively stronger signals than the rare cell populations.
@@ -20,8 +21,12 @@
 #' @export
 #'
 #' @examples
-computeCommunProb <- function(object, LR.use = NULL, population.size = TRUE, trim = NULL, nboot = 100, seed.use = 1L, Kh = 0.5) {
-  data <- object@data.project
+computeCommunProb <- function(object, LR.use = NULL, raw.use = FALSE, population.size = TRUE, trim = NULL, nboot = 100, seed.use = 1L, Kh = 0.5) {
+  if (raw.use) {
+    data <- as.matrix(object@data.signaling)
+  } else {
+    data <- object@data.project
+  }
   if (is.null(LR.use)) {
     pairLR.use <- object@LR$LRsig
   } else {
@@ -245,6 +250,7 @@ aggregateNet <- function(object, thresh = 0.05) {
   net <- object@net
   prob <- net$prob
   pval <- net$pval
+  pval[prob == 0] <- 1
   net$count <- apply(pval < thresh, c(1,2), sum)
   prob[pval >= thresh] <- 0
   net$sum <- apply(prob, c(1,2), sum)
@@ -260,6 +266,7 @@ aggregateNet <- function(object, thresh = 0.05) {
 #' @param data.use data matrix
 #' @param complex the names of complex
 #' @return
+#' @export
 #' @importFrom dplyr select starts_with
 #' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
@@ -290,6 +297,7 @@ computeExpr_complex <- function(complex_input, data.use, complex) {
 #' @param cofactor_input the cofactor_input from CellChatDB
 #' @param coreceptor.all all the coreceptor in the database
 #' @param index.coreceptor the index of coreceptor in the database
+#' @export
 #' @return
 #' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
@@ -332,6 +340,7 @@ computeExpr_coreceptor <- function(cofactor_input, data.use, coreceptor.all, ind
 #' @param index.agonist the index of agonist in the database
 #' @param Kh a parameter in Hill function
 #' @param FunMean the function for computing mean expression per group
+#' @export
 #' @return
 #' @importFrom stats aggregate
 computeExpr_agonist <- function(data.use, pairLRsig, cofactor_input, group, index.agonist, Kh, FunMean) {
@@ -363,6 +372,7 @@ computeExpr_agonist <- function(data.use, pairLRsig, cofactor_input, group, inde
 #' @param index.antagonist the index of antagonist in the database
 #' @param Kh a parameter in Hill function
 #' @param FunMean the function for computing mean expression per group
+#' @export
 #' @return
 #' @importFrom stats aggregate
 computeExpr_antagonist <- function(data.use, pairLRsig, cofactor_input, group, index.antagonist, Kh, FunMean) {
