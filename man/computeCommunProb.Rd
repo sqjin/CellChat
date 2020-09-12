@@ -7,6 +7,7 @@
 computeCommunProb(
   object,
   LR.use = NULL,
+  raw.use = FALSE,
   population.size = TRUE,
   trim = NULL,
   nboot = 100,
@@ -18,6 +19,8 @@ computeCommunProb(
 \item{object}{CellChat object}
 
 \item{LR.use}{ligand-receptor interactions used in inferring communication network}
+
+\item{raw.use}{whether use the raw data or the projected data}
 
 \item{population.size}{whether consider the proportion of cells in each group across all sequenced cells. Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the
 potential artifact of population size. Set population.size = TRUE if analyzing unsorted single-cell transcriptomes. We reason that abundant cell populations tend to
