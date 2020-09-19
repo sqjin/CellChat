@@ -818,7 +818,7 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
     pSum <- apply(prob1, 3, sum)
     pSum <- pSum
     pSum <- -1/log(pSum)
-    pSum[is.infinite(pSum) & pSum < 0] <- max(pSum+1)
+    pSum[is.infinite(pSum) | pSum < 0] <- max(pSum+1)
     pSum[is.na(pSum)] <- 0
     pair.name <- names(pSum)
 
@@ -849,13 +849,13 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
 
     pSum1 <- pSum
     pSum1 <- -1/log(pSum1)
-    pSum1[is.infinite(pSum1) & pSum1 < 0] <- max(pSum1+1)
+    pSum1[is.infinite(pSum1) | pSum1 < 0] <- max(pSum1+1)
 
     pSum1[is.na(pSum1)] <- 0
     pair.name1 <- names(pSum1)
     pSum2 <- pSum2
     pSum2 <- -1/log(pSum2)
-    pSum2[is.infinite(pSum2) & pSum2 < 0] <- max(pSum2+1)
+    pSum2[is.infinite(pSum2) | pSum2 < 0] <- max(pSum2+1)
 
     pSum2[is.na(pSum2)] <- 0
     pair.name2 <- names(pSum2)
