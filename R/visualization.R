@@ -57,6 +57,7 @@ scPalette <- function(n) {
 #' @param signaling a signaling pathway name
 #' @param signaling.name alternative signaling pathway name to show on the plot
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
+#' @param top the fraction of interactions to show (0 < top <= 1)
 #' @param color.use the character vector defining the color of each cell group
 #' @param from a vector giving the index or the name of source cell groups when using circle plot
 #' @param to a vector giving the index or the name of target cell groups.
@@ -77,7 +78,7 @@ scPalette <- function(n) {
 #'
 #' @examples
 #'
-netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8) {
+netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, top = 1, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8) {
   layout <- match.arg(layout)
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
@@ -123,8 +124,8 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
       #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
-      netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
-      netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
     }
     dev.off()
 
@@ -132,8 +133,8 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     svglite(file = paste0(signaling.name, "_hierarchy_aggregate.svg"), width = 7, height = 1*height)
     par(mfrow=c(1,2), ps = pt.title)
-    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
-    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
     graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
     dev.off()
   } else if (layout == "circle") {
@@ -143,14 +144,14 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
       #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
-      netVisual_circle(prob.i, top = 1, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      netVisual_circle(prob.i, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
     }
     dev.off()
 
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = height, height = 1*height)
-    netVisual_circle(prob.sum, top = 1, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
+    netVisual_circle(prob.sum, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
     dev.off()
   }
 }
@@ -162,6 +163,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
 #' @param signaling a signaling pathway name
 #' @param signaling.name alternative signaling pathway name to show on the plot
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
+#' @param top the fraction of interactions to show
 #' @param color.use the character vector defining the color of each cell group
 #' @param from a vector giving the index or the name of source cell groups when using circle plot
 #' @param to a vector giving the index or the name of target cell groups.
@@ -180,7 +182,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
 #'
 #' @examples
 #'
-netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), thresh = 0.05,
+netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, top = 1, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), thresh = 0.05,
                                 pt.title = 12, title.space = 6, vertex.label.cex = 0.8) {
   layout <- match.arg(layout)
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
@@ -224,13 +226,13 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     par(mfrow=c(1,2), ps = pt.title)
-    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
-    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
     graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
   } else if (layout == "circle") {
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
-    netVisual_circle(prob.sum, top = 1, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
+    netVisual_circle(prob.sum, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
   }
 
 
@@ -244,6 +246,7 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex
 #' @param signaling a signaling pathway name
 #' @param signaling.name alternative signaling pathway name to show on the plot
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
+#' @param top the fraction of interactions to show
 #' @param color.use the character vector defining the color of each cell group
 #' @param from a vector giving the index or the name of source cell groups when using circle plot
 #' @param to a vector giving the index or the name of target cell groups.
@@ -260,7 +263,7 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex
 #'
 #' @examples
 #'
-netVisual_individual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05) {
+netVisual_individual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, top = 1, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), height = 5, thresh = 0.05) {
   layout <- match.arg(layout)
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
@@ -305,8 +308,8 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
-      netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
-      netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
+      netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
+      netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
     }
 
   } else if (layout == "circle") {
@@ -314,7 +317,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
-      netVisual_circle(prob.i, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, top = 1, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
+      netVisual_circle(prob.i, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i)
     }
 
   }
@@ -332,6 +335,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
 #' @param vertex.receiver  a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
 #' @param color.use the character vector defining the color of each cell group
 #' @param signaling.name alternative signaling pathway name to show on the plot
+#' @param top the fraction of interactions to show
 #' @param weight.scale whether rescale the edge weights
 #' @param label.dist the distance between labels and dot position
 #' @param space.v the space between different columns in the plot
@@ -370,9 +374,11 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, verte
 #' @importFrom shape Arrows
 #' @return A network graph of the significant interactions
 #' @export
-netVisual_hierarchy1 <-function(net, vertex.receiver, color.use = NULL, signaling.name = NULL, weight.scale = FALSE, label.dist = 2.8, space.v = 1.5, space.h = 1.6, shape= NULL, label=FALSE,edge.curved=0, vertex.size=20,margin=0.2,
+netVisual_hierarchy1 <-function(net, vertex.receiver, color.use = NULL, signaling.name = NULL, top = 1, weight.scale = FALSE, label.dist = 2.8, space.v = 1.5, space.h = 1.6, shape= NULL, label=FALSE,edge.curved=0, vertex.size=20,margin=0.2,
                                 vertex.label.cex=0.6,vertex.label.color= "black",arrow.width=1,arrow.size = 0.2,edge.label.color='black',edge.label.cex=0.5,edge.max.width=8,alpha.edge = 0.6){
   options(warn = -1)
+  thresh <- stats::quantile(net, probs = 1-top)
+  net[net < thresh] <- 0
   if (is.null(color.use)) {
     color.use <- scPalette(nrow(net))
   }
@@ -452,6 +458,7 @@ netVisual_hierarchy1 <-function(net, vertex.receiver, color.use = NULL, signalin
 #' @param vertex.receiver  a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
 #' @param color.use the character vector defining the color of each cell group
 #' @param signaling.name alternative signaling pathway name to show on the plot
+#' @param top the fraction of interactions to show
 #' @param weight.scale whether rescale the edge weights
 #' @param label.dist the distance between labels and dot position
 #' @param space.v the space between different columns in the plot
@@ -488,9 +495,11 @@ netVisual_hierarchy1 <-function(net, vertex.receiver, color.use = NULL, signalin
 #' @importFrom shape Arrows
 #' @return A network graph of the significant interactions
 #' @export
-netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, signaling.name = NULL, weight.scale = FALSE, label.dist = 2.8, space.v = 1.5, space.h = 1.6, shape= NULL, label=FALSE,edge.curved=0, vertex.size=20,margin=0.2,
+netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, signaling.name = NULL, top = 1, weight.scale = FALSE, label.dist = 2.8, space.v = 1.5, space.h = 1.6, shape= NULL, label=FALSE,edge.curved=0, vertex.size=20,margin=0.2,
                                 vertex.label.cex=0.6,vertex.label.color= "black",arrow.width=1,arrow.size = 0.2,edge.label.color='black',edge.label.cex=0.5,edge.max.width=8,alpha.edge = 0.6){
   options(warn = -1)
+  thresh <- stats::quantile(net, probs = 1-top)
+  net[net < thresh] <- 0
   if (is.null(color.use)) {
     color.use <- scPalette(nrow(net))
   }
