@@ -9,6 +9,7 @@ netVisual_individual(
   signaling,
   signaling.name = NULL,
   vertex.receiver = NULL,
+  top = 1,
   color.use = NULL,
   from = NULL,
   to = NULL,
@@ -28,6 +29,8 @@ netVisual_individual(
 \item{signaling.name}{alternative signaling pathway name to show on the plot}
 
 \item{vertex.receiver}{a numeric vector giving the index of the cell groups as targets in the first hierarchy plot}
+  
+\item{top}{the fraction of interactions to show}
 
 \item{color.use}{the character vector defining the color of each cell group}
 
