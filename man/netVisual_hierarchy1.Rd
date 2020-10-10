@@ -9,6 +9,7 @@ netVisual_hierarchy1(
   vertex.receiver,
   color.use = NULL,
   signaling.name = NULL,
+  top = 1,
   weight.scale = FALSE,
   label.dist = 2.8,
   space.v = 1.5,
@@ -36,6 +37,8 @@ netVisual_hierarchy1(
 \item{color.use}{the character vector defining the color of each cell group}
 
 \item{signaling.name}{alternative signaling pathway name to show on the plot}
+  
+\item{top}{the fraction of interactions to show}
 
 \item{weight.scale}{whether rescale the edge weights}
 
