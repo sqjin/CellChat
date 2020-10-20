@@ -796,6 +796,9 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param mode "single","comparison"
 #' @param comparison a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets
+#' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
+#' @param return.data whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair
+#' @param show.raw whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale
 #' @param x.rotation rotation of x-labels
 #' @param title main title of the plot
 #' @param bar.w the width of bar plot
@@ -808,37 +811,33 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @export
 #'
 #' @examples
-rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"), comparison = c(1,2), x.rotation = 90, title = NULL, color.use = NULL, bar.w = 0.75, font.size = 8) {
+rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"), comparison = c(1,2), tol = 0.05, return.data = FALSE, show.raw = FALSE, x.rotation = 90, title = NULL, color.use = NULL, bar.w = 0.75, font.size = 8) {
   mode <- match.arg(mode)
+  options(warn = -1)
   object.names <- names(methods::slot(object, slot.name))
-
   if (mode == "single") {
     object1 <- methods::slot(object, slot.name)[[comparison[1]]]
     prob1 = object1$prob
     pSum <- apply(prob1, 3, sum)
     pSum <- pSum
+    pSum.original <- pSum
     pSum <- -1/log(pSum)
     pSum[is.infinite(pSum) | pSum < 0] <- max(pSum+1)
     pSum[is.na(pSum)] <- 0
     pair.name <- names(pSum)
 
-    df<- data.frame(name = pair.name, contribution = pSum)
-    idx <- with(df, order(df$contribution))
+    df<- data.frame(name = pair.name, contribution = pSum.original, contribution.scaled = pSum, group = object.names[comparison[1]])
+    idx <- with(df, order(df$contribution.scaled))
     df <- df[idx, ]
     df$name <- factor(df$name, levels = as.character(df$name))
-    gg <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity",width = bar.w) +
+    gg <- ggplot(df, aes(x=name, y=contribution.scaled)) + geom_bar(stat="identity",width = bar.w) +
       theme_classic() + theme(axis.text=element_text(size=10),axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.y = element_text(size=10)) +
       xlab("") + ylab("Information flow") + coord_flip()#+
     if (!is.null(title)) {
       gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
     }
 
-    return(gg)
-
   } else {
-    if (is.null(title)) {
-      title <- object.names
-    }
     object1 <- methods::slot(object, slot.name)[[comparison[1]]]
     object2 <- methods::slot(object, slot.name)[[comparison[2]]]
     prob1 = object1$prob
@@ -848,52 +847,71 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
     pSum2 <- apply(prob2, 3, sum)
 
     pSum1 <- pSum
+    pSum1.original <- pSum1
     pSum1 <- -1/log(pSum1)
-    pSum1[is.infinite(pSum1) | pSum1 < 0] <- max(pSum1+1)
-
-    pSum1[is.na(pSum1)] <- 0
     pair.name1 <- names(pSum1)
     pSum2 <- pSum2
+    pSum2.original <- pSum2
     pSum2 <- -1/log(pSum2)
-    pSum2[is.infinite(pSum2) | pSum2 < 0] <- max(pSum2+1)
-
-    pSum2[is.na(pSum2)] <- 0
     pair.name2 <- names(pSum2)
 
+    pSum1[is.na(pSum1)] <- 0
+    pSum2[is.na(pSum2)] <- 0
+    idx1 <- which(is.infinite(pSum1) | pSum1 < 0)
+    idx2 <- which(is.infinite(pSum2) | pSum2 < 0)
+    values.assign <- seq(max(c(pSum1, pSum2))*1.1, max(c(pSum1, pSum2))*1.5, length.out = length(c(idx1, idx2)))
+    position <- sort(c(pSum1.original[idx1], pSum2.original[idx2]), index.return = TRUE)$ix
+    pSum1[idx1] <- values.assign[match(1:length(idx1), position)]
+    pSum2[idx2] <- values.assign[match((length(idx1)+1):length(position), position)]
+
     pair.name <- union(pair.name1, pair.name2)
-    df1 <- data.frame(name = pair.name, contribution = 0, group = title[comparison[1]], row.names = pair.name)
-    df1[pair.name1,2] <- -pSum1
-    df2 <- data.frame(name = pair.name, contribution = 0, group = title[comparison[2]], row.names = pair.name)
-    df2[pair.name2,2] <- pSum2
+    df1 <- data.frame(name = pair.name, contribution = 0, contribution.scaled = 0, group = object.names[comparison[1]], row.names = pair.name)
+    df1[pair.name1,3] <- -pSum1
+    df1[pair.name1,2] <- pSum1.original
+    df2 <- data.frame(name = pair.name, contribution = 0, contribution.scaled = 0, group = object.names[comparison[2]], row.names = pair.name)
+    df2[pair.name2,3] <- pSum2
+    df2[pair.name2,2] <- pSum2.original
 
     contribution.relative <- as.numeric(format(df2$contribution/abs(df1$contribution), digits=1))
     df1$contribution.relative <- contribution.relative
     df2$contribution.relative <- contribution.relative
-    idx <- with(df1, order(-contribution.relative, -contribution))
+    df1$contribution.data2 <- df2$contribution
+    idx <- with(df1, order(-contribution.relative, contribution, -contribution.data2))
     df1 <- df1[idx, ]
     df2 <- df2[idx, ]
+    df1$contribution.data2 <- NULL
     df1$name <- factor(df1$name, levels = as.character(df1$name))
     df2$name <- factor(df2$name, levels = as.character(df2$name))
     df <- rbind(df1, df2)
+    df$group <- factor(df$group, levels = c(object.names[comparison[1]], object.names[comparison[2]]))
 
     if (is.null(color.use)) {
       color.use =  ggPalette(2)
     }
-
-    if (!is.null(color.use)) {
+    if (!show.raw) {
+      colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
+      gg <- ggplot(df, aes(x=name, y=contribution.scaled, fill = group)) + geom_bar(stat="identity",width = bar.w) +
+        theme_classic() + theme(axis.text=element_text(size=font.size), axis.text.x = element_blank(),axis.ticks.x = element_blank(), axis.title.y = element_text(size=font.size)) +
+        xlab("") + ylab("Information flow") + coord_flip()#+
+      gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text))
+    } else {
+      df$contribution[df$group == object.names[comparison[1]]] <- -df$contribution[df$group == object.names[comparison[1]]]
       colors.text <- ifelse(df$contribution.relative < 1, color.use[1], ifelse(df$contribution.relative > 1, color.use[2], "black"))
       gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w) +
         theme_classic() + theme(axis.text=element_text(size=font.size), axis.text.x = element_blank(),axis.ticks.x = element_blank(), axis.title.y = element_text(size=font.size)) +
         xlab("") + ylab("Information flow") + coord_flip()#+
       gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text))
-    } else {
-      colors.text <- ifelse(df$contribution.relative < 1, "black", ifelse(df$contribution.relative > 1, "#696969", "#C0C0C0"))
-      gg <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(data = df[df$group == title[comparison[1]], ],fill = "grey50", color = "grey50",stat="identity",width = bar.w)
-      gg <- gg + geom_bar(data = df[df$group == title[comparison[2]], ], fill = "white", color = "grey50",stat="identity",width = bar.w)
-      gg <- gg + theme_classic() + theme(axis.text=element_text(size=font.size),axis.text.x = element_blank(),axis.ticks.x = element_blank(), axis.title.y = element_text(size=font.size)) +
-        xlab("") + ylab("Information flow") + coord_flip() #+
-      gg <- gg + theme(axis.text.y = element_text(colour = colors.text))
     }
+
+  }
+  if (!is.null(title)) {
+    gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
+  }
+  if (return.data) {
+    df$contribution <- abs(df$contribution)
+    df$contribution.scaled <- abs(df$contribution.scaled)
+    return(list(signaling.contribution = df, gg.obj = gg))
+  } else {
     return(gg)
   }
 }
