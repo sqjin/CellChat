@@ -11,6 +11,7 @@ netAnalysis_contribution(
   width = 0.1,
   vertex.receiver = NULL,
   thresh = 0.05,
+  return.data = FALSE,
   x.rotation = 0,
   title = "Contribution of each L-R pair",
   font.size = 10,
@@ -29,6 +30,8 @@ netAnalysis_contribution(
 \item{vertex.receiver}{a numeric vector giving the index of the cell groups as targets in the first hierarchy plot}
 
 \item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{return.data}{whether return the data.frame consisting of the predicted L-R pairs and their contribution}
 
 \item{x.rotation}{rotation of x-label}
 
