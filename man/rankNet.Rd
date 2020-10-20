@@ -9,6 +9,9 @@ rankNet(
   slot.name = "netP",
   mode = c("single", "comparison"),
   comparison = c(1, 2),
+  tol = 0.05,
+  return.data = FALSE,
+  show.raw = FALSE,
   x.rotation = 90,
   title = NULL,
   color.use = NULL,
@@ -24,6 +27,12 @@ rankNet(
 \item{mode}{"single","comparison"}
 
 \item{comparison}{a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets}
+
+\item{tol}{a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution}
+
+\item{return.data}{whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair}
+
+\item{show.raw}{whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale}
 
 \item{x.rotation}{rotation of x-labels}
 
