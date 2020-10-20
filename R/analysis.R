@@ -7,6 +7,7 @@
 #' @param width the width of individual bar
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
 #' @param thresh threshold of the p-value for determining significant interaction
+#' @param return.data whether return the data.frame consisting of the predicted L-R pairs and their contribution
 #' @param x.rotation rotation of x-label
 #' @param title the title of the plot
 #' @param font.size font size of the text
@@ -19,7 +20,7 @@
 #' @export
 #'
 #' @examples
-netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, width = 0.1, vertex.receiver = NULL, thresh = 0.05,
+netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, width = 0.1, vertex.receiver = NULL, thresh = 0.05, return.data = FALSE,
                                      x.rotation = 0, title = "Contribution of each L-R pair",
                                      font.size = 10, font.size.title = 10) {
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
@@ -65,7 +66,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 
     pair.name <- unlist(dimnames(prob)[3])
     pair.name <- factor(pair.name, levels = unique(pair.name))
-    if (!is.null(pair.name.use)) {
+    if (!is.null(pairLR.name.use)) {
       pair.name <- pair.name.use[as.character(pair.name),1]
       pair.name <- factor(pair.name, levels = unique(pair.name))
     }
@@ -139,7 +140,11 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     gg <- gg.combined
     gg
   }
-    return(list(LRpair = as.character(pair.name), gg.obj = gg))
+  if (return.data) {
+    return(list(LR.contribution = df, gg.obj = gg))
+  } else {
+    return(gg)
+  }
 }
 
 
