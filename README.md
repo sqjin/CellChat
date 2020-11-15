@@ -34,6 +34,7 @@ CellChat R package can be easily installed from Github using devtools:
 ```
 devtools::install_github("sqjin/CellChat")
 ```
+CellChat can be installed on a normal computer within few mins. 
 
 ### Installation of other dependencies
 - Install [NMF](https://github.com/sqjin/NMF) using `devtools::install_github("sqjin/NMF")`. Please check [here](https://github.com/sqjin/CellChat/issues/16) for other solutions if you encounter any issue.
@@ -46,6 +47,7 @@ Some users might have issues when installing CellChat pacakge due to different o
 - **Installation on Windows, Linux and Centos**: Please check the solution [here](https://github.com/sqjin/CellChat/issues/5).  
 
 
+
 ## Vignettes
 Please check the vignettes directory of the repo.
 
@@ -54,6 +56,7 @@ Please check the vignettes directory of the repo.
 - [Walkthrough - CellChat analysis of cell-cell communication in mouse skin wounds](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/walkthrough_wound.html)
 - [Example streamline for quick analysis and exploration](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/example_streamline_for_quick_analysis_and_exploration.html)
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Interface_with_other_single-cell_analysis_toolkits.html)
+
 
 
 ## System Requirements
