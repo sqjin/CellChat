@@ -37,7 +37,7 @@ devtools::install_github("sqjin/CellChat")
 CellChat can be installed on a normal computer within few mins. 
 
 ### Installation of other dependencies
-- Install [NMF](https://github.com/sqjin/NMF) using `devtools::install_github("sqjin/NMF")`. Please check [here](https://github.com/sqjin/CellChat/issues/16) for other solutions if you encounter any issue.
+- Install [NMF](http://renozao.github.io/NMF/devel/PAGE-INSTALLATION.html) using `devtools::install_github("renozao/NMF@devel")`. Please check [here](https://github.com/sqjin/CellChat/issues/16) for other solutions if you encounter any issue. You might can set `Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=TRUE)` if it throws R version error. 
 - Install [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if you encounter any issue.
 - Install UMAP python pacakge for dimension reduction: ```pip install umap-learn```. Please check [here](https://github.com/lmcinnes/umap) if you encounter any issue. 
 
@@ -56,6 +56,7 @@ Please check the vignettes directory of the repo.
 - [Walkthrough - CellChat analysis of cell-cell communication in mouse skin wounds](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/walkthrough_wound.html)
 - [Example streamline for quick analysis and exploration](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/example_streamline_for_quick_analysis_and_exploration.html)
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Interface_with_other_single-cell_analysis_toolkits.html)
+- [Tutorial for updating CellChatDB](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/vignettes/Update-CellChatDB.html)
 
 
 
