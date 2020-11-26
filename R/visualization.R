@@ -157,13 +157,15 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
 }
 
 
-#' Visualize the inferred signaling network of signaling pathways by aggregating all L-R pairs
+#' Visualize the inferred cell-cell communication network
+#'
+#' Automatically save plots in the current working directory
 #'
 #' @param object CellChat object
 #' @param signaling a signaling pathway name
 #' @param signaling.name alternative signaling pathway name to show on the plot
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
-#' @param top the fraction of interactions to show
+#' @param top the fraction of interactions to show (0 < top <= 1)
 #' @param color.use the character vector defining the color of each cell group
 #' @param from a vector giving the index or the name of source cell groups when using circle plot
 #' @param to a vector giving the index or the name of target cell groups.
@@ -171,10 +173,13 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
 #' @param remove.isolate whether remove the isolate nodes in the communication network
 #' @param vertex.size The size of vertex
 #' @param layout "hierarchy" or "circle"
+#' @param height height of plot
 #' @param thresh threshold of the p-value for determining significant interaction
 #' @param pt.title font size of the text
 #' @param title.space the space between the title and plot
 #' @param vertex.label.cex The label size of vertex in the network
+#' @param out.format the format of output figures: svg, png and pdf
+#' @importFrom svglite svglite
 #' @importFrom grDevices dev.off pdf
 #'
 #' @return
@@ -182,10 +187,11 @@ netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver 
 #'
 #' @examples
 #'
-netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, top = 1, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20, layout = c("hierarchy","circle"), thresh = 0.05,
-                                pt.title = 12, title.space = 6, vertex.label.cex = 0.8) {
+netVisual <- function(object, signaling, signaling.name = NULL, vertex.receiver = NULL, top = 1, color.use = NULL, from = NULL, to = NULL, bidirection = FALSE, remove.isolate = FALSE, vertex.size = 20,
+                      layout = c("hierarchy","circle"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8,
+                      out.format = c("svg","png")) {
   layout <- match.arg(layout)
-  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
+  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
   if (is.null(signaling.name)) {
     signaling.name <- signaling
@@ -223,21 +229,123 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, vertex
   prob <-(prob-min(prob))/(max(prob)-min(prob))
 
   if (layout == "hierarchy") {
+    if (is.element("svg", out.format)) {
+      svglite::svglite(file = paste0(signaling.name, "_hierarchy_individual.svg"), width = 8, height = nRow*height)
+      par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+        netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      }
+      dev.off()
+    }
+    if (is.element("png", out.format)) {
+      grDevices::png(paste0(signaling.name, "_hierarchy_individual.png"), width = 8, height = nRow*height, units = "in",res = 300)
+      par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
+      for (i in 1:length(pairLR.name.use)) {
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+        netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      }
+      dev.off()
+    }
+    if (is.element("pdf", out.format)) {
+      grDevices::pdf(paste0(signaling.name, "_hierarchy_individual.pdf"), width = 8, height = nRow*height)
+      par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
+      for (i in 1:length(pairLR.name.use)) {
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_hierarchy1(prob.i, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+        netVisual_hierarchy2(prob.i, vertex.receiver = setdiff(1:nrow(prob.i),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      }
+      dev.off()
+    }
+
+
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
-    par(mfrow=c(1,2), ps = pt.title)
-    netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
-    netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
-    graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
+    if (is.element("svg", out.format)) {
+      svglite::svglite(file = paste0(signaling.name, "_hierarchy_aggregate.svg"), width = 7, height = 1*height)
+      par(mfrow=c(1,2), ps = pt.title)
+      netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+      netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+      graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
+      dev.off()
+    }
+    if (is.element("png", out.format)) {
+      grDevices::png(paste0(signaling.name, "_hierarchy_aggregate.png"), width = 7, height = 1*height, units = "in",res = 300)
+      par(mfrow=c(1,2), ps = pt.title)
+      netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+      netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+      graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
+      dev.off()
+    }
+    if (is.element("pdf", out.format)) {
+      grDevices::pdf(paste0(signaling.name, "_hierarchy_aggregate.pdf"), width = 7, height = 1*height)
+      par(mfrow=c(1,2), ps = pt.title)
+      netVisual_hierarchy1(prob.sum, vertex.receiver = vertex.receiver, top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+      netVisual_hierarchy2(prob.sum, vertex.receiver = setdiff(1:nrow(prob.sum),vertex.receiver), top = top, color.use = color.use, vertex.size = vertex.size, signaling.name = NULL, vertex.label.cex = vertex.label.cex)
+      graphics::mtext(paste0(signaling.name, " signaling pathway network"), side = 3, outer = TRUE, cex = 1, line = -title.space)
+      dev.off()
+    }
+
   } else if (layout == "circle") {
+    if (is.element("svg", out.format)) {
+      svglite::svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
+      par(mfrow=c(nRow,1))
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_circle(prob.i, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      }
+      dev.off()
+    }
+    if (is.element("png", out.format)) {
+      grDevices::png(paste0(signaling.name,"_", layout, "_individual.png"), width = height, height = nRow*height, units = "in",res = 300)
+      par(mfrow=c(nRow,1))
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_circle(prob.i, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      }
+      dev.off()
+    }
+    if (is.element("pdf", out.format)) {
+      grDevices::pdf(paste0(signaling.name,"_", layout, "_individual.pdf"), width = height, height = nRow*height)
+      par(mfrow=c(nRow,1))
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_circle(prob.i, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = signalName_i, vertex.label.cex = vertex.label.cex)
+      }
+      dev.off()
+    }
+
     prob.sum <- apply(prob, c(1,2), sum)
     prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
-    netVisual_circle(prob.sum, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
+    if (is.element("svg", out.format)) {
+      svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = height, height = 1*height)
+      netVisual_circle(prob.sum, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
+      dev.off()
+    }
+    if (is.element("png", out.format)) {
+      grDevices::png(paste0(signaling.name,"_", layout,  "_aggregate.png"), width = height, height = 1*height, units = "in",res = 300)
+      netVisual_circle(prob.sum, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
+      dev.off()
+    }
+    if (is.element("pdf", out.format)) {
+      grDevices::pdf(paste0(signaling.name,"_", layout,  "_aggregate.pdf"), width = height, height = 1*height)
+      netVisual_circle(prob.sum, top = top, color.use = color.use, from = from, to = to, bidirection = bidirection, remove.isolate = remove.isolate, vertex.size = vertex.size, signaling.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex)
+      dev.off()
+    }
   }
-
-
 }
-
 
 
 #' Visualize the inferred signaling network of individual L-R pairs
