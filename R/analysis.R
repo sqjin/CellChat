@@ -228,7 +228,59 @@ computeCentralityLocal <- function(net) {
   return(centr)
 }
 
+#' Select the number of the patterns
+#'
+#' @param object CellChat object
+#' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
+#' @param pattern "outgoing" or "incoming"
+#' @param k.range a range of the number of patterns
+#' @param title.name title of plot
+#' @param do.facet whether use facet plot showing the two measures
+#' @param nrun number of runs when performing NMF
+#' @param seed.use seed when performing NMF
+#' @importFrom methods slot
+#' @importFrom NMF nmfEstimateRank nmf
+#' @importFrom ggplot2 scale_color_brewer
+#' @return
+#' @export
+#'
+#' @examples
+selectK <- function(object, slot.name = "netP", pattern = c("outgoing","incoming"), title.name = NULL, do.facet = TRUE, k.range = seq(2,10), nrun = 30, seed.use = 10) {
+  pattern <- match.arg(pattern)
+  prob <- methods::slot(object, slot.name)$prob
+  if (pattern == "outgoing") {
+    data_sender <- apply(prob, c(1,3), sum)
+    data_sender = sweep(data_sender, 2L, apply(data_sender, 2, function(x) max(x, na.rm = TRUE)), '/', check.margin = FALSE)
+    data0 = as.matrix(data_sender)
+  } else if (pattern == "incoming") {
+    data_receiver <- apply(prob, c(2,3), sum)
+    data_receiver = sweep(data_receiver, 2L, apply(data_receiver, 2, function(x) max(x, na.rm = TRUE)), '/', check.margin = FALSE)
+    data0 = as.matrix(data_receiver)
+  }
+  options(warn = -1)
+  data <- data0
+  data <- data[rowSums(data)!=0,]
 
+  if (is.null(title.name)) {
+    title.name <- paste0(pattern, " signaling \n (nrun = ", nrun, ", seed = ", seed.use, ")")
+  }
+
+  res <- NMF::nmfEstimateRank(data, range = k.range, method = 'lee', nrun=nrun, seed = seed.use)
+  df1 <- data.frame(k = res$measures$rank, score = res$measures$cophenetic, Measure = "Cophenetic")
+  df2 <- data.frame(k = res$measures$rank, score = res$measures$silhouette.consensus, Measure = "Silhouette")
+  df <- rbind(df1, df2)
+  gg <- ggplot(df, aes(x = k, y = score, group = Measure, color = Measure)) + geom_line(size=1) +
+    geom_point() +
+    theme_classic() + labs(x = 'Number of patterns', y='Measure score') +
+    labs(title = title.name) +  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5)) +
+    theme(legend.position = "right") + theme(text = element_text(size = 10)) + scale_x_discrete(limits = (unique(df$k))) +
+    scale_color_brewer(palette="Set2") + guides(color=guide_legend("Measure type"))
+  if (do.facet) {
+    gg <- gg + facet_wrap(~ Measure, scales='free')
+  }
+  gg
+  return(gg)
+}
 
 #' Identification of major signals for specific cell groups and general communication patterns
 #'
