@@ -1,12 +1,5 @@
 
----
-title: "CellChat: Inference and analysis of cell-cell communication"
-output:
-  html_document:
-    toc: true
-    theme: united
-mainfont: Arial
----
+# CellChat: Inference and analysis of cell-cell communication
 
 <p align="center">
   <img width="250"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
