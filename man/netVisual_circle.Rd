@@ -6,50 +6,71 @@
 \usage{
 netVisual_circle(
   net,
-  from = NULL,
-  to = NULL,
-  bidirection = FALSE,
-  remove.isolate = FALSE,
   color.use = NULL,
-  signaling.name = NULL,
+  title.name = NULL,
+  sources.use = NULL,
+  targets.use = NULL,
+  remove.isolate = FALSE,
   top = 1,
   weight.scale = FALSE,
+  vertex.weight = 20,
+  vertex.weight.max = NULL,
+  vertex.size.max = 15,
+  vertex.label.cex = 1,
+  vertex.label.color = "black",
+  edge.weight.max = NULL,
+  edge.width.max = 8,
+  alpha.edge = 0.6,
   label.edge = FALSE,
+  edge.label.color = "black",
+  edge.label.cex = 0.8,
   edge.curved = 0.2,
   shape = "circle",
   layout = in_circle(),
-  vertex.size = 20,
   margin = 0.2,
-  vertex.label.cex = 0.8,
-  vertex.label.color = "black",
+  vertex.size = NULL,
   arrow.width = 1,
-  arrow.size = 0.2,
-  edge.label.color = "black",
-  edge.label.cex = 0.5,
-  edge.max.width = 8,
-  alpha.edge = 0.6
+  arrow.size = 0.2
 )
 }
 \arguments{
 \item{net}{A weighted matrix representing the connections}
 
-\item{from}{a vector giving the index or the name of source cell groups}
-
-\item{to}{a vector giving the index or the name of target cell groups.}
-
-\item{bidirection}{whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.}
-
-\item{remove.isolate}{whether remove the isolate nodes in the communication network}
-
 \item{color.use}{Colors represent different cell groups}
 
-\item{signaling.name}{the name of the title}
+\item{title.name}{the name of the title}
+
+\item{sources.use}{a vector giving the index or the name of source cell groups}
+
+\item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{remove.isolate}{whether remove the isolate nodes in the communication network}
 
 \item{top}{the fraction of interactions to show}
 
 \item{weight.scale}{whether scale the weight}
 
+\item{vertex.weight}{The weight of vertex: either a scale value or a vector}
+
+\item{vertex.weight.max}{the maximum weight of vertex; defualt = max(vertex.weight)}
+
+\item{vertex.size.max}{the maximum vertex size for visualization}
+
+\item{vertex.label.cex}{The label size of vertex}
+
+\item{vertex.label.color}{The color of label for vertex}
+
+\item{edge.weight.max}{the maximum weight of edge; defualt = max(net)}
+
+\item{edge.width.max}{The maximum edge width for visualization}
+
+\item{alpha.edge}{the transprency of edge}
+
 \item{label.edge}{Whether or not shows the label of edges}
+
+\item{edge.label.color}{The color for single arrow}
+
+\item{edge.label.cex}{The size of label for arrows}
 
 \item{edge.curved}{Specifies whether to draw curved edges, or not.
 This can be a logical or a numeric vector or scalar.
@@ -69,32 +90,20 @@ shapes and vertex.shape.pie for using pie charts as vertices.}
 \item{layout}{The layout specification. It must be a call to a layout
 specification function.}
 
-\item{vertex.size}{The size of vertex}
-
 \item{margin}{The amount of empty space below, over, at the left and right
 of the plot, it is a numeric vector of length four. Usually values between
 0 and 0.5 are meaningful, but negative values are also possible, that will
 make the plot zoom in to a part of the graph. If it is shorter than four
 then it is recycled.}
 
-\item{vertex.label.cex}{The label size of vertex}
-
-\item{vertex.label.color}{The color of label for vertex}
+\item{vertex.size}{Deprecated. Use `vertex.weight`}
 
 \item{arrow.width}{The width of arrows}
 
 \item{arrow.size}{the size of arrow}
-
-\item{edge.label.color}{The color for single arrow}
-
-\item{edge.label.cex}{The size of label for arrows}
-
-\item{edge.max.width}{The maximum arrow size}
-
-\item{alpha.edge}{the transprency of edge}
 }
 \value{
-A network graph of the significant interactions
+an object of class "recordedplot"
 }
 \description{
 The width of edges represent the strength of the communication.

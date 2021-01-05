@@ -2,7 +2,7 @@
 % Please edit documentation in R/analysis.R
 \name{selectK}
 \alias{selectK}
-\title{Select the number of the patterns}
+\title{Select the number of the patterns for running `identifyCommunicationPatterns`}
 \usage{
 selectK(
   object,
@@ -33,8 +33,8 @@ selectK(
 \item{seed.use}{seed when performing NMF}
 }
 \value{
-
+a ggplot object
 }
 \description{
-Select the number of the patterns
+We infer the number of patterns based on two metrics that have been implemented in the NMF R package, including Cophenetic and Silhouette. Both metrics measure the stability for a particular number of patterns based on a hierarchical clustering of the consensus matrix. For a range of the number of patterns, a suitable number of patterns is the one at which Cophenetic and Silhouette values begin to drop suddenly.
 }

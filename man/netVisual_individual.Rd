@@ -8,17 +8,34 @@ netVisual_individual(
   object,
   signaling,
   signaling.name = NULL,
-  vertex.receiver = NULL,
-  top = 1,
+  pairLR.use = NULL,
   color.use = NULL,
-  from = NULL,
-  to = NULL,
-  bidirection = FALSE,
+  vertex.receiver = NULL,
+  sources.use = NULL,
+  targets.use = NULL,
+  top = 1,
   remove.isolate = FALSE,
-  vertex.size = 20,
-  layout = c("hierarchy", "circle"),
+  vertex.weight = NULL,
+  vertex.weight.max = NULL,
+  vertex.size.max = 15,
+  vertex.label.cex = 0.8,
+  weight.scale = FALSE,
+  edge.weight.max = NULL,
+  edge.width.max = 8,
+  layout = c("hierarchy", "circle", "chord"),
   height = 5,
-  thresh = 0.05
+  thresh = 0.05,
+  group = NULL,
+  cell.order = NULL,
+  small.gap = 1,
+  big.gap = 10,
+  scale = FALSE,
+  reduce = -1,
+  show.legend = FALSE,
+  legend.pos.x = 20,
+  legend.pos.y = 20,
+  nCol = NULL,
+  ...
 )
 }
 \arguments{
@@ -28,34 +45,67 @@ netVisual_individual(
 
 \item{signaling.name}{alternative signaling pathway name to show on the plot}
 
-\item{vertex.receiver}{a numeric vector giving the index of the cell groups as targets in the first hierarchy plot}
-  
-\item{top}{the fraction of interactions to show}
+\item{pairLR.use}{a char vector or a data frame consisting of one column named "interaction_name", defining the L-R pairs of interest}
 
 \item{color.use}{the character vector defining the color of each cell group}
 
-\item{from}{a vector giving the index or the name of source cell groups when using circle plot}
+\item{vertex.receiver}{a numeric vector giving the index of the cell groups as targets in the first hierarchy plot}
 
-\item{to}{a vector giving the index or the name of target cell groups.}
+\item{sources.use}{a vector giving the index or the name of source cell groups}
 
-\item{bidirection}{whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.}
+\item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{top}{the fraction of interactions to show}
 
 \item{remove.isolate}{whether remove the isolate nodes in the communication network}
 
-\item{vertex.size}{The size of vertex}
+\item{vertex.weight}{The weight of vertex: either a scale value or a vector}
 
-\item{layout}{"hierarchy" or "circle"}
+\item{vertex.weight.max}{the maximum weight of vertex; defualt = max(vertex.weight)}
+
+\item{vertex.size.max}{the maximum vertex size for visualization}
+
+\item{vertex.label.cex}{The label size of vertex in the network}
+
+\item{weight.scale}{whether scale the edge weight}
+
+\item{edge.weight.max}{the maximum weight of edge; defualt = max(net)}
+
+\item{edge.width.max}{The maximum edge width for visualization}
+
+\item{layout}{"hierarchy", "circle" or "chord"}
 
 \item{height}{height of plot}
 
-\item{thresh}{threshold of the p-value for determining significant interaction}
+\item{thresh}{threshold of the p-value for determining significant interaction
+
+Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.}
+
+\item{group}{A named group labels for making multiple-group Chord diagrams. The sector names should be used as the names in the vector.
+The order of group controls the sector orders and if group is set as a factor, the order of levels controls the order of groups.}
+
+\item{cell.order}{a char vector defining the cell type orders (sector orders)}
+
+\item{small.gap}{Small gap between sectors.}
+
+\item{big.gap}{Gap between the different sets of sectors, which are defined in the `group` parameter}
+
+\item{scale}{scale each sector to same width; default = FALSE; however, it is set to be TRUE when remove.isolate = TRUE}
+
+\item{reduce}{if the ratio of the width of certain grid compared to the whole circle is less than this value, the grid is removed on the plot. Set it to value less than zero if you want to keep all tiny grid.}
+
+\item{show.legend}{whether show the figure legend}
+
+\item{legend.pos.x, legend.pos.y}{adjust the legend position}
+
+\item{nCol}{number of columns when displaying the figures using "circle" or "chord"}
+
+\item{...}{other parameters (e.g.,vertex.label.cex, vertex.label.color, alpha.edge, label.edge, edge.label.color, edge.label.cex, edge.curved)
+passing to `netVisual_hierarchy1`,`netVisual_hierarchy2`,`netVisual_circle`. NB: some parameters might be not supported}
 }
 \value{
-
+an object of class "recordedplot"
 }
 \description{
 Visualize the inferred signaling network of individual L-R pairs
-}
-\examples{
-
 }

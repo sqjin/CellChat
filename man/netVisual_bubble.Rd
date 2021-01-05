@@ -6,32 +6,110 @@
 \usage{
 netVisual_bubble(
   object,
-  from,
-  to,
-  bidirection = FALSE,
-  pairLR.use0 = NULL,
-  color.heatmap = viridis::viridis(50),
-  thresh = 0.05
+  sources.use = NULL,
+  targets.use = NULL,
+  signaling = NULL,
+  pairLR.use = NULL,
+  color.heatmap = c("Spectral", "viridis"),
+  n.colors = 10,
+  direction = -1,
+  thresh = 0.05,
+  comparison = NULL,
+  group = NULL,
+  remove.isolate = FALSE,
+  max.dataset = NULL,
+  min.dataset = NULL,
+  min.quantile = 0,
+  max.quantile = 1,
+  line.on = TRUE,
+  line.size = 0.2,
+  color.text.use = TRUE,
+  color.text = NULL,
+  title.name = NULL,
+  font.size = 10,
+  font.size.title = 10,
+  show.legend = TRUE,
+  grid.on = TRUE,
+  color.grid = "grey90",
+  angle.x = 90,
+  vjust.x = NULL,
+  hjust.x = NULL,
+  return.data = FALSE
 )
 }
 \arguments{
 \item{object}{CellChat object}
 
-\item{from}{a vector giving the index or the name of source cell groups}
+\item{sources.use}{a vector giving the index or the name of source cell groups}
 
-\item{to}{a corresponding vector giving the index or the name of target cell groups. Note: The length of 'from' and 'to' must be the same, giving the corresponding pair of cell groups for communication.}
+\item{targets.use}{a vector giving the index or the name of target cell groups.}
 
-\item{bidirection}{whether show the bidirectional communication, i.e., both 'from'->'to' and 'to'->'from'.}
+\item{signaling}{a character vector giving the name of signaling pathways of interest}
 
-\item{pairLR.use0}{ligand-receptor pairs to use; default is all the significant interactions}
+\item{pairLR.use}{a data frame consisting of one column named either "interaction_name" or "pathway_name", defining the interactions of interest}
 
-\item{color.heatmap}{color map}
+\item{color.heatmap}{A character string or vector indicating the colormap option to use. It can be the avaibale color palette in viridis_pal() or brewer.pal()}
+
+\item{n.colors}{number of basic colors to generate from color palette}
+
+\item{direction}{Sets the order of colors in the scale. If 1, the default colors are used. If -1, the order of colors is reversed.}
 
 \item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{comparison}{a numerical vector giving the datasets for comparison in the merged object; e.g., comparison = c(1,2)}
+
+\item{group}{a numerical vector giving the group information of different datasets; e.g., group = c(1,2,2)}
+
+\item{remove.isolate}{whether remove the entire empty column, i.e., communication between certain cell groups}
+
+\item{max.dataset}{a scale, keep the communications with highest probability in max.dataset (i.e., certrain condition)}
+
+\item{min.dataset}{a scale, keep the communications with lowest probability in min.dataset (i.e., certrain condition)}
+
+\item{min.quantile, max.quantile}{minimum and maximum quantile cutoff values for the colorbar, may specify quantile in [0,1]}
+
+\item{line.on}{whether add vertical line when doing comparison analysis for the merged object}
+
+\item{line.size}{size of vertical line if added}
+
+\item{color.text.use}{whether color the xtick labels according to the dataset origin when doing comparison analysis}
+
+\item{color.text}{the colors for xtick labels according to the dataset origin when doing comparison analysis}
+
+\item{title.name}{main title of the plot}
+
+\item{font.size, font.size.title}{font size of all the text and the title name}
+
+\item{show.legend}{whether show legend}
+
+\item{grid.on, color.grid}{whether add grid}
+
+\item{angle.x, vjust.x, hjust.x}{parameters for adjusting the rotation of xtick labels}
+
+\item{return.data}{whether return the data.frame for replotting}
 }
 \value{
 
 }
 \description{
-Show all the significant interactions (L-R pairs) from some cell groups to other cell groups
+The dot color and size represent the calculated communication probability and p-values.
+}
+\examples{
+\dontrun{
+# show all the significant interactions (L-R pairs) from some cell groups (defined by 'sources.use') to other cell groups (defined by 'targets.use')
+netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:11), remove.isolate = FALSE)
+
+# show all the significant interactions (L-R pairs) associated with certain signaling pathways
+netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:11), signaling = c("CCL","CXCL"))
+
+# show all the significant interactions (L-R pairs) based on user's input (defined by `pairLR.use`)
+pairLR.use <- extractEnrichedLR(cellchat, signaling = c("CCL","CXCL","FGF"))
+netVisual_bubble(cellchat, sources.use = c(3,4), targets.use = c(5:8), pairLR.use = pairLR.use, remove.isolate = TRUE)
+
+# show all the increased interactions in the second dataset compared to the first dataset
+netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:8), remove.isolate = TRUE, max.dataset = 2)
+
+# show all the decreased interactions in the second dataset compared to the first dataset
+netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:8), remove.isolate = TRUE, max.dataset = 1)
+}
 }

@@ -45,5 +45,12 @@ netAnalysis_river(
 
 }
 \description{
-River plot showing the associations of latent patterns with cell groups and ligand-receptor pairs or signaling pathways
+River (alluvial) plot shows the correspondence between the inferred latent patterns and cell groups as well as ligand-receptor pairs or signaling pathways.
+}
+\details{
+The thickness of the flow indicates the contribution of the cell group or signaling pathway to each latent pattern. The height of each pattern is proportional to the number of its associated cell groups or signaling pathways.
+
+Outgoing patterns reveal how the sender cells coordinate with each other as well as how they coordinate with certain signaling pathways to drive communication.
+
+Incoming patterns show how the target cells coordinate with each other as well as how they coordinate with certain signaling pathways to respond to incoming signaling.
 }

@@ -11,32 +11,32 @@ The key slots used in the CellChat object are described below.
 \section{Slots}{
 
 \describe{
-\item{\code{data.raw}}{raw data matrix, one per dataset (Genes should be in rows and cells in columns)}
+\item{\code{data.raw}}{raw count data matrix}
 
-\item{\code{data}}{normalized matrix (genes by cells)}
+\item{\code{data}}{normalized data matrix for CellChat analysis (Genes should be in rows and cells in columns)}
 
-\item{\code{data.signaling}}{normalized matrix used in the CellChat analysis}
+\item{\code{data.signaling}}{a subset of normalized matrix only containing signaling genes}
 
-\item{\code{data.scale}}{scaled matrix}
+\item{\code{data.scale}}{scaled data matrix}
 
 \item{\code{data.project}}{projected data}
 
 \item{\code{net}}{a three-dimensional array P (K×K×N), where K is the number of cell groups and N is the number of ligand-receptor pairs. Each row of P indicates the communication probability originating from the sender cell group to other cell groups.}
 
-\item{\code{netP}}{communication networks on signaling pathway level}
+\item{\code{netP}}{a three-dimensional array representing cel-cell communication networks on a signaling pathway level}
 
-\item{\code{DB}}{ligand-receptor interaction database used in the analysis}
+\item{\code{DB}}{ligand-receptor interaction database used in the analysis (a subset of CellChatDB)}
 
 \item{\code{LR}}{a list of information related with ligand-receptor pairs}
 
 \item{\code{meta}}{data frame storing the information associated with each cell}
 
-\item{\code{idents}}{a factor defining the cell identity}
+\item{\code{idents}}{a factor defining the cell identity used for all analysis. It becomes a list for a merged CellChat object}
 
-\item{\code{var.features}}{informative features to be used}
+\item{\code{var.features}}{A list: one element is a vector consisting of the identified over-expressed signaling genes; one element is a data frame returned from the differential expression analysis}
 
 \item{\code{dr}}{List of the reduced 2D coordinates, one per method, e.g., umap/tsne/dm}
 
-\item{\code{options}}{List of parameters used throughout analysis}
+\item{\code{options}}{List of miscellaneous data, such as parameters used throughout analysis, and a indicator whether the CellChat object is a single or merged}
 }}
 

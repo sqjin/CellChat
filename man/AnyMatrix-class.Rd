@@ -5,8 +5,8 @@
 \alias{AnyMatrix-class}
 \title{The CellChat Class}
 \description{
-The CellChat object is created from a single-cell transcriptomic data matrix.
-It takes a digital data matrices as input. Genes should be in rows and cells in columns. rownames and colnames should be included.
+The CellChat object is created from a single-cell transcriptomic data matrix, Seurat V3 or SingleCellExperiment object.
+When inputting an data matrix, it takes a digital data matrices as input. Genes should be in rows and cells in columns. rownames and colnames should be included.
 The class provides functions for data preprocessing, intercellular communication network inference, communication network analysis, and visualization.
 }
 \details{

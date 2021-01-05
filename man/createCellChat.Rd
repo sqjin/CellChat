@@ -2,12 +2,19 @@
 % Please edit documentation in R/CellChat_class.R
 \name{createCellChat}
 \alias{createCellChat}
-\title{creat a new CellChat object}
+\title{Create a new CellChat object from a data matrix, Seurat or SingleCellExperiment object}
 \usage{
-createCellChat(data, do.sparse = T)
+createCellChat(object, meta = NULL, group.by = NULL, do.sparse = T)
 }
 \arguments{
-\item{data}{raw data matrix, a single-cell transcriptomic data}
+\item{object}{a normalized data matrix (genes by cells), Seurat or SingleCellExperiment object}
+
+\item{meta}{a data frame consisting of cell information, which will be used for defining cell groups.
+If input is a Seurat or SingleCellExperiment object, the meta data in the object will be used}
+
+\item{group.by}{a char name of the variable in meta data, defining cell groups.
+If input is a data matrix and group.by is NULL, the input `meta` should contain a column named 'labels',
+If input is a Seurat or SingleCellExperiment object, USER must provide `group.by` to define the cell groups. e.g, group.by = "ident" for Seurat object}
 
 \item{do.sparse}{whether use sparse format}
 }
@@ -15,5 +22,22 @@ createCellChat(data, do.sparse = T)
 
 }
 \description{
-creat a new CellChat object
+Create a new CellChat object from a data matrix, Seurat or SingleCellExperiment object
+}
+\examples{
+\dontrun{
+# Input is a data matrix
+## create a dataframe consisting of the cell labels
+meta = data.frame(labels = cell.labels, row.names = names(cell.labels))
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+
+# input is a Seurat object
+## use the default cell identities of Seurat object
+# cellchat <- createCellChat(object = seurat.obj, group.by = "ident")
+## use other meta information as cell groups
+# cellchat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
+
+# input is a SingleCellExperiment object
+# cellchat <- createCellChat(object = sce.obj, group.by = "sce.clusters")
+}
 }

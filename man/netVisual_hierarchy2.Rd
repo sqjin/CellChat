@@ -8,16 +8,24 @@ netVisual_hierarchy2(
   net,
   vertex.receiver,
   color.use = NULL,
-  signaling.name = NULL,
+  title.name = NULL,
+  sources.use = NULL,
+  targets.use = NULL,
+  remove.isolate = FALSE,
   top = 1,
   weight.scale = FALSE,
+  vertex.weight = 20,
+  vertex.weight.max = NULL,
+  vertex.size.max = 15,
+  edge.weight.max = NULL,
+  edge.width.max = 8,
+  alpha.edge = 0.6,
   label.dist = 2.8,
   space.v = 1.5,
   space.h = 1.6,
   shape = NULL,
-  label = FALSE,
+  label.edge = FALSE,
   edge.curved = 0,
-  vertex.size = 20,
   margin = 0.2,
   vertex.label.cex = 0.6,
   vertex.label.color = "black",
@@ -25,8 +33,7 @@ netVisual_hierarchy2(
   arrow.size = 0.2,
   edge.label.color = "black",
   edge.label.cex = 0.5,
-  edge.max.width = 8,
-  alpha.edge = 0.6
+  vertex.size = NULL
 )
 }
 \arguments{
@@ -36,11 +43,29 @@ netVisual_hierarchy2(
 
 \item{color.use}{the character vector defining the color of each cell group}
 
-\item{signaling.name}{alternative signaling pathway name to show on the plot}
-  
+\item{title.name}{alternative signaling pathway name to show on the plot}
+
+\item{sources.use}{a vector giving the index or the name of source cell groups}
+
+\item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{remove.isolate}{whether remove the isolate nodes in the communication network}
+
 \item{top}{the fraction of interactions to show}
 
 \item{weight.scale}{whether rescale the edge weights}
+
+\item{vertex.weight}{The weight of vertex: either a scale value or a vector}
+
+\item{vertex.weight.max}{the maximum weight of vertex; defualt = max(vertex.weight)}
+
+\item{vertex.size.max}{the maximum vertex size for visualization}
+
+\item{edge.weight.max}{the maximum weight of edge; defualt = max(net)}
+
+\item{edge.width.max}{The maximum edge width for visualization}
+
+\item{alpha.edge}{the transprency of edge}
 
 \item{label.dist}{the distance between labels and dot position}
 
@@ -55,7 +80,7 @@ plot.igraph command. “none” does not draw the vertices at all, although
 vertex label are plotted (if given). See shapes for details about vertex
 shapes and vertex.shape.pie for using pie charts as vertices.}
 
-\item{label}{Whether or not shows the label of edges (number of connections between different cell types)}
+\item{label.edge}{Whether or not shows the label of edges (number of connections between different cell types)}
 
 \item{edge.curved}{Specifies whether to draw curved edges, or not.
 This can be a logical or a numeric vector or scalar.
@@ -64,8 +89,6 @@ edges in the graph. Then it is interpreted for each edge separately.
 A numeric value specifies the curvature of the edge; zero curvature means
 straight edges, negative values means the edge bends clockwise, positive
 values the opposite. TRUE means curvature 0.5, FALSE means curvature zero}
-
-\item{vertex.size}{The size of vertex}
 
 \item{margin}{The amount of empty space below, over, at the left and right
 of the plot, it is a numeric vector of length four. Usually values between
@@ -85,12 +108,10 @@ then it is recycled.}
 
 \item{edge.label.cex}{The size of label for arrows}
 
-\item{edge.max.width}{The maximum arrow size}
-
-\item{alpha.edge}{the transprency of edge}
+\item{vertex.size}{Deprecated. Use `vertex.weight`}
 }
 \value{
-A network graph of the significant interactions
+an object of class "recordedplot"
 }
 \description{
 This function loads the significant interactions as a weighted matrix, and colors
