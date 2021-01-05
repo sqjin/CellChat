@@ -2,41 +2,54 @@
 % Please edit documentation in R/modeling.R
 \name{computeCommunProb}
 \alias{computeCommunProb}
-\title{Compute the communication probability/strength of any interacting cell groups}
+\title{Compute the communication probability/strength between any interacting cell groups}
 \usage{
 computeCommunProb(
   object,
+  type = c("triMean", "truncatedMean", "median"),
+  trim = NULL,
   LR.use = NULL,
   raw.use = FALSE,
-  population.size = TRUE,
-  trim = NULL,
+  population.size = FALSE,
   nboot = 100,
   seed.use = 1L,
-  Kh = 0.5
+  Kh = 0.5,
+  n = 1
 )
 }
 \arguments{
 \item{object}{CellChat object}
 
-\item{LR.use}{ligand-receptor interactions used in inferring communication network}
+\item{type}{methods for computing the average gene expression per cell group. By default = "triMean", producing fewer but stronger interactions;
+When setting `type = "truncatedMean"`, a value should be assigned to 'trim',  producing more interactions.}
 
-\item{raw.use}{whether use the raw data or the projected data}
+\item{trim}{the fraction (0 to 0.25) of observations to be trimmed from each end of x before the mean is computed}
 
-\item{population.size}{whether consider the proportion of cells in each group across all sequenced cells. Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the
-potential artifact of population size. Set population.size = TRUE if analyzing unsorted single-cell transcriptomes. We reason that abundant cell populations tend to
-send collectively stronger signals than the rare cell populations.}
+\item{LR.use}{a subset of ligand-receptor interactions used in inferring communication network}
 
-\item{trim}{the fraction (0 to 0.25) of observations to be trimmed from each end of x before the mean is computed; default using the robust Tukey's trimean}
+\item{raw.use}{whether use the raw data or the projected data.
+Set raw.use = FALSE to use the projected data when analyzing single-cell data with shallow sequencing depth because the projected data could help to reduce the dropout effects of signaling genes, in particular for possible zero expression of subunits of ligands/receptors.
+Set raw.use = TRUE when analyzing high-quality data}
+
+\item{population.size}{whether consider the proportion of cells in each group across all sequenced cells.
+Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the potential artifact of population size.
+Set population.size = TRUE if analyzing unsorted single-cell transcriptomes, with the reason that abundant cell populations tend to send collectively stronger signals than the rare cell populations.}
 
 \item{nboot}{threshold of p-values}
 
-\item{seed.use}{set a random seed. By default, sets the seed to 1.}
+\item{seed.use}{set a random seed. By default, set the seed to 1.}
 
 \item{Kh}{parameter in Hill function}
+
+\item{n}{parameter in Hill function}
 }
 \value{
+A CellChat object with updated slot 'net':
 
+object@net$prob is the inferred communication probability (strength) array, where the first, second and third dimensions represent a source, target and ligand-receptor pair, respectively. USER can access all the inferred cell-cell communications using the function 'subsetCommunication(object)', which returns a data frame.
+
+object@net$pval is the corresponding p-values of each interaction
 }
 \description{
-Compute the communication probability/strength of any interacting cell groups
+Compute the communication probability/strength between any interacting cell groups
 }

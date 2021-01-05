@@ -9,6 +9,12 @@ rankNet(
   slot.name = "netP",
   mode = c("single", "comparison"),
   comparison = c(1, 2),
+  stacked = FALSE,
+  axis.gap = FALSE,
+  ylim = NULL,
+  segments = NULL,
+  tick_width = NULL,
+  rel_heights = c(0.9, 0, 0.1),
   tol = 0.05,
   return.data = FALSE,
   show.raw = FALSE,
@@ -27,6 +33,14 @@ rankNet(
 \item{mode}{"single","comparison"}
 
 \item{comparison}{a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets}
+
+\item{stacked}{whether plot the stacked bar plot}
+
+\item{axis.gap}{whetehr making gaps in y-axes}
+
+\item{ylim, segments, tick_width, rel_heights}{parameters in the function gg.gap when making gaps in y-axes
+e.g., ylim = c(0, 35), segments = list(c(11, 14),c(16, 28)), tick_width = c(5,2,5), rel_heights = c(0.8,0,0.1,0,0.1)
+https://tobiasbusch.xyz/an-r-package-for-everything-ep2-gaps}
 
 \item{tol}{a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution}
 

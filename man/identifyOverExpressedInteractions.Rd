@@ -2,18 +2,27 @@
 % Please edit documentation in R/utilities.R
 \name{identifyOverExpressedInteractions}
 \alias{identifyOverExpressedInteractions}
-\title{Identify over-expressed ligand-receptor interactions}
+\title{Identify over-expressed ligand-receptor interactions (pairs) within the used CellChatDB}
 \usage{
-identifyOverExpressedInteractions(object, features = NULL)
+identifyOverExpressedInteractions(
+  object,
+  features.name = "features",
+  features = NULL,
+  return.object = TRUE
+)
 }
 \arguments{
 \item{object}{CellChat object}
 
-\item{features}{a vector of features}
+\item{features.name}{a char name used for assess the results in `object@var.features[[features.name]]`}
+
+\item{features}{a vector of features to use. default use all over-expressed genes in `object@var.features[[features.name]]`}
+
+\item{return.object}{whether returning a CellChat object. If FALSE, it will return a data frame containing the over-expressed ligand-receptor pairs}
 }
 \value{
-
+A CellChat object or a data frame. If returning a CellChat object, a new element named 'LRsig' will be added into the list `object@LR`
 }
 \description{
-Identify over-expressed ligand-receptor interactions
+Identify over-expressed ligand-receptor interactions (pairs) within the used CellChatDB
 }

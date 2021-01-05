@@ -4,15 +4,36 @@
 \alias{aggregateNet}
 \title{Calculate the aggregated network by counting the number of links or summarizing the communication probability}
 \usage{
-aggregateNet(object, thresh = 0.05)
+aggregateNet(
+  object,
+  sources.use = NULL,
+  targets.use = NULL,
+  signaling = NULL,
+  pairLR.use = NULL,
+  remove.isolate = TRUE,
+  thresh = 0.05,
+  return.object = TRUE
+)
 }
 \arguments{
 \item{object}{CellChat object}
 
+\item{sources.use, targets.use, signaling, pairLR.use}{Please check the description in function \code{\link{subsetCommunication}}}
+
+\item{remove.isolate}{whether removing the isolate cell groups without any interactions when applying \code{\link{subsetCommunication}}}
+
 \item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{return.object}{whether return an updated CellChat object}
 }
 \value{
+Return an updated CellChat object:
 
+`object@net$count` is a matrix: rows and columns are sources and targets respectively, and elements are the number of interactions between any two cell groups. USER can convert a matrix to a data frame using the function `reshape2::melt()`
+
+`object@net$weight` is also a matrix containing the interaction weights between any two cell groups
+
+`object@net$sum` is deprecated. Use `object@net$weight`
 }
 \description{
 Calculate the aggregated network by counting the number of links or summarizing the communication probability

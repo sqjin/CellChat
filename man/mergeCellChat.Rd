@@ -4,12 +4,21 @@
 \alias{mergeCellChat}
 \title{Merge CellChat objects}
 \usage{
-mergeCellChat(object.list, add.names = NULL)
+mergeCellChat(
+  object.list,
+  add.names = NULL,
+  merge.data = FALSE,
+  cell.prefix = FALSE
+)
 }
 \arguments{
 \item{object.list}{A list of multiple CellChat objects}
 
 \item{add.names}{A vector containing the name of each dataset}
+
+\item{merge.data}{whether merging the data for all genes}
+
+\item{cell.prefix}{whether prefix cell names}
 }
 \value{
 

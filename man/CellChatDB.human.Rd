@@ -4,7 +4,9 @@
 \name{CellChatDB.human}
 \alias{CellChatDB.human}
 \title{Ligand-receptor interactions in CellChat database for human}
-\format{A list includes the ligand-receptor interactions}
+\format{
+A list includes the ligand-receptor interactions
+}
 \source{
 \url{https://github.com/sqjin/CellChat/}
 }

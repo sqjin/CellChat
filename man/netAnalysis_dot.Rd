@@ -27,7 +27,7 @@ netAnalysis_dot(
 
 \item{pattern}{"outgoing" or "incoming"}
 
-\item{cutoff}{the threshold for filtering out weak links}
+\item{cutoff}{the threshold for filtering out weak links. Default is 1/R where R is the number of latent patterns. We set the elements in W and H to be zero if they are less than `cutoff`.}
 
 \item{color.use}{the character vector defining the color of each cell group}
 
@@ -51,5 +51,5 @@ netAnalysis_dot(
 
 }
 \description{
-Dot plots showing the associations of latent patterns with cell groups and ligand-receptor pairs or signaling pathways
+Using a contribution score of each cell group to each signaling pathway computed by multiplying W by H obtained from `identifyCommunicationPatterns`, we constructed a dot plot in which the dot size is proportion to the contribution score to show association between cell group and their enriched signaling pathways.
 }

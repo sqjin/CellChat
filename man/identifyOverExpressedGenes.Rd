@@ -2,20 +2,56 @@
 % Please edit documentation in R/utilities.R
 \name{identifyOverExpressedGenes}
 \alias{identifyOverExpressedGenes}
-\title{Identify over-expressed genes in each cell group}
+\title{Identify over-expressed signaling genes associated with each cell group}
 \usage{
-identifyOverExpressedGenes(object, features = NULL, thresh.p = 0.05)
+identifyOverExpressedGenes(
+  object,
+  data.use = NULL,
+  group.by = NULL,
+  idents.use = NULL,
+  invert = FALSE,
+  group.dataset = NULL,
+  pos.dataset = NULL,
+  features.name = "features",
+  features = NULL,
+  return.object = TRUE,
+  thresh.pc = 0,
+  thresh.fc = 0,
+  thresh.p = 0.05
+)
 }
 \arguments{
 \item{object}{CellChat object}
 
-\item{features}{a vector of features}
+\item{data.use}{a customed data matrix. Default: data.use = NULL and the expression matrix in the slot 'data.signaling' is used}
 
-\item{thresh.p}{threshold of p-values}
+\item{group.by}{cell group information; default is `object@idents`; otherwise it should be one of the column names of the meta slot}
+
+\item{idents.use}{a subset of cell groups used for analysis}
+
+\item{invert}{whether invert the idents.use}
+
+\item{group.dataset}{dataset origin information in a merged CellChat object; set it as one of the column names of meta slot when identifying the highly enriched genes in one dataset for each cell group}
+
+\item{pos.dataset}{the dataset name used for identifying highly enriched genes in this dataset for each cell group}
+
+\item{features.name}{a char name used for storing the over-expressed signaling genes in `object@var.features[[features.name]]`}
+
+\item{features}{features used for identifying Over Expressed genes. default use all features}
+
+\item{return.object}{whether return the object; otherwise return a data frame consisting of over-expressed signaling genes associated with each cell group}
+
+\item{thresh.pc}{Threshold of the percent of cells expressed in one cluster}
+
+\item{thresh.fc}{Threshold of Log Fold Change}
+
+\item{thresh.p}{Threshold of p-values}
 }
 \value{
-
+A CellChat object or a data frame. If returning a CellChat object, two new elements named 'features.name' and paste0(features.name, ".info") will be added into the list `object@var.features`
+`object@var.features[[features.name]]` is a vector consisting of the identified over-expressed signaling genes;
+`object@var.features[[paste0(features.name, ".info")]]` is a data frame returned from the differential expression analysis
 }
 \description{
-Identify over-expressed genes in each cell group
+Identify over-expressed signaling genes associated with each cell group
 }

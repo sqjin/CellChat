@@ -2,18 +2,18 @@
 % Please edit documentation in R/utilities.R
 \name{subsetData}
 \alias{subsetData}
-\title{Subset the expression data of signaling genes in CellChatDB}
+\title{Subset the expression data of signaling genes for saving computation cost}
 \usage{
 subsetData(object, features = NULL)
 }
 \arguments{
 \item{object}{CellChat object}
 
-\item{features}{default = NULL: subset the expression data of signaling genes in CellChatDB}
+\item{features}{default = NULL: subset the expression data of signaling genes in CellChatDB.use}
 }
 \value{
-
+An updated CellChat object by assigning a subset of the data into the slot `data.signaling`
 }
 \description{
-Subset the expression data of signaling genes in CellChatDB
+Subset the expression data of signaling genes for saving computation cost
 }

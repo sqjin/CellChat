@@ -11,6 +11,9 @@ checkGeneSymbol(geneSet, geneIfo)
 
 \item{geneIfo}{official Gene Symbol}
 }
+\value{
+
+}
 \description{
 check the official Gene Symbol
 }

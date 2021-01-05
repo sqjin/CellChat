@@ -2,7 +2,7 @@
 % Please edit documentation in R/database.R
 \name{subsetDB}
 \alias{subsetDB}
-\title{Subset CellChatDB databse}
+\title{Subset CellChatDB databse by only including interactions of interest}
 \usage{
 subsetDB(CellChatDB, search = c(), key = "annotation")
 }
@@ -17,5 +17,5 @@ subsetDB(CellChatDB, search = c(), key = "annotation")
 
 }
 \description{
-Subset CellChatDB databse
+Subset CellChatDB databse by only including interactions of interest
 }

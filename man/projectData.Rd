@@ -16,15 +16,18 @@ projectData(
 
 \item{adjMatrix}{adjacency matrix of protein-protein interaction network to use}
 
-\item{alpha}{numeric in [0,1]}
+\item{alpha}{numeric in [0,1] alpha = 0: no smoothing; a larger value alpha results in increasing levels of smoothing.}
 
 \item{normalizeAdjMatrix}{how to normalize the adjacency matrix
 possible values are 'rows' (in-degree)
 and 'columns' (out-degree)}
 }
 \value{
-projected gene expression matrix
+a projected gene expression matrix
 }
 \description{
-Project gene expression data onto a protein-protein interaction network
+A diffusion process is used to smooth genes’ expression values based on their neighbors’ defined in a high-confidence experimentally validated protein-protein network.
+}
+\details{
+This function is useful when analyzing single-cell data with shallow sequencing depth because the projection reduces the dropout effects of signaling genes, in particular for possible zero expression of subunits of ligands/receptors
 }

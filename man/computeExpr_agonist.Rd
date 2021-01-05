@@ -11,7 +11,8 @@ computeExpr_agonist(
   group,
   index.agonist,
   Kh,
-  FunMean
+  FunMean,
+  n
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ computeExpr_agonist(
 \item{Kh}{a parameter in Hill function}
 
 \item{FunMean}{the function for computing mean expression per group}
+
+\item{n}{Hill coefficient}
 }
 \value{
 
