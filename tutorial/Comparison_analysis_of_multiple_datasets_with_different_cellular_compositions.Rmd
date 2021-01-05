@@ -1,0 +1,119 @@
+
+---
+title: "Comparison analysis of multiple datasets with different cell type compositions"
+author: "Suoqin Jin"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    theme: united
+mainfont: Arial
+vignette: >
+  %\VignetteIndexEntry{Comparison analysis of multiple datasets using CellChat}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+  
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  root.dir = './'
+)
+#knitr::opts_chunk$set(eval = FALSE)
+```
+This vignette shows how to apply CellChat to the comparison analysis of multiple datasets with different cell type compositions. Almost all the CellChat’s functionalities can be applied. 
+
+## Load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(CellChat)
+library(ggplot2)                  
+library(patchwork)
+library(igraph)
+```
+
+# Part I: Comparison analysis of multiple datasets with slightly different cell type compositions
+For the datasets with slightly different cell type (group) compositions, CellChat can lift up the cell groups to the same cell labels across all datasets using the function `liftCellChat`, and then perform comparison analysis as the joint analysis of datasets with the same cell type compositions. 
+
+Here we take an example of comparison analysis of two embryonic mouse skin scRNA-seq datasets from days E13.5 and E14.5. There are 11 shared skin cell populations at E13.5 and E14.5 and additional two populations (i.e., dermal DC and pericytes) specific to E14.5. Therefore, we will lift up the cell groups from E13.5 to the same cell labels as E14.5. 
+
+## Load CellChat object of each dataset
+USERS need to run CellChat on each dataset seperately and then merge different CellChat objects together. Here we also do `updateCellChat` because these two objects are obtained using the earlier version (< 0.5.0) of CellChat. 
+```{r}
+cellchat.E13 <- readRDS(url("https://ndownloader.figshare.com/files/25957094"))
+cellchat.E13 <- updateCellChat(cellchat.E13)
+cellchat.E14 <- readRDS(url("https://ndownloader.figshare.com/files/25957634"))
+cellchat.E14 <- updateCellChat(cellchat.E14)
+```
+
+## Lift up CellChat object and merge together
+Since there are additional two populations (i.e., dermal DC and pericytes) specific to E14.5 compared to E13.5, we lift up `cellchat.E13` by lifting up the cell groups to the same cell labels as E14.5. `liftCellChat` will only update the slot related to the cell-cell communication network, including slots object@net, object@netP and object@idents. 
+
+```{r}
+# Define the cell labels to lift up
+group.new = levels(cellchat.E14@idents)
+cellchat.E13 <- liftCellChat(cellchat.E13, group.new)
+object.list <- list(E13 = cellchat.E13, E14 = cellchat.E14)
+cellchat <- mergeCellChat(object.list, add.names = names(object.list), cell.prefix = TRUE)
+```
+
+## Visualize the inferred signaling network using the lifted object
+
+```{r, fig.width=8,fig.height = 6, fig.wide = TRUE, fig.align = "center"}
+# Hierarchy plot
+pathways.show <- c("WNT") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+vertex.receiver = seq(1,10) # Left portion of hierarchy plot the shows signaling to dermal cells and right portion shows signaling to epidermal cells
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, vertex.receiver = vertex.receiver, edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+```
+
+```{r, fig.width=11,fig.height = 5, fig.wide = TRUE, fig.align = "center"}
+# Circle plot
+pathways.show <- c("WNT") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+```
+
+```{r, fig.width=12,fig.height = 6, fig.wide = TRUE, fig.align = "center"}
+# Chord diagram
+pathways.show <- c("WNT") 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "chord", signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+```
+
+For the chord diagram, CellChat has an independent function `netVisual_chord_cell` to flexibly visualize the signaling network by adjusting different parameters in the [circlize](https://github.com/jokergoo/circlize) package. For example, we can define a named char vector `group` to create multiple-group chord diagram, e.g., grouping cell clusters into different cell types. 
+```{r, fig.width=12,fig.height = 6, fig.wide = TRUE, fig.align = "center"}
+# Chord diagram
+group.merged <- c(rep("Dermal", 10), rep("Epidermal", 3)) # grouping cell clusters into dermal and epidermal cells to study the cell-cell communication between dermal and epidermal
+names(group.merged) <- levels(object.list[[1]]@idents)
+pathways.show <- c("WNT") 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_cell(object.list[[i]], signaling = pathways.show, group = group.merged, title.name = paste0(pathways.show, " signaling network - ", names(object.list)[i]))
+}
+```
+
+
+# Part II: Comparison analysis of multiple datasets with vastly different cell type compositions
+CellChat can be used to compare cell-cell communication patterns between two scRNA-seq datasets from vastly distinct biological contexts – embryonic morphogenesis vs. wound-induced repair. For the datasets with vastly different cell type (group) compositions, most of the CellChat’s functionalities can be applied, except for the following two aspects:
+
+* Compare the differential number of interactions and interaction strength among different cell populations using `netVisual_diffInteraction`. However, USERS can still use `netVisual_circle` fucntion to show the number of interactions and interaction strength.
+
+* Identify signaling groups based on their functional similarity using `computeNetSimilarityPairwise(cellchat, type = "functional")`. However, USERS can still use `computeNetSimilarityPairwise(cellchat, type = "structural")` to perform structure similarity analysis. 
+
+Please check out our paper for the comparison analysis of two scRNA-seq datasets, one from embryonic day E13.5 skin and another from adult day 12 wound skin.  
+
+```{r}
+sessionInfo()
+```
+
+
