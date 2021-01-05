@@ -8,7 +8,7 @@
 ## Important update
 Janunary 05, 2021 (Version 0.5.0)
 
-* Enhanced documentation of functions and tutorials
+* Enhanced documentation of functions and tutorials (use `help()` to check the documentation, e.g., `help(CellChat)`)
 * New features for comparison analysis of multiple datasets
 * Support for creating a new CellChat object from Seurat V3 or SingleCellExperiment object
 * Slight changes of CellChat object (Please update your previously calculated CellChat object via `updateCellChat()`)
