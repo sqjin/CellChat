@@ -51,7 +51,7 @@ searchPair <- function(signaling = c(), pairLR.use, key = c("pathway_name","liga
   return(as.data.frame(pairLR, stringsAsFactors = FALSE))
 }
 
-#' Subset CellChatDB databse
+#' Subset CellChatDB databse by only including interactions of interest
 #'
 #' @param CellChatDB CellChatDB databse
 #' @param search a character
@@ -115,6 +115,7 @@ extractGene <- function(CellChatDB) {
 #'
 #' @return
 #' @importFrom dplyr select starts_with
+#' @export
 extractGeneSubset <- function(geneSet, complex_input, geneIfo) {
   complex <- geneSet[which(geneSet %in% geneIfo$Symbol == "FALSE")]
   geneSet <- intersect(geneSet, geneIfo$Symbol)
@@ -131,7 +132,8 @@ extractGeneSubset <- function(geneSet, complex_input, geneIfo) {
 #'
 #' @param geneSet gene set to check
 #' @param geneIfo official Gene Symbol
-#'
+#' @return
+#' @export
 #'
 checkGeneSymbol <- function(geneSet, geneIfo) {
   geneSet <- unique(geneSet[geneSet != ""])
@@ -139,4 +141,5 @@ checkGeneSymbol <- function(geneSet, geneIfo) {
   if (length(genes_notOfficial) > 0) {
     cat("Issue identified!! Please check the official Gene Symbol of the following genes: ", "\n", genes_notOfficial, "\n")
   }
+  return(FALSE)
 }

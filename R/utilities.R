@@ -133,14 +133,12 @@ setIdent <- function(object, ident.use = NULL, levels = NULL){
   return(object)
 }
 
-
-
-#' Subset the expression data of signaling genes in CellChatDB
+#' Subset the expression data of signaling genes for saving computation cost
 #'
 #' @param object CellChat object
-#' @param features default = NULL: subset the expression data of signaling genes in CellChatDB
+#' @param features default = NULL: subset the expression data of signaling genes in CellChatDB.use
 #'
-#' @return
+#' @return An updated CellChat object by assigning a subset of the data into the slot `data.signaling`
 #' @export
 #'
 subsetData <- function(object, features = NULL) {
@@ -155,34 +153,82 @@ subsetData <- function(object, features = NULL) {
   return(object)
 }
 
-#' Identify over-expressed genes in each cell group
+
+
+#' Identify over-expressed signaling genes associated with each cell group
 #'
 #' @param object CellChat object
-#' @param features a vector of features
-#' @param thresh.p threshold of p-values
-#' @importFrom stats wilcox.test
+#' @param data.use a customed data matrix. Default: data.use = NULL and the expression matrix in the slot 'data.signaling' is used
+#' @param group.by cell group information; default is `object@idents`; otherwise it should be one of the column names of the meta slot
+#' @param idents.use a subset of cell groups used for analysis
+#' @param invert whether invert the idents.use
+#' @param group.dataset dataset origin information in a merged CellChat object; set it as one of the column names of meta slot when identifying the highly enriched genes in one dataset for each cell group
+#' @param pos.dataset the dataset name used for identifying highly enriched genes in this dataset for each cell group
+#' @param features.name a char name used for storing the over-expressed signaling genes in `object@var.features[[features.name]]`
+#' @param features features used for identifying Over Expressed genes. default use all features
+#' @param return.object whether return the object; otherwise return a data frame consisting of over-expressed signaling genes associated with each cell group
+#' @param thresh.pc Threshold of the percent of cells expressed in one cluster
+#' @param thresh.fc Threshold of Log Fold Change
+#' @param thresh.p Threshold of p-values
 #' @importFrom future nbrOfWorkers
-#' @importFrom future.apply future_sapply
 #' @importFrom pbapply pbsapply
+#' @importFrom future.apply future_sapply
+#' @importFrom stats sd wilcox.test
 #' @importFrom stats p.adjust
 #'
-#' @return
+#' @return A CellChat object or a data frame. If returning a CellChat object, two new elements named 'features.name' and paste0(features.name, ".info") will be added into the list `object@var.features`
+#' `object@var.features[[features.name]]` is a vector consisting of the identified over-expressed signaling genes;
+#' `object@var.features[[paste0(features.name, ".info")]]` is a data frame returned from the differential expression analysis
 #' @export
 #'
-#' @examples
-identifyOverExpressedGenes <- function(object, features = NULL, thresh.p = 0.05) {
-  data.use <- object@data.signaling
-  if (is.null(features)) {
-    features <- row.names(data.use)
+identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL, idents.use = NULL, invert = FALSE, group.dataset = NULL, pos.dataset = NULL, features.name = "features",  features = NULL, return.object = TRUE,
+                                       thresh.pc = 0, thresh.fc = 0, thresh.p = 0.05) {
+  if (!is.list(object@var.features)) {
+    stop("Please update your CellChat object via `updateCellChat()`")
+  }
+  if (is.null(data.use)) {
+    X <- object@data.signaling
   } else {
-    features <- intersect(features, row.names(data.use))
+    X <- data.use
   }
 
-  data.use <- as.matrix(data.use[features, ])
-  labels <- object@idents
-  level.use <- levels(labels)
-  level.use <- level.use[level.use %in% unique(labels)]
+  if (is.null(features)) {
+    features.use <- row.names(X)
+  } else {
+    features.use <- intersect(features, row.names(X))
+  }
+  data.use <- X[features.use,]
+  data.use <- as.matrix(data.use)
+
+  if (is.null(group.by)) {
+    labels <- object@idents
+    if (!is.factor(labels)) {
+      message("Use the joint cell labels from the merged CellChat object")
+      labels <- object@idents$joint
+    }
+  } else {
+    labels <- object@meta[[group.by]]
+  }
+  if (!is.factor(labels)) {
+    labels <- factor(labels)
+  }
+  level.use <- levels(labels)[levels(labels) %in% unique(labels)]
+  if (!is.null(idents.use)) {
+    if (invert) {
+      level.use <- level.use[!(level.use %in% idents.use)]
+    } else {
+      level.use <- level.use[level.use %in% idents.use]
+    }
+  }
   numCluster <- length(level.use)
+
+  if (!is.null(group.dataset)) {
+    labels.dataset <- as.character(object@meta[[group.dataset]])
+    if (!(pos.dataset %in% unique(labels.dataset))) {
+      cat("Please set pos.dataset to be one of the following dataset names: ", unique(as.character(labels.dataset)))
+      stop()
+    }
+  }
 
   my.sapply <- ifelse(
     test = future::nbrOfWorkers() == 1,
@@ -190,49 +236,215 @@ identifyOverExpressedGenes <- function(object, features = NULL, thresh.p = 0.05)
     no = future.apply::future_sapply
   )
 
-  Pvalues <- matrix(nrow = length(features), ncol = numCluster)
+  mean.fxn <- function(x) {
+    return(log(x = mean(x = expm1(x = x)) + 1))
+  }
+  labels <- as.character(labels)
+  genes.de <- vector("list", length = numCluster)
   for (i in 1:numCluster) {
-    cell.use1 <- which(labels %in% level.use[i])
-    cell.use2 <- base::setdiff(1:length(labels), cell.use1)
-    data1 <- data.use[, cell.use1, drop = FALSE]
-    data2 <- data.use[, cell.use2, drop = FALSE]
+    features <- features.use
+    if (is.null(group.dataset)) {
+      cell.use1 <- which(labels == level.use[i])
+      cell.use2 <- base::setdiff(1:length(labels), cell.use1)
+    } else {
+      cell.use1 <- which((labels == level.use[i]) & (labels.dataset == pos.dataset))
+      cell.use2 <- which((labels == level.use[i]) & (labels.dataset != pos.dataset))
+    }
+
+    # feature selection (based on percentages)
+    thresh.min <- 0
+    pct.1 <- round(
+      x = rowSums(data.use[features, cell.use1, drop = FALSE] > thresh.min) /
+        length(x = cell.use1),
+      digits = 3
+    )
+    pct.2 <- round(
+      x = rowSums(data.use[features, cell.use2, drop = FALSE] > thresh.min) /
+        length(x = cell.use2),
+      digits = 3
+    )
+    data.alpha <- cbind(pct.1, pct.2)
+    colnames(x = data.alpha) <- c("pct.1", "pct.2")
+    alpha.min <- apply(X = data.alpha, MARGIN = 1, FUN = max)
+    names(x = alpha.min) <- rownames(x = data.alpha)
+    features <- names(x = which(x = alpha.min > thresh.pc))
+    if (length(x = features) == 0) {
+      #stop("No features pass thresh.pc threshold")
+      next
+    }
+
+    # feature selection (based on average difference)
+    data.1 <- apply(X = data.use[features, cell.use1, drop = FALSE],MARGIN = 1,FUN = mean.fxn)
+    data.2 <- apply(X = data.use[features, cell.use2, drop = FALSE],MARGIN = 1,FUN = mean.fxn)
+    FC <- (data.1 - data.2)
+    features.diff <- names(which(FC > thresh.fc))
+    features <- intersect(x = features, y = features.diff)
+    if (length(x = features) == 0) {
+      #  stop("No features pass thresh.fc threshold")
+      next
+    }
+
+    data1 <- data.use[features, cell.use1, drop = FALSE]
+    data2 <- data.use[features, cell.use2, drop = FALSE]
+
     pvalues <- unlist(
       x = my.sapply(
-        X = 1:nrow(data1),
+        X = 1:nrow(x = data1),
         FUN = function(x) {
           return(wilcox.test(data1[x, ], data2[x, ], alternative = "greater")$p.value)
         }
       )
     )
-    Pvalues[, i] <- pvalues
+
+    # pval.adj = stats::p.adjust(
+    #   p = pvalues,
+    #   method = "bonferroni",
+    #   n = nrow(X)
+    # )
+    if (is.null(group.dataset)) {
+      genes.de[[i]] <- data.frame(clusters = level.use[i], features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F])
+    } else {
+      genes.de[[i]] <- data.frame(clusters = level.use[i], datasets = pos.dataset, features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F])
+    }
   }
-  features.sig <- features[rowSums(Pvalues < thresh.p) > 0]
-  object@var.features <- features.sig
-  return(object)
+
+  markers.all <- data.frame()
+  for (i in 1:numCluster) {
+    gde <- genes.de[[i]]
+    if (!is.null(gde)) {
+      gde <- gde[order(gde$pvalues, -gde$logFC), ]
+      gde <- subset(gde, subset = pvalues < thresh.p)
+      if (nrow(gde) > 0) {
+        markers.all <- rbind(markers.all, gde)
+      }
+    }
+  }
+  markers.all$features <- as.character(markers.all$features)
+
+  features.sig <- markers.all$features
+  object@var.features[[features.name]] <- features.sig
+  features.name <- paste0(features.name, ".info")
+  object@var.features[[features.name]] <- markers.all
+
+  if (return.object) {
+    return(object)
+  } else {
+    return(markers.all)
+  }
 }
 
 
-#' Identify over-expressed ligand-receptor interactions
+#' Identify over-expressed ligands and (complex) receptors associated with each cell group
+#'
+#' This function identifies the over-expressed ligands and (complex) receptors based on the identified signaling genes from 'identifyOverExpressedGenes'.
 #'
 #' @param object CellChat object
-#' @param features a vector of features
+#' @param features.name a char name used for storing the over-expressed ligands and receptors in `object@var.features[[paste0(features.name, ".LR")]]`
+#' @param features a vector of features to use. default use all over-expressed genes in `object@var.features[[features.name]]`
+#' @param return.object whether returning a CellChat object. If FALSE, it will return a data frame containing over-expressed ligands and (complex) receptors associated with each cell group
 #' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
 #' @importFrom pbapply pbsapply
 #' @importFrom dplyr select
 #'
-#' @return
+#' @return A CellChat object or a data frame. If returning a CellChat object, a new element named paste0(features.name, ".LR") will be added into the list `object@var.features`
 #' @export
 #'
-#' @examples
-identifyOverExpressedInteractions <- function(object, features = NULL) {
-  if (is.null(features)) {
-    gene.use <- row.names(object@data.signaling)
-  } else {
-    gene.use <- intersect(features, row.names(object@data.signaling))
-  }
+identifyOverExpressedLigandReceptor <- function(object, features.name = "features", features = NULL, return.object = TRUE) {
+
+  features.name.LR <- paste0(features.name, ".LR")
+  features.name <- paste0(features.name, ".info")
   DB <- object@DB
-  features.sig <- object@var.features
+  interaction_input <- DB$interaction
+  complex_input <- DB$complex
+  pairLR <- select(interaction_input, ligand, receptor)
+  LR.use <- unique(c(pairLR$ligand, pairLR$receptor))
+  if (is.null(features)) {
+    if (is.list(object@var.features)) {
+      markers.all <- object@var.features[[features.name]] # use the updated CellChat object 12/2020
+    } else {
+      stop("Please update your CellChat object via `updateCellChat()`")
+    }
+
+  } else {
+    features.use <- features
+    rm(features)
+    markers.all <- subset(markers.all, subset = features %in% features.use)
+  }
+
+  my.sapply <- ifelse(
+    test = future::nbrOfWorkers() == 1,
+    yes = pbapply::pbsapply,
+    no = future.apply::future_sapply
+  )
+  complexSubunits <- complex_input[, grepl("subunit" , colnames(complex_input))]
+
+  markers.all.new <- data.frame()
+  for (i in 1:nrow(markers.all)) {
+    if (markers.all$features[i] %in% LR.use) {
+      markers.all.new <- rbind(markers.all.new, markers.all[i, , drop = FALSE])
+    } else {
+      index.sig <- unlist(
+        x = my.sapply(
+          X = 1:nrow(complexSubunits),
+          FUN = function(x) {
+            complexsubunitsV <- unlist(complexSubunits[x,], use.names = F)
+            complexsubunitsV <- complexsubunitsV[complexsubunitsV != ""]
+            if (markers.all$features[i] %in% complexsubunitsV) {
+              return(x)
+            }
+          }
+        )
+      )
+      complexSubunits.sig <- rownames(complexSubunits[index.sig,])
+      markers.all.complex <- data.frame()
+      for (j in 1:length(complexSubunits.sig)) {
+        markers.all.complex <- rbind(markers.all.complex, markers.all[i, , drop = FALSE])
+      }
+      markers.all.complex$features <- complexSubunits.sig
+      markers.all.new <- rbind(markers.all.new, markers.all.complex)
+    }
+  }
+
+  object@var.features[[features.name.LR]] <- markers.all.new
+
+  if (return.object) {
+    return(object)
+  } else {
+    return(markers.all.new)
+  }
+}
+
+
+
+#' Identify over-expressed ligand-receptor interactions (pairs) within the used CellChatDB
+#'
+#' @param object CellChat object
+#' @param features.name a char name used for assess the results in `object@var.features[[features.name]]`
+#' @param features a vector of features to use. default use all over-expressed genes in `object@var.features[[features.name]]`
+#' @param return.object whether returning a CellChat object. If FALSE, it will return a data frame containing the over-expressed ligand-receptor pairs
+#' @importFrom future nbrOfWorkers
+#' @importFrom future.apply future_sapply
+#' @importFrom pbapply pbsapply
+#' @importFrom dplyr select
+#'
+#' @return A CellChat object or a data frame. If returning a CellChat object, a new element named 'LRsig' will be added into the list `object@LR`
+#' @export
+#'
+identifyOverExpressedInteractions <- function(object, features.name = "features", features = NULL, return.object = TRUE) {
+  gene.use <- row.names(object@data.signaling)
+  DB <- object@DB
+  if (is.null(features)) {
+    if (is.list(object@var.features)) {
+      features.sig <- object@var.features[[features.name]] # use the updated CellChat object 12/2020
+    } else {
+      stop("Please update your CellChat object via `updateCellChat()`")
+    }
+
+  } else {
+    features.sig <- features
+  }
+
   interaction_input <- DB$interaction
   complex_input <- DB$complex
   my.sapply <- ifelse(
@@ -269,20 +481,30 @@ identifyOverExpressedInteractions <- function(object, features = NULL) {
   )
   pairLRsig <- interaction_input[index.sig, ]
   object@LR$LRsig <- pairLRsig
-  return(object)
+  if (return.object) {
+    return(object)
+  } else {
+    return(pairLRsig)
+  }
 }
 
 
 #' Project gene expression data onto a protein-protein interaction network
-#' @param object   CellChat object
-#' @param adjMatrix    adjacency matrix of protein-protein interaction network to use
-#' @param alpha    numeric in [0,1]
+#'
+#' A diffusion process is used to smooth genes’ expression values based on their neighbors’ defined in a high-confidence experimentally validated protein-protein network.
+#'
+#' This function is useful when analyzing single-cell data with shallow sequencing depth because the projection reduces the dropout effects of signaling genes, in particular for possible zero expression of subunits of ligands/receptors
+#'
+#' @param object  CellChat object
+#' @param adjMatrix adjacency matrix of protein-protein interaction network to use
+#' @param alpha numeric in [0,1] alpha = 0: no smoothing; a larger value alpha results in increasing levels of smoothing.
 #' @param normalizeAdjMatrix    how to normalize the adjacency matrix
 #'                              possible values are 'rows' (in-degree)
 #'                              and 'columns' (out-degree)
-#' @return projected gene expression matrix
-#' @examples
+#' @return a projected gene expression matrix
 #' @export
+#'
+# This function is adapted from https://github.com/BIMSBbioinfo/netSmooth
 projectData <- function(object, adjMatrix, alpha=0.5, normalizeAdjMatrix=c('rows','columns')){
   data <- as.matrix(object@data.signaling)
   normalizeAdjMatrix <- match.arg(normalizeAdjMatrix)
@@ -534,3 +756,137 @@ runUMAP <- function(
   return(umap_output)
 }
 
+.error_if_no_Seurat <- function() {
+  if (!requireNamespace("Seurat", quietly = TRUE)) {
+    stop("Seurat installation required for working with Seurat objects")
+  }
+}
+
+
+#' Color interpolation
+#'
+#' This function is modified from https://rdrr.io/cran/circlize/src/R/utils.R
+#' Colors are linearly interpolated according to break values and corresponding colors through CIE Lab color space (`colorspace::LAB`) by default.
+#' Values exceeding breaks will be assigned with corresponding maximum or minimum colors.
+#'
+#' @param breaks A vector indicating numeric breaks
+#' @param colors A vector of colors which correspond to values in ``breaks``
+#' @param transparency A single value in ``[0, 1]``. 0 refers to no transparency and 1 refers to full transparency
+#' @param space color space in which colors are interpolated. Value should be one of "RGB", "HSV", "HLS", "LAB", "XYZ", "sRGB", "LUV", see `colorspace::color-class` for detail.
+#' @importFrom colorspace coords RGB HSV HLS LAB XYZ sRGB LUV hex
+#' @importFrom grDevices col2rgb
+#' @return It returns a function which accepts a vector of numeric values and returns interpolated colors.
+#' @export
+#' @examples
+#' \dontrun{
+#' col_fun = colorRamp3(c(-1, 0, 1), c("green", "white", "red"))
+#' col_fun(c(-2, -1, -0.5, 0, 0.5, 1, 2))
+#' }
+colorRamp3 = function(breaks, colors, transparency = 0, space = "LAB") {
+
+  if(length(breaks) != length(colors)) {
+    stop("Length of `breaks` should be equal to `colors`.\n")
+  }
+
+  colors = colors[order(breaks)]
+  breaks = sort(breaks)
+
+  l = duplicated(breaks)
+  breaks = breaks[!l]
+  colors = colors[!l]
+
+  if(length(breaks) == 1) {
+    stop_wrap("You should have at least two distinct break values.")
+  }
+
+
+  if(! space %in% c("RGB", "HSV", "HLS", "LAB", "XYZ", "sRGB", "LUV")) {
+    stop_wrap("`space` should be in 'RGB', 'HSV', 'HLS', 'LAB', 'XYZ', 'sRGB', 'LUV'")
+  }
+
+  colors = t(grDevices::col2rgb(colors)/255)
+
+  attr = list(breaks = breaks, colors = colors, transparency = transparency, space = space)
+
+  if(space == "LUV") {
+    i = which(apply(colors, 1, function(x) all(x == 0)))
+    colors[i, ] = 1e-5
+  }
+
+  transparency = 1-ifelse(transparency > 1, 1, ifelse(transparency < 0, 0, transparency))[1]
+  transparency_str = sprintf("%X", round(transparency*255))
+  if(nchar(transparency_str) == 1) transparency_str = paste0("0", transparency_str)
+
+  fun = function(x = NULL, return_rgb = FALSE, max_value = 1) {
+    if(is.null(x)) {
+      stop_wrap("Please specify `x`\n")
+    }
+
+    att = attributes(x)
+    if(is.data.frame(x)) x = as.matrix(x)
+
+    l_na = is.na(x)
+    if(all(l_na)) {
+      return(rep(NA, length(l_na)))
+    }
+
+    x2 = x[!l_na]
+
+    x2 = ifelse(x2 < breaks[1], breaks[1],
+                ifelse(x2 > breaks[length(breaks)], breaks[length(breaks)],
+                       x2
+                ))
+    ibin = .bincode(x2, breaks, right = TRUE, include.lowest = TRUE)
+    res_col = character(length(x2))
+    for(i in unique(ibin)) {
+      l = ibin == i
+      res_col[l] = .get_color(x2[l], breaks[i], breaks[i+1], colors[i, ], colors[i+1, ], space = space)
+    }
+    res_col = paste(res_col, transparency_str[1], sep = "")
+
+    if(return_rgb) {
+      res_col = t(grDevices::col2rgb(as.vector(res_col), alpha = TRUE)/255)
+      return(res_col)
+    } else {
+      res_col2 = character(length(x))
+      res_col2[l_na] = NA
+      res_col2[!l_na] = res_col
+
+      attributes(res_col2) = att
+      return(res_col2)
+    }
+  }
+
+  attributes(fun) = attr
+  return(fun)
+}
+
+.restrict_in = function(x, lower, upper) {
+  x[x > upper] = upper
+  x[x < lower] = lower
+  x
+}
+
+# x: vector
+# break1 single value
+# break2 single value
+# rgb1 vector with 3 elements
+# rgb2 vector with 3 elements
+.get_color = function(x, break1, break2, col1, col2, space) {
+
+  col1 = colorspace::coords(as(colorspace::sRGB(col1[1], col1[2], col1[3]), space))
+  col2 = colorspace::coords(as(colorspace::sRGB(col2[1], col2[2], col2[3]), space))
+
+  res_col = matrix(ncol = 3, nrow = length(x))
+  for(j in 1:3) {
+    xx = (x - break2)*(col2[j] - col1[j]) / (break2 - break1) + col2[j]
+    res_col[, j] = xx
+  }
+
+  res_col = get(space)(res_col)
+  res_col = colorspace::coords(as(res_col, "sRGB"))
+  res_col[, 1] = .restrict_in(res_col[,1], 0, 1)
+  res_col[, 2] = .restrict_in(res_col[,2], 0, 1)
+  res_col[, 3] = .restrict_in(res_col[,3], 0, 1)
+  colorspace::hex(colorspace::sRGB(res_col))
+}
