@@ -5,7 +5,7 @@
   <img width="250"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
 </p>
 
-## Important update!!
+## $\color{red}{\text{Important update!!}}$
 January 05, 2021 (Version 0.5.0)
 
 * Enhanced documentation of functions and tutorials (use `help()` to check the documentation, e.g., `help(CellChat)`)
@@ -57,7 +57,7 @@ Please check the tutorial directory of the repo.
 - [Full tutorial for comparison analysis of multiple datasets](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Comparison_analysis_of_multiple_datasets.html)
 - [Comparison analysis of multiple datasets with different cellular compositions](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Comparison_analysis_of_multiple_datasets_with_different_cellular_compositions.html)
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, SingleCellExperiment, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Interface_with_other_single-cell_analysis_toolkits.html)
-- [Tutorial for updating CellChatDB](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Update-CellChatDB.html)
+- [Tutorial for updating ligand-receptor database CellChatDB](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Update-CellChatDB.html)
 
 
 
