@@ -5,8 +5,8 @@
   <img width="250"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
 </p>
 
-## Important update
-Janunary 05, 2021 (Version 0.5.0)
+## Important update!!
+January 05, 2021 (Version 0.5.0)
 
 * Enhanced documentation of functions and tutorials (use `help()` to check the documentation, e.g., `help(CellChat)`)
 * New features for comparison analysis of multiple datasets
