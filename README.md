@@ -35,7 +35,7 @@ CellChat R package can be easily installed from Github using devtools:
 ```
 devtools::install_github("sqjin/CellChat")
 ```
-CellChat can be installed on a normal computer within few mins. **Please make sure you have installed the correct version of `NMF` and 'circlize' package**. See instruction below. 
+**Please make sure you have installed the correct version of `NMF` and `circlize` package**. See instruction below. 
 
 ### Installation of other dependencies
 - Install [NMF (>= 0.23.0)](http://renozao.github.io/NMF/devel/PAGE-INSTALLATION.html) using `install.packages('NMF')`. Please check [here](https://github.com/sqjin/CellChat/issues/16) for other solutions if you encounter any issue. You might can set `Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=TRUE)` if it throws R version error. 
@@ -64,7 +64,7 @@ Please check the tutorial directory of the repo.
 ## System Requirements
 - Hardware requirements: CellChat package requires only a standard computer with enough RAM to support the in-memory operations.
 
-- Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. 
+- Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. CellChat can be installed on a normal computer within few mins.
 
 ## Help
 If you have any questions, comments or suggestions, please contact cellchat.package@gmail.com.
