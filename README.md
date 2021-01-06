@@ -5,7 +5,7 @@
   <img width="250"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
 </p>
 
-## $\color{red}{\text{Important update!!}}$
+## Important update!!
 January 05, 2021 (Version 0.5.0)
 
 * Enhanced documentation of functions and tutorials (use `help()` to check the documentation, e.g., `help(CellChat)`)
