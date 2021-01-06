@@ -24,7 +24,7 @@ Imports:
     expm,
     Rtsne,
     ggrepel, 
-    circlize (>= 0.4.12),
+    circlize (>= 0.4.11),
     RColorBrewer,
     cowplot,
     methods,
