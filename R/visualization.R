@@ -1684,7 +1684,7 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
       df.net$source.target <- paste(df.net$source, df.net$target, sep = " -> ")
       source.target <- paste(rep(sources.use, each = length(targets.use)), targets.use, sep = " -> ")
       source.target.isolate <- setdiff(source.target, unique(df.net$source.target))
-      if (!is.null(source.target.isolate)) {
+      if (length(source.target.isolate) > 0) {
         df.net.isolate <- as.data.frame(matrix(NA, nrow = length(source.target.isolate), ncol = ncol(df.net)))
         colnames(df.net.isolate) <- colnames(df.net)
         df.net.isolate$source.target <- source.target.isolate
@@ -1793,6 +1793,10 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
     df <- df[!is.na(df$prob), ]
     line.on <- FALSE
   }
+  if (nrow(df) == 0) {
+    stop("No interactions are detected. Please consider changing the cell groups for analysis. ")
+  }
+  
   df$interaction_name_2 <- factor(df$interaction_name_2, levels = unique(df$interaction_name_2))
   df$source.target = droplevels(df$source.target, exclude = setdiff(levels(df$source.target),unique(df$source.target)))
 
