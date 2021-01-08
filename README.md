@@ -68,7 +68,7 @@ Please check the tutorial directory of the repo.
 - Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. CellChat can be installed on a normal computer within few mins.
 
 ## Help
-If you have any questions, comments or suggestions, please contact cellchat.package@gmail.com.
+If you have any question, comment or suggestion, please post it in the 'Issues' section or contact cellchat.package@gmail.com.
 
 ## Preprint
 Suoqin Jin, Christian F. Guerrero-Juarez, Lihua Zhang, Ivan Chang, Peggy Myung, Maksim V. Plikus, Qing Nie. Inference and analysis of cell-cell communication using CellChat. bioRxiv 2020.07.21.214387; doi: https://doi.org/10.1101/2020.07.21.214387
