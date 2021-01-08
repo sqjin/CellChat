@@ -17,8 +17,9 @@ netVisual(
   vertex.weight = NULL,
   vertex.weight.max = NULL,
   vertex.size.max = 15,
-  weight.scale = FALSE,
-  edge.weight.max = NULL,
+  weight.scale = TRUE,
+  edge.weight.max.individual = NULL,
+  edge.weight.max.aggregate = NULL,
   edge.width.max = 8,
   layout = c("hierarchy", "circle", "chord"),
   height = 5,
@@ -71,7 +72,9 @@ netVisual(
 
 \item{weight.scale}{whether scale the edge weight}
 
-\item{edge.weight.max}{the maximum weight of edge; defualt = max(net)}
+\item{edge.weight.max.individual}{the maximum weight of edge when plotting the individual L-R netwrok; defualt = max(net)}
+
+\item{edge.weight.max.aggregate}{the maximum weight of edge when plotting the aggregated signaling pathway network}
 
 \item{edge.width.max}{The maximum edge width for visualization}
 

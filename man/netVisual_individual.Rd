@@ -19,7 +19,7 @@ netVisual_individual(
   vertex.weight.max = NULL,
   vertex.size.max = 15,
   vertex.label.cex = 0.8,
-  weight.scale = FALSE,
+  weight.scale = TRUE,
   edge.weight.max = NULL,
   edge.width.max = 8,
   layout = c("hierarchy", "circle", "chord"),
