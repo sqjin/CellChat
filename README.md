@@ -27,6 +27,7 @@ In addition to infer the intercellular communication from any given scRNA-seq da
 - It provides an easy-to-use tool for extracting and visualizing high-order information of the inferred networks. For example, it allows ready prediction of major signaling inputs and outputs for all cell populations and how these populations and signals coordinate together for functions.
 - It provides several visualization outputs to facilitate intuitive user-guided data interpretation.
 
+Check out [our preprint on bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.21.214387v1) for the detailed methods and applications (It is now accepted for publication in Nature Communications, 2021).
 
 ## Installation
 
@@ -70,8 +71,6 @@ Please check the tutorial directory of the repo.
 If you have any questions, comments or suggestions, please contact cellchat.package@gmail.com.
 
 ## Preprint
-Check out [our preprint on bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.21.214387v1) for the detailed methods and applications.
-
 Suoqin Jin, Christian F. Guerrero-Juarez, Lihua Zhang, Ivan Chang, Peggy Myung, Maksim V. Plikus, Qing Nie. Inference and analysis of cell-cell communication using CellChat. bioRxiv 2020.07.21.214387; doi: https://doi.org/10.1101/2020.07.21.214387
 
 
