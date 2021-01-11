@@ -9,20 +9,23 @@ rankNet(
   slot.name = "netP",
   mode = c("single", "comparison"),
   comparison = c(1, 2),
+  color.use = NULL,
   stacked = FALSE,
+  sources.use = NULL,
+  targets.use = NULL,
+  show.raw = FALSE,
+  tol = 0.05,
+  thresh = 0.05,
+  return.data = FALSE,
+  x.rotation = 90,
+  title = NULL,
+  bar.w = 0.75,
+  font.size = 8,
   axis.gap = FALSE,
   ylim = NULL,
   segments = NULL,
   tick_width = NULL,
-  rel_heights = c(0.9, 0, 0.1),
-  tol = 0.05,
-  return.data = FALSE,
-  show.raw = FALSE,
-  x.rotation = 90,
-  title = NULL,
-  color.use = NULL,
-  bar.w = 0.75,
-  font.size = 8
+  rel_heights = c(0.9, 0, 0.1)
 )
 }
 \arguments{
@@ -34,33 +37,39 @@ rankNet(
 
 \item{comparison}{a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets}
 
+\item{color.use}{defining the color for each cell group}
+
 \item{stacked}{whether plot the stacked bar plot}
+
+\item{sources.use}{a vector giving the index or the name of source cell groups}
+
+\item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{show.raw}{whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale; When stacked = TRUE, use raw information flow by default.}
+
+\item{tol}{a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution}
+
+\item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{return.data}{whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair}
+
+\item{x.rotation}{rotation of x-labels}
+
+\item{title}{main title of the plot}
+
+\item{bar.w}{the width of bar plot}
+
+\item{font.size}{font size}
 
 \item{axis.gap}{whetehr making gaps in y-axes}
 
 \item{ylim, segments, tick_width, rel_heights}{parameters in the function gg.gap when making gaps in y-axes
 e.g., ylim = c(0, 35), segments = list(c(11, 14),c(16, 28)), tick_width = c(5,2,5), rel_heights = c(0.8,0,0.1,0,0.1)
 https://tobiasbusch.xyz/an-r-package-for-everything-ep2-gaps}
-
-\item{tol}{a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution}
-
-\item{return.data}{whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair}
-
-\item{show.raw}{whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale}
-
-\item{x.rotation}{rotation of x-labels}
-
-\item{title}{main title of the plot}
-
-\item{color.use}{defining the color for each cell group}
-
-\item{bar.w}{the width of bar plot}
-
-\item{font.size}{font size}
 }
 \value{
 
 }
 \description{
-Rank signaling networks based on the information flow
+This function can also be used to rank signaling from certain cell groups to other cell groups
 }

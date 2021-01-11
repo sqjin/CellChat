@@ -9,6 +9,9 @@ netAnalysis_river(
   slot.name = "netP",
   pattern = c("outgoing", "incoming"),
   cutoff = 0.5,
+  sources.use = NULL,
+  targets.use = NULL,
+  signaling = NULL,
   color.use = NULL,
   color.use.pattern = NULL,
   color.use.signaling = "grey50",
@@ -26,6 +29,12 @@ netAnalysis_river(
 \item{pattern}{"outgoing" or "incoming"}
 
 \item{cutoff}{the threshold for filtering out weak links}
+
+\item{sources.use}{a vector giving the index or the name of source cell groups of interest}
+
+\item{targets.use}{a vector giving the index or the name of target cell groups of interest}
+
+\item{signaling}{a character vector giving the name of signaling pathways of interest}
 
 \item{color.use}{the character vector defining the color of each cell group}
 
