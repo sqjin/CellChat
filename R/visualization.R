@@ -2432,6 +2432,9 @@ netVisual_chord_gene <- function(object, slot.name = "net", color.use = NULL,
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param pattern "outgoing" or "incoming"
 #' @param cutoff the threshold for filtering out weak links
+#' @param sources.use a vector giving the index or the name of source cell groups of interest
+#' @param targets.use a vector giving the index or the name of target cell groups of interest
+#' @param signaling a character vector giving the name of signaling pathways of interest
 #' @param color.use the character vector defining the color of each cell group
 #' @param color.use.pattern the character vector defining the color of each pattern
 #' @param color.use.signaling the character vector defining the color of each signaling
@@ -2452,12 +2455,13 @@ netVisual_chord_gene <- function(object, slot.name = "net", color.use = NULL,
 #'
 #' @examples
 netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing","incoming"), cutoff = 0.5,
+                              sources.use = NULL, targets.use = NULL, signaling = NULL,
                               color.use = NULL, color.use.pattern = NULL, color.use.signaling = "grey50",
                               do.order = FALSE, main.title = NULL,
                               font.size = 2.5, font.size.title = 12){
   message("Please make sure you have load `library(ggalluvial)` when running this function")
   requireNamespace("ggalluvial")
-#  suppressMessages(require(ggalluvial))
+  #  suppressMessages(require(ggalluvial))
   res.pattern <- methods::slot(object, slot.name)$pattern[[pattern]]
   data1 = res.pattern$pattern$cell
   data2 = res.pattern$pattern$signaling
@@ -2524,13 +2528,25 @@ netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing"
     plot.data <- data1
     nPatterns<-length(unique(plot.data$Pattern))
     nCellGroup<-length(unique(plot.data$CellGroup))
+    cells.level = levels(object@idents)
     if (is.null(color.use)) {
-      color.use <- scPalette(nCellGroup)
+      color.use <- scPalette(length(cells.level))[cells.level %in% unique(plot.data$CellGroup)]
     }
     if (is.null(color.use.pattern)){
       color.use.pattern <- ggPalette(nPatterns)
     }
-
+    if (!is.null(sources.use)) {
+      if (is.numeric(sources.use)) {
+        sources.use <- cells.level[sources.use]
+      }
+      plot.data <- subset(plot.data, CellGroup %in% sources.use)
+    }
+    if (!is.null(targets.use)) {
+      if (is.numeric(targets.use)) {
+        targets.use <- cells.level[targets.use]
+      }
+      plot.data <- subset(plot.data, CellGroup %in% targets.use)
+    }
     ## connect cell groups with patterns
     plot.data.long <- to_lodes_form(plot.data, axes = 1:2, id = "connection")
     if (do.order) {
@@ -2574,6 +2590,9 @@ netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing"
       color.use.all <- c(color.use.pattern, color.use.signaling)
     }
 
+    if (!is.null(signaling)) {
+      plot.data <- plot.data[plot.data$Signaling %in% signaling, ]
+    }
 
     plot.data.long <- ggalluvial::to_lodes_form(plot.data, axes = 1:2, id = "connection")
     if (do.order) {
@@ -2607,9 +2626,10 @@ netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing"
     ## connect cell groups with signaling
     # data1 = data1[data1$Contribution > 0,]
     # data2 = data2[data2$Contribution > 0,]
-    data3 = merge(data1, data2, by.x="Pattern", by.y="Pattern")
-    data3$Contribution <- data3$Contribution.x * data3$Contribution.y
-    data3 <- data3[,colnames(data3) %in% c("CellGroup","Signaling","Contribution")]
+
+    # data3 = merge(data1, data2, by.x="Pattern", by.y="Pattern")
+    # data3$Contribution <- data3$Contribution.x * data3$Contribution.y
+    # data3 <- data3[,colnames(data3) %in% c("CellGroup","Signaling","Contribution")]
 
     # plot.data <- data3
     # nSignaling<-length(unique(plot.data$Signaling))
@@ -2659,7 +2679,6 @@ netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing"
   }
   return(gg)
 }
-
 
 #' Dot plots showing the associations of latent patterns with cell groups and ligand-receptor pairs or signaling pathways
 #'

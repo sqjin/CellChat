@@ -847,22 +847,27 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 
 #' Rank signaling networks based on the information flow
 #'
+#' This function can also be used to rank signaling from certain cell groups to other cell groups
+#'
 #' @param object CellChat object
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param mode "single","comparison"
 #' @param comparison a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets
+#' @param color.use defining the color for each cell group
 #' @param stacked whether plot the stacked bar plot
+#' @param sources.use a vector giving the index or the name of source cell groups
+#' @param targets.use a vector giving the index or the name of target cell groups.
+#' @param show.raw whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale; When stacked = TRUE, use raw information flow by default.
+#' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
+#' @param thresh threshold of the p-value for determining significant interaction
 #' @param axis.gap whetehr making gaps in y-axes
 #' @param ylim,segments,tick_width,rel_heights parameters in the function gg.gap when making gaps in y-axes
 #' e.g., ylim = c(0, 35), segments = list(c(11, 14),c(16, 28)), tick_width = c(5,2,5), rel_heights = c(0.8,0,0.1,0,0.1)
 #' https://tobiasbusch.xyz/an-r-package-for-everything-ep2-gaps
-#' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
 #' @param return.data whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair
-#' @param show.raw whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale
 #' @param x.rotation rotation of x-labels
 #' @param title main title of the plot
 #' @param bar.w the width of bar plot
-#' @param color.use defining the color for each cell group
 #' @param font.size font size
 
 #' @import ggplot2
@@ -872,14 +877,42 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @export
 #'
 #' @examples
-rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"), comparison = c(1,2), stacked = FALSE, axis.gap = FALSE, ylim = NULL, segments = NULL, tick_width = NULL, rel_heights = c(0.9,0,0.1), tol = 0.05, return.data = FALSE, show.raw = FALSE, x.rotation = 90, title = NULL, color.use = NULL, bar.w = 0.75, font.size = 8) {
+rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL, show.raw = FALSE, tol = 0.05, thresh = 0.05, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
+                    axis.gap = FALSE, ylim = NULL, segments = NULL, tick_width = NULL, rel_heights = c(0.9,0,0.1)) {
   mode <- match.arg(mode)
   options(warn = -1)
   object.names <- names(methods::slot(object, slot.name))
   if (mode == "single") {
     object1 <- methods::slot(object, slot.name)
-    prob1 = object1$prob
-    pSum <- apply(prob1, 3, sum)
+    prob = object1$prob
+    prob[object1$pval > thresh] <- 0
+    if (!is.null(sources.use)) {
+      if (is.character(sources.use)) {
+        if (all(sources.use %in% dimnames(prob)[[1]])) {
+          sources.use <- match(sources.use, dimnames(prob)[[1]])
+        } else {
+          stop("The input `sources.use` should be cell group names or a numerical vector!")
+        }
+      }
+      idx.t <- setdiff(1:nrow(prob), sources.use)
+      prob[idx.t, , ] <- 0
+    }
+    if (!is.null(targets.use)) {
+      if (is.character(targets.use)) {
+        if (all(targets.use %in% dimnames(prob)[[1]])) {
+          targets.use <- match(targets.use, dimnames(prob)[[2]])
+        } else {
+          stop("The input `targets.use` should be cell group names or a numerical vector!")
+        }
+      }
+      idx.t <- setdiff(1:nrow(prob), targets.use)
+      prob[ ,idx.t, ] <- 0
+    }
+    if (sum(prob) == 0) {
+      stop("No inferred communications for the input!")
+    }
+
+    pSum <- apply(prob, 3, sum)
     pSum.original <- pSum
     pSum <- -1/log(pSum)
     pSum[is.na(pSum)] <- 0
@@ -890,9 +923,15 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
     pair.name <- names(pSum)
 
     df<- data.frame(name = pair.name, contribution = pSum.original, contribution.scaled = pSum, group = object.names[comparison[1]])
-    idx <- with(df, order(df$contribution.scaled))
+    idx <- with(df, order(df$contribution))
     df <- df[idx, ]
     df$name <- factor(df$name, levels = as.character(df$name))
+    for (i in 1:length(pair.name)) {
+      df.t <- df[df$name == pair.name[i], "contribution"]
+      if (sum(df.t) == 0) {
+        df <- df[-which(df$name == pair.name[i]), ]
+      }
+    }
     gg <- ggplot(df, aes(x=name, y=contribution.scaled)) + geom_bar(stat="identity",width = bar.w) +
       theme_classic() + theme(axis.text=element_text(size=10),axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.y = element_text(size=10)) +
       xlab("") + ylab("Information flow") + coord_flip()#+
@@ -901,98 +940,162 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
     }
 
   } else {
-    object1 <- methods::slot(object, slot.name)[[comparison[1]]]
-    object2 <- methods::slot(object, slot.name)[[comparison[2]]]
-    prob1 = object1$prob
-    prob2 = object2$prob
+    object.list <- list()
+    pSum <- list()
+    pSum.original <- list()
+    pair.name <- list()
+    idx <- list()
+    pSum.original.all <- c()
+    object.names.comparison <- c()
+    for (i in 1:length(comparison)) {
+      object.list <- methods::slot(object, slot.name)[[comparison[i]]]
+      prob <- object.list$prob
+      prob[object.list$pval > thresh] <- 0
+      if (!is.null(sources.use)) {
+        if (is.character(sources.use)) {
+          if (all(sources.use %in% dimnames(prob)[[1]])) {
+            sources.use <- match(sources.use, dimnames(prob)[[1]])
+          } else {
+            stop("The input `sources.use` should be cell group names or a numerical vector!")
+          }
+        }
+        idx.t <- setdiff(1:nrow(prob), sources.use)
+        prob[idx.t, , ] <- 0
+      }
+      if (!is.null(targets.use)) {
+        if (is.character(targets.use)) {
+          if (all(targets.use %in% dimnames(prob)[[1]])) {
+            targets.use <- match(targets.use, dimnames(prob)[[2]])
+          } else {
+            stop("The input `targets.use` should be cell group names or a numerical vector!")
+          }
+        }
+        idx.t <- setdiff(1:nrow(prob), targets.use)
+        prob[ ,idx.t, ] <- 0
+      }
+      if (sum(prob) == 0) {
+        stop("No inferred communications for the input!")
+      }
+      pSum.original[[i]] <- apply(prob, 3, sum)
+      pSum[[i]] <- -1/log(pSum.original[[i]])
+      pair.name[[i]] <- names(pSum.original[[i]])
 
-    pSum <- apply(prob1, 3, sum)
-    pSum2 <- apply(prob2, 3, sum)
+      pSum[[i]][is.na(pSum[[i]])] <- 0
+      idx[[i]] <- which(is.infinite(pSum[[i]]) | pSum[[i]] < 0)
+      pSum.original.all <- c(pSum.original.all, pSum.original[[i]][idx[[i]]])
+      object.names.comparison <- c(object.names.comparison, object.names[comparison[i]])
+    }
 
-    pSum1 <- pSum
-    pSum1.original <- pSum1
-    pSum1 <- -1/log(pSum1)
-    pair.name1 <- names(pSum1)
-    pSum2 <- pSum2
-    pSum2.original <- pSum2
-    pSum2 <- -1/log(pSum2)
-    pair.name2 <- names(pSum2)
+    values.assign <- seq(max(unlist(pSum))*1.1, max(unlist(pSum))*1.5, length.out = length(unlist(idx)))
+    position <- sort(pSum.original.all, index.return = TRUE)$ix
 
-    pSum1[is.na(pSum1)] <- 0
-    pSum2[is.na(pSum2)] <- 0
-    idx1 <- which(is.infinite(pSum1) | pSum1 < 0)
-    idx2 <- which(is.infinite(pSum2) | pSum2 < 0)
-    values.assign <- seq(max(c(pSum1, pSum2))*1.1, max(c(pSum1, pSum2))*1.5, length.out = length(c(idx1, idx2)))
-    position <- sort(c(pSum1.original[idx1], pSum2.original[idx2]), index.return = TRUE)$ix
-    pSum1[idx1] <- values.assign[match(1:length(idx1), position)]
-    pSum2[idx2] <- values.assign[match((length(idx1)+1):length(position), position)]
+    for (i in 1:length(comparison)) {
+      if (i == 1) {
+        pSum[[i]][idx[[i]]] <- values.assign[match(1:length(idx[[i]]), position)]
+      } else {
+        pSum[[i]][idx[[i]]] <- values.assign[match(length(unlist(idx[1:i-1]))+1:length(unlist(idx[1:i])), position)]
+      }
+    }
 
-    pair.name <- union(pair.name1, pair.name2)
-    df1 <- data.frame(name = pair.name, contribution = 0, contribution.scaled = 0, group = object.names[comparison[1]], row.names = pair.name)
-    df1[pair.name1,3] <- pSum1
-    df1[pair.name1,2] <- pSum1.original
-    df2 <- data.frame(name = pair.name, contribution = 0, contribution.scaled = 0, group = object.names[comparison[2]], row.names = pair.name)
-    df2[pair.name2,3] <- pSum2
-    df2[pair.name2,2] <- pSum2.original
+    pair.name.all <- as.character(unique(unlist(pair.name)))
+    df <- list()
+    for (i in 1:length(comparison)) {
+      df[[i]] <- data.frame(name = pair.name.all, contribution = 0, contribution.scaled = 0, group = object.names[comparison[i]], row.names = pair.name.all)
+      df[[i]][pair.name[[i]],3] <- pSum[[i]]
+      df[[i]][pair.name[[i]],2] <- pSum.original[[i]]
+    }
 
-    contribution.relative <- as.numeric(format(df2$contribution/abs(df1$contribution), digits=1))
-    df1$contribution.relative <- contribution.relative
-    df2$contribution.relative <- contribution.relative
-    df1$contribution.data2 <- df2$contribution
-    #df1$contribution.data2[!is.infinite(df1$contribution.data2)] <- 0
-    idx <- with(df1, order(-contribution.relative, contribution, -contribution.data2))
-    df1 <- df1[idx, ]
-    df2 <- df2[idx, ]
-    df1$contribution.data2 <- NULL
-    df1$name <- factor(df1$name, levels = as.character(df1$name))
-    df2$name <- factor(df2$name, levels = as.character(df2$name))
-    df <- rbind(df1, df2)
-    df$group <- factor(df$group, levels = c(object.names[comparison[1]], object.names[comparison[2]]))
+
+    # contribution.relative <- as.numeric(format(df[[length(comparison)]]$contribution/abs(df[[1]]$contribution), digits=1))
+    # #  contribution.relative <- as.numeric(format(df[[length(comparison)]]$contribution.scaled/abs(df[[1]]$contribution.scaled), digits=1))
+    # contribution.relative2 <- as.numeric(format(df[[length(comparison)-1]]$contribution/abs(df[[1]]$contribution), digits=1))
+    # contribution.relative[is.na(contribution.relative)] <- 0
+    # for (i in 1:length(comparison)) {
+    #   df[[i]]$contribution.relative <- contribution.relative
+    #   df[[i]]$contribution.relative2 <- contribution.relative2
+    # }
+    # df[[1]]$contribution.data2 <- df[[length(comparison)]]$contribution
+    # idx <- with(df[[1]], order(-contribution.relative,  -contribution.relative2, contribution, -contribution.data2))
+    #
+    contribution.relative <- list()
+    for (i in 1:(length(comparison)-1)) {
+      contribution.relative[[i]] <- as.numeric(format(df[[length(comparison)-i+1]]$contribution/df[[1]]$contribution, digits=1))
+      contribution.relative[[i]][is.na(contribution.relative[[i]])] <- 0
+    }
+    names(contribution.relative) <- paste0("contribution.relative.", 1:length(contribution.relative))
+    for (i in 1:length(comparison)) {
+      for (j in 1:length(contribution.relative)) {
+        df[[i]][[names(contribution.relative)[j]]] <- contribution.relative[[j]]
+      }
+    }
+    df[[1]]$contribution.data2 <- df[[length(comparison)]]$contribution
+    if (length(comparison) == 2) {
+      idx <- with(df[[1]], order(-contribution.relative.1, contribution, -contribution.data2))
+    } else if (length(comparison) == 3) {
+      idx <- with(df[[1]], order(-contribution.relative.1, -contribution.relative.2,contribution, -contribution.data2))
+    } else if (length(comparison) == 4) {
+      idx <- with(df[[1]], order(-contribution.relative.1, -contribution.relative.2, -contribution.relative.3, contribution, -contribution.data2))
+    } else {
+      idx <- with(df[[1]], order(-contribution.relative.1, -contribution.relative.2, -contribution.relative.3, -contribution.relative.4, contribution, -contribution.data2))
+    }
+
+
+
+    for (i in 1:length(comparison)) {
+      df[[i]] <- df[[i]][idx, ]
+      df[[i]]$name <- factor(df[[i]]$name, levels = as.character(df[[i]]$name))
+    }
+    df[[1]]$contribution.data2 <- NULL
+
+    df <- do.call(rbind, df)
+    df$group <- factor(df$group, levels = object.names.comparison)
 
     if (is.null(color.use)) {
-      color.use =  ggPalette(2)
+      color.use =  ggPalette(length(comparison))
     }
-    if (!show.raw) {
-      if (stacked) {
-        colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
-        gg <- ggplot(df, aes(x=name, y=contribution.scaled, fill = group)) + geom_bar(stat="identity",width = bar.w, position ="fill") +
-          theme_classic() + theme(axis.text=element_text(size=font.size), axis.title.y = element_text(size=font.size)) +
-          xlab("") + ylab("Relative information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
-        gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text)) +
-          # scale_y_continuous(labels = c(0,0.5,1)) +
-          geom_hline(yintercept = 0.5, linetype="dashed", color = "grey50", size=0.5)
-        if (!is.null(title)) {
-          gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
-        }
-      } else {
-        colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
-        gg <- ggplot(df, aes(x=name, y=contribution.scaled, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
-          theme_classic() + theme(axis.text=element_text(size=font.size), axis.title.y = element_text(size=font.size)) +
+    if (length(comparison) == 2) {
+      colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
+    } else {
+      message("The text on the y-axis will not be colored for the number of compared datasets larger than 3!")
+      colors.text = NULL
+    }
+    # https://stackoverflow.com/questions/49448497/coord-flip-changes-ordering-of-bars-within-groups-in-grouped-bar-plot
+    df$group <- factor(df$group, levels = rev(levels(df$group)))
+    color.use <- rev(color.use)
+    for (i in 1:length(pair.name.all)) {
+      df.t <- df[df$name == pair.name.all[i], "contribution"]
+      if (sum(df.t) == 0) {
+        df <- df[-which(df$name == pair.name.all[i]), ]
+      }
+    }
+    if (stacked) {
+      gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position ="fill") +
+        xlab("") + ylab("Relative information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+      #  scale_y_discrete(breaks=c("0","0.5","1")) +
+      gg <- gg + geom_hline(yintercept = 0.5, linetype="dashed", color = "grey50", size=0.5)
+    } else {
+      if (show.raw) {
+        gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
           xlab("") + ylab("Information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
-        gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text))
-        if (axis.gap) {
-          gg <- gg + theme_bw() + theme(panel.grid = element_blank())
-          gg.gap::gg.gap(gg,
-                         ylim = ylim,
-                         segments = segments,
-                         tick_width = tick_width,
-                         rel_heights = rel_heights)
-        }
-        if (!is.null(title)) {
-          gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
-        }
+      } else {
+        gg <- ggplot(df, aes(x=name, y=contribution.scaled, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
+          xlab("") + ylab("Information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       }
 
-    } else {
-      df$contribution[df$group == object.names[comparison[1]]] <- -df$contribution[df$group == object.names[comparison[1]]]
-      colors.text <- ifelse(df$contribution.relative < 1, color.use[1], ifelse(df$contribution.relative > 1, color.use[2], "black"))
-      gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w) +
-        theme_classic() + theme(axis.text=element_text(size=font.size),axis.title.y = element_text(size=font.size)) +
-        xlab("") + ylab("Information flow") + coord_flip()#+
-      gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text))
-      if (!is.null(title)) {
-        gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
+      if (axis.gap) {
+        gg <- gg + theme_bw() + theme(panel.grid = element_blank())
+        gg.gap::gg.gap(gg,
+                       ylim = ylim,
+                       segments = segments,
+                       tick_width = tick_width,
+                       rel_heights = rel_heights)
       }
+    }
+    gg <- gg +  CellChat_theme_opts() + theme_classic() + theme(axis.text=element_text(size=font.size), axis.title.y = element_text(size=font.size))
+    gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text))
+    gg <- gg + guides(fill = guide_legend(reverse = TRUE))
+    if (!is.null(title)) {
+      gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
     }
   }
 
@@ -1004,6 +1107,7 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
     return(gg)
   }
 }
+
 
 #' Comparing the number of inferred communication links between different datasets
 #'
