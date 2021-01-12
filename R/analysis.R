@@ -72,14 +72,14 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     }
     mat <- pSum
     df1 <- data.frame(name = pair.name, contribution = mat)
-    if(nrow(df1) < 10) {
+   if(nrow(df1) < 10) {
       df2 <- data.frame(name = as.character(1:(10-nrow(df1))), contribution = rep(0, 10-nrow(df1)))
       df <- rbind(df1, df2)
     } else {
       df <- df1
     }
-    df <- df[order(df$contribution, decreasing = TRUE), ]
-    df$name <- factor(df$name,levels=df$name[order(df$contribution)])    
+    df <- df[order(df$contribution,decreasing=TRUE), ]
+    df$name <- factor(df$name,levels=df$name[order(df$contribution,decreasing=TRUE)])
     gg <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity", width = 0.7) +
       theme_classic() + theme(axis.text.y = element_text(angle = x.rotation, hjust = 1,size=font.size, colour = 'black'), axis.text=element_text(size=font.size),
                               axis.title.y = element_text(size= font.size), axis.text.x = element_blank(), axis.ticks = element_blank()) +
@@ -100,6 +100,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     y.lim <- max(pSum)
 
     df<- data.frame(name = pair.name, contribution = pSum)
+    df$name <- factor(df$name,levels=df$name[order(df$contribution,decreasing=TRUE)])
     gg <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity",width = 0.2) +
       theme_classic() + theme(axis.text=element_text(size=10),axis.text.x = element_text(angle = x.rotation, hjust = 1,size=8),
                               axis.title.y = element_text(size=10)) +
@@ -116,6 +117,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     pSum[is.na(pSum)] <- 0
 
     df<- data.frame(name = pair.name, contribution = pSum)
+    df$name <- factor(df$name,levels=df$name[order(df$contribution,decreasing=TRUE)])
     gg1 <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity",width = 0.2) +
       theme_classic() + theme(axis.text=element_text(size=10),axis.text.x = element_text(angle = x.rotation, hjust = 1,size=8), axis.title.y = element_text(size=10)) +
       xlab("") + ylab("Relative contribution") + ylim(0,y.lim)+ ggtitle("Hierarchy1") + theme(plot.title = element_text(hjust = 0.5))#+
@@ -132,6 +134,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     pSum[is.na(pSum)] <- 0
 
     df<- data.frame(name = pair.name, contribution = pSum)
+    df$name <- factor(df$name,levels=df$name[order(df$contribution,decreasing=TRUE)])
     gg2 <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity", width=0.9) +
       theme_classic() + theme(axis.text=element_text(size=10),axis.text.x = element_text(angle = x.rotation, hjust = 1,size=8), axis.title.y = element_text(size=10)) +
       xlab("") + ylab("Relative contribution") + ylim(0,y.lim)+ ggtitle("Hierarchy2")+ theme(plot.title = element_text(hjust = 0.5))#+
