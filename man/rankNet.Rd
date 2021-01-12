@@ -7,15 +7,17 @@
 rankNet(
   object,
   slot.name = "netP",
-  mode = c("single", "comparison"),
+  mode = c("comparison", "single"),
   comparison = c(1, 2),
   color.use = NULL,
   stacked = FALSE,
   sources.use = NULL,
   targets.use = NULL,
-  show.raw = FALSE,
+  do.stat = TRUE,
+  cutoff.pvalue = 0.05,
   tol = 0.05,
   thresh = 0.05,
+  show.raw = FALSE,
   return.data = FALSE,
   x.rotation = 90,
   title = NULL,
@@ -45,11 +47,15 @@ rankNet(
 
 \item{targets.use}{a vector giving the index or the name of target cell groups.}
 
-\item{show.raw}{whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale; When stacked = TRUE, use raw information flow by default.}
+\item{do.stat}{whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets}
+
+\item{cutoff.pvalue}{the cutoff of pvalue when doing Wilcoxon test; Default = 0.05}
 
 \item{tol}{a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution}
 
 \item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{show.raw}{whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale; When stacked = TRUE, use raw information flow by default.}
 
 \item{return.data}{whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair}
 
