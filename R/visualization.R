@@ -2270,9 +2270,9 @@ netVisual_chord_gene <- function(object, slot.name = "net", color.use = NULL,
 
   if (slot.name == "netP") {
     net <- dplyr::select(net, c("source","target","pathway_name","prob"))
-    net$source_target <- paste(net$source, net$target, sep = "_")
+    net$source_target <- paste(net$source, net$target, sep = "sourceTotarget")
     net <- net %>% dplyr::group_by(source_target, pathway_name) %>% dplyr::summarize(prob = sum(prob))
-    a <- stringr::str_split(net$source_target, "_", simplify = T)
+    a <- stringr::str_split(net$source_target, "sourceTotarget", simplify = T)
     net$source <- as.character(a[, 1])
     net$target <- as.character(a[, 2])
     net$ligand <- net$pathway_name

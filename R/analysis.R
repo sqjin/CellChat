@@ -78,6 +78,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     } else {
       df <- df1
     }
+    df <- df[order(df$contribution, decreasing = TRUE), ]
     gg <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity", width = 0.7) +
       theme_classic() + theme(axis.text.y = element_text(angle = x.rotation, hjust = 1,size=font.size, colour = 'black'), axis.text=element_text(size=font.size),
                               axis.title.y = element_text(size= font.size), axis.text.x = element_blank(), axis.ticks = element_blank()) +
@@ -141,6 +142,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     gg
   }
   if (return.data) {
+    df <- subset(df, contribution > 0)
     return(list(LR.contribution = df, gg.obj = gg))
   } else {
     return(gg)
@@ -857,13 +859,15 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @param stacked whether plot the stacked bar plot
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
-#' @param show.raw whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale; When stacked = TRUE, use raw information flow by default.
+#' @param do.stat whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets
+#' @param cutoff.pvalue the cutoff of pvalue when doing Wilcoxon test; Default = 0.05
 #' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
 #' @param thresh threshold of the p-value for determining significant interaction
 #' @param axis.gap whetehr making gaps in y-axes
 #' @param ylim,segments,tick_width,rel_heights parameters in the function gg.gap when making gaps in y-axes
 #' e.g., ylim = c(0, 35), segments = list(c(11, 14),c(16, 28)), tick_width = c(5,2,5), rel_heights = c(0.8,0,0.1,0,0.1)
 #' https://tobiasbusch.xyz/an-r-package-for-everything-ep2-gaps
+#' @param show.raw whether show the raw information flow. Default = FALSE, showing the scaled information flow to provide compariable data scale; When stacked = TRUE, use raw information flow by default.
 #' @param return.data whether return the data.frame consisting of the calculated information flow of each signaling pathway or L-R pair
 #' @param x.rotation rotation of x-labels
 #' @param title main title of the plot
@@ -877,7 +881,7 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @export
 #'
 #' @examples
-rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL, show.raw = FALSE, tol = 0.05, thresh = 0.05, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
+rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL,  do.stat = TRUE, cutoff.pvalue = 0.05, tol = 0.05, thresh = 0.05, show.raw = FALSE, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
                     axis.gap = FALSE, ylim = NULL, segments = NULL, tick_width = NULL, rel_heights = c(0.9,0,0.1)) {
   mode <- match.arg(mode)
   options(warn = -1)
@@ -939,8 +943,8 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
       gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
     }
 
-  } else {
-    object.list <- list()
+  } else if (mode == "comparison") {
+    prob.list <- list()
     pSum <- list()
     pSum.original <- list()
     pair.name <- list()
@@ -951,6 +955,7 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
       object.list <- methods::slot(object, slot.name)[[comparison[i]]]
       prob <- object.list$prob
       prob[object.list$pval > thresh] <- 0
+      prob.list[[i]] <- prob
       if (!is.null(sources.use)) {
         if (is.character(sources.use)) {
           if (all(sources.use %in% dimnames(prob)[[1]])) {
@@ -1053,21 +1058,76 @@ rankNet <- function(object, slot.name = "netP", mode = c("single","comparison"),
     if (is.null(color.use)) {
       color.use =  ggPalette(length(comparison))
     }
+
+    # https://stackoverflow.com/questions/49448497/coord-flip-changes-ordering-of-bars-within-groups-in-grouped-bar-plot
+    df$group <- factor(df$group, levels = rev(levels(df$group)))
+    color.use <- rev(color.use)
+
+    # perform statistical analysis
+    # if (do.stat) {
+    #   pvalues <- c()
+    #   for (i in 1:length(pair.name.all)) {
+    #     df.prob <- data.frame()
+    #     for (j in 1:length(comparison)) {
+    #       if (pair.name.all[i] %in% pair.name[[j]]) {
+    #         df.prob <- rbind(df.prob, data.frame(prob = as.vector(prob.list[[j]][ , , pair.name.all[i]]), group = comparison[j]))
+    #       } else {
+    #         df.prob <- rbind(df.prob, data.frame(prob = as.vector(matrix(0, nrow = nrow(prob.list[[j]]), ncol = nrow(prob.list[[j]]))), group = comparison[j]))
+    #       }
+    #
+    #     }
+    #     df.prob$group <- factor(df.prob$group, levels = comparison)
+    #     if (length(comparison) == 2) {
+    #       pvalues[i] <- wilcox.test(prob ~ group, data = df.prob)$p.value
+    #     } else {
+    #       pvalues[i] <- kruskal.test(prob ~ group, data = df.prob)$p.value
+    #     }
+    #   }
+    #   df$pvalues <- pvalues
+    # }
+    if (do.stat & length(comparison) == 2) {
+      for (i in 1:length(pair.name.all)) {
+        if (nrow(prob.list[[j]]) != nrow(prob.list[[1]])) {
+          stop("Statistical test is not applicable to datasets with different cellular compositions! Please set `do.stat = FALSE`")
+        }
+        prob.values <- matrix(0, nrow = nrow(prob.list[[1]]) * nrow(prob.list[[1]]), ncol = length(comparison))
+        for (j in 1:length(comparison)) {
+          if (pair.name.all[i] %in% pair.name[[j]]) {
+            prob.values[, j] <- as.vector(prob.list[[j]][ , , pair.name.all[i]])
+          } else {
+            prob.values[, j] <- NA
+          }
+        }
+        prob.values <- prob.values[rowSums(prob.values, na.rm = TRUE) != 0, , drop = FALSE]
+        if (nrow(prob.values) >3 & sum(is.na(prob.values)) == 0) {
+          pvalues <- wilcox.test(prob.values[ ,1], prob.values[ ,2], paired = TRUE)$p.value
+        } else {
+          pvalues <- 0
+        }
+        pvalues[is.na(pvalues)] <- 0
+        df$pvalues[df$name == pair.name.all[i]] <- pvalues
+      }
+    }
+
+
     if (length(comparison) == 2) {
-      colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
+      if (do.stat) {
+        colors.text <- ifelse((df$contribution.relative < 1-tol) & (df$pvalues < cutoff.pvalue), color.use[1], ifelse((df$contribution.relative > 1+tol) & df$pvalues < cutoff.pvalue, color.use[2], "black"))
+      } else {
+        colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
+      }
     } else {
       message("The text on the y-axis will not be colored for the number of compared datasets larger than 3!")
       colors.text = NULL
     }
-    # https://stackoverflow.com/questions/49448497/coord-flip-changes-ordering-of-bars-within-groups-in-grouped-bar-plot
-    df$group <- factor(df$group, levels = rev(levels(df$group)))
-    color.use <- rev(color.use)
+
     for (i in 1:length(pair.name.all)) {
       df.t <- df[df$name == pair.name.all[i], "contribution"]
       if (sum(df.t) == 0) {
         df <- df[-which(df$name == pair.name.all[i]), ]
       }
     }
+
     if (stacked) {
       gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position ="fill") +
         xlab("") + ylab("Relative information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
@@ -1748,11 +1808,11 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
 
   if (slot.name == "netP") {
     net <- dplyr::select(net, c("source","target","pathway_name","prob", "pval","annotation"))
-    net$source_target <- paste(net$source, net$target, sep = "_")
+    net$source_target <- paste(net$source, net$target, sep = "sourceTotarget")
     # net$source_target_pathway <- paste(paste(net$source, net$target, sep = "_"), net$pathway_name, sep = "_")
-    net <- net %>% group_by(source_target, pathway_name) %>% summarize(prob = sum(prob), .groups = 'drop')
     net.pval <- net %>% group_by(source_target, pathway_name) %>% summarize(pval = mean(pval), .groups = 'drop')
-    a <- stringr::str_split(net$source_target, "_", simplify = T)
+    net <- net %>% group_by(source_target, pathway_name) %>% summarize(prob = sum(prob), .groups = 'drop')
+    a <- stringr::str_split(net$source_target, "sourceTotarget", simplify = T)
     net$source <- as.character(a[, 1])
     net$target <- as.character(a[, 2])
     net <- dplyr::select(net, -source_target)
