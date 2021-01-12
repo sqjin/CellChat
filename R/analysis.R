@@ -1114,9 +1114,9 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
 
     if (length(comparison) == 2) {
       if (do.stat) {
-        colors.text <- ifelse((df$contribution.relative < 1-tol) & (df$pvalues < cutoff.pvalue), color.use[1], ifelse((df$contribution.relative > 1+tol) & df$pvalues < cutoff.pvalue, color.use[2], "black"))
+        colors.text <- ifelse((df$contribution.relative < 1-tol) & (df$pvalues < cutoff.pvalue), color.use[2], ifelse((df$contribution.relative > 1+tol) & df$pvalues < cutoff.pvalue, color.use[1], "black"))
       } else {
-        colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[1], ifelse(df$contribution.relative > 1+tol, color.use[2], "black"))
+        colors.text <- ifelse(df$contribution.relative < 1-tol, color.use[2], ifelse(df$contribution.relative > 1+tol, color.use[1], "black"))
       }
     } else {
       message("The text on the y-axis will not be colored for the number of compared datasets larger than 3!")
