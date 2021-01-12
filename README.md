@@ -61,7 +61,7 @@ Please check the tutorial directory of the repo.
 - [Tutorial for updating ligand-receptor database CellChatDB](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Update-CellChatDB.html)
 
 <p align="center">
-  <img width="700"  src="https://github.com/sqjin/CellChat/blob/master/overview_CellChat.png">
+  <img width="900"  src="https://github.com/sqjin/CellChat/blob/master/overview_CellChat.png">
 </p>
 
 ## System Requirements
