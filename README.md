@@ -8,10 +8,10 @@
 ## Important update!!
 January 05, 2021 (Version 0.5.0)
 
+* Slight changes of CellChat object (Please update your previously calculated CellChat object via `updateCellChat()`)
 * Enhanced documentation of functions and tutorials (use `help()` to check the documentation, e.g., `help(CellChat)`)
 * New features for comparison analysis of multiple datasets
 * Support for creating a new CellChat object from Seurat V3 or SingleCellExperiment object
-* Slight changes of CellChat object (Please update your previously calculated CellChat object via `updateCellChat()`)
 
 ## Web-based “CellChat Explorer” 
 
@@ -40,8 +40,8 @@ devtools::install_github("sqjin/CellChat")
 
 ### Installation of other dependencies
 - Install [NMF (>= 0.23.0)](http://renozao.github.io/NMF/devel/PAGE-INSTALLATION.html) using `install.packages('NMF')`. Please check [here](https://github.com/sqjin/CellChat/issues/16) for other solutions if you encounter any issue. You might can set `Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=TRUE)` if it throws R version error. 
-- Install [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if you encounter any issue.
 - Install [circlize (>= 0.4.12)](https://github.com/jokergoo/circlize) using `devtools::install_github("jokergoo/circlize")` if you encounter any issue.
+- Install [ComplexHeatmap](https://github.com/jokergoo/ComplexHeatmap) using `devtools::install_github("jokergoo/ComplexHeatmap")` if you encounter any issue.
 - Install UMAP python pacakge for dimension reduction: ```pip install umap-learn```. Please check [here](https://github.com/lmcinnes/umap) if you encounter any issue. 
 
 Some users might have issues when installing CellChat pacakge due to different operating systems and new R version. Please check the following solutions:
@@ -60,7 +60,9 @@ Please check the tutorial directory of the repo.
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, SingleCellExperiment, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Interface_with_other_single-cell_analysis_toolkits.html)
 - [Tutorial for updating ligand-receptor database CellChatDB](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Update-CellChatDB.html)
 
-
+<p align="center">
+  <img width="700"  src="https://github.com/sqjin/CellChat/blob/master/overview_CellChat.png">
+</p>
 
 ## System Requirements
 - Hardware requirements: CellChat package requires only a standard computer with enough RAM to support the in-memory operations.
