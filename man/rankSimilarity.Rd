@@ -8,7 +8,8 @@ rankSimilarity(
   object,
   slot.name = "netP",
   type = c("functional", "structural"),
-  comparison = c(1, 2),
+  comparison1 = NULL,
+  comparison2 = c(1, 2),
   pathway.remove = NULL,
   x.rotation = 90,
   title = NULL,
@@ -24,7 +25,9 @@ rankSimilarity(
 
 \item{type}{"functional","structural"}
 
-\item{comparison}{a numerical vector giving the datasets for comparison}
+\item{comparison1}{a numerical vector giving the datasets for comparison. This should be the same as `comparison` in `computeNetSimilarityPairwise`}
+
+\item{comparison2}{a numerical vector with two elements giving the datasets for comparison. If there are more than 2 datasets defined in `comparison1`, `comparison2` can be defined to indicate which two datasets used for computing the distance}
 
 \item{pathway.remove}{a character vector defining the signaling to remove}
 

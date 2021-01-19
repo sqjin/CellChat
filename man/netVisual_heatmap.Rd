@@ -21,7 +21,9 @@ netVisual_heatmap(
   cluster.cols = FALSE,
   sources.use = NULL,
   targets.use = NULL,
-  remove.isolate = FALSE
+  remove.isolate = FALSE,
+  row.show = NULL,
+  col.show = NULL
 )
 }
 \arguments{
@@ -58,6 +60,8 @@ netVisual_heatmap(
 \item{targets.use}{a vector giving the index or the name of target cell groups.}
 
 \item{remove.isolate}{whether remove the isolate nodes in the communication network}
+
+\item{row.show, col.show}{a vector giving the index or the name of row or columns to show in the heatmap}
 }
 \value{
 an object of ComplexHeatmap
@@ -65,7 +69,7 @@ an object of ComplexHeatmap
 \description{
 This heatmap can be used to show differential number of interactions or interaction strength in the cell-cell communication network between two datasets;
 the number of interactions or interaction strength in a single dataset
-the signaling network in single dataset, defined by `signaling`
+the inferred cell-cell communication network in single dataset, defined by `signaling`
 }
 \details{
 When show differential number of interactions or interaction strength in the cell-cell communication network between two datasets, the width of edges represent the relative number of interactions or interaction strength.

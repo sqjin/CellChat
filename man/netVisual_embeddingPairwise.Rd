@@ -8,6 +8,7 @@ netVisual_embeddingPairwise(
   object,
   slot.name = "netP",
   type = c("functional", "structural"),
+  comparison = NULL,
   color.use = NULL,
   point.shape = NULL,
   pathway.remove = NULL,
@@ -29,6 +30,8 @@ netVisual_embeddingPairwise(
 \item{slot.name}{the slot name of object that is used to compute centrality measures of signaling networks}
 
 \item{type}{"functional","structural"}
+
+\item{comparison}{a numerical vector giving the datasets for comparison. Default are all datasets when object is a merged object}
 
 \item{color.use}{defining the color for each cell group}
 

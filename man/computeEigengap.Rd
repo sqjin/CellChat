@@ -4,7 +4,7 @@
 \alias{computeEigengap}
 \title{Compute the eigengap of a given matrix for inferring the number of clusters}
 \usage{
-computeEigengap(CM, tau = NULL, tol = 0.01, do.plot = TRUE)
+computeEigengap(CM, tau = NULL, tol = 0.01)
 }
 \arguments{
 \item{CM}{consensus matrix}
@@ -12,8 +12,6 @@ computeEigengap(CM, tau = NULL, tol = 0.01, do.plot = TRUE)
 \item{tau}{truncated consensus matrix}
 
 \item{tol}{tolerance}
-
-\item{do.plot}{whether showing the eigenspectrum; Default will save the plot}
 }
 \value{
 

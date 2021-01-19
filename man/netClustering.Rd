@@ -8,8 +8,11 @@ netClustering(
   object,
   slot.name = "netP",
   type = c("functional", "structural"),
+  comparison = NULL,
   k = NULL,
   methods = "kmeans",
+  do.plot = TRUE,
+  fig.id = NULL,
   do.parallel = TRUE,
   nCores = 4,
   k.eigen = NULL
@@ -22,9 +25,15 @@ netClustering(
 
 \item{type}{"functional","structural"}
 
+\item{comparison}{a numerical vector giving the datasets for comparison. No need to define for a single dataset. Default are all datasets when object is a merged object}
+
 \item{k}{the number of signaling groups when running kmeans}
 
 \item{methods}{the methods for clustering: "kmeans" or "spectral"}
+
+\item{do.plot}{whether showing the eigenspectrum for inferring number of clusters; Default will save the plot}
+
+\item{fig.id}{add a unique figure id when saving the plot}
 
 \item{do.parallel}{whether doing parallel when inferring the number of signaling groups when running kmeans}
 

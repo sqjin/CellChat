@@ -8,6 +8,7 @@ netEmbedding(
   object,
   slot.name = "netP",
   type = c("functional", "structural"),
+  comparison = NULL,
   pathway.remove = NULL,
   k = NULL
 )
@@ -18,6 +19,8 @@ netEmbedding(
 \item{slot.name}{the slot name of object that is used to compute centrality measures of signaling networks}
 
 \item{type}{"functional","structural"}
+
+\item{comparison}{a numerical vector giving the datasets for comparison. No need to define for a single dataset. Default are all datasets when object is a merged object}
 
 \item{pathway.remove}{a range of the number of patterns}
 

@@ -13,7 +13,7 @@ rankNet(
   stacked = FALSE,
   sources.use = NULL,
   targets.use = NULL,
-  do.stat = TRUE,
+  do.stat = FALSE,
   cutoff.pvalue = 0.05,
   tol = 0.05,
   thresh = 0.05,
@@ -47,7 +47,7 @@ rankNet(
 
 \item{targets.use}{a vector giving the index or the name of target cell groups.}
 
-\item{do.stat}{whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets}
+\item{do.stat}{whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets. Default = FALSE}
 
 \item{cutoff.pvalue}{the cutoff of pvalue when doing Wilcoxon test; Default = 0.05}
 

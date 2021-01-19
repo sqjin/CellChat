@@ -2,12 +2,13 @@
 % Please edit documentation in R/analysis.R
 \name{computeNetSimilarityPairwise}
 \alias{computeNetSimilarityPairwise}
-\title{Compute signaling network similarity for a pair of datasets}
+\title{Compute signaling network similarity for any pair of datasets}
 \usage{
 computeNetSimilarityPairwise(
   object,
   slot.name = "netP",
   type = c("functional", "structural"),
+  comparison = NULL,
   k = NULL,
   thresh = NULL
 )
@@ -19,6 +20,8 @@ computeNetSimilarityPairwise(
 
 \item{type}{"functional","structural"}
 
+\item{comparison}{a numerical vector giving the datasets for comparison}
+
 \item{k}{the number of nearest neighbors}
 
 \item{thresh}{the fraction (0 to 0.25) of interactions to be trimmed before computing network similarity}
@@ -27,5 +30,5 @@ computeNetSimilarityPairwise(
 
 }
 \description{
-Compute signaling network similarity for a pair of datasets
+Compute signaling network similarity for any pair of datasets
 }

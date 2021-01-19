@@ -13,6 +13,7 @@ identifyOverExpressedGenes(
   group.dataset = NULL,
   pos.dataset = NULL,
   features.name = "features",
+  only.pos = TRUE,
   features = NULL,
   return.object = TRUE,
   thresh.pc = 0,
@@ -36,6 +37,8 @@ identifyOverExpressedGenes(
 \item{pos.dataset}{the dataset name used for identifying highly enriched genes in this dataset for each cell group}
 
 \item{features.name}{a char name used for storing the over-expressed signaling genes in `object@var.features[[features.name]]`}
+
+\item{only.pos}{Only return positive markers}
 
 \item{features}{features used for identifying Over Expressed genes. default use all features}
 

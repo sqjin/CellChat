@@ -13,11 +13,20 @@ subsetCommunication_internal(
   targets.use = NULL,
   signaling = NULL,
   pairLR.use = NULL,
-  thresh = 0.05
+  thresh = 0.05,
+  datasets = NULL,
+  ligand.pvalues = NULL,
+  ligand.logFC = NULL,
+  ligand.pct.1 = NULL,
+  ligand.pct.2 = NULL,
+  receptor.pvalues = NULL,
+  receptor.logFC = NULL,
+  receptor.pct.1 = NULL,
+  receptor.pct.2 = NULL
 )
 }
 \arguments{
-\item{net, LR, cells.level}{object@net object@LR levels(object@idents)}
+\item{net, LR, cells.level}{net is object@net or a data frame; LR: object@LR$LRsig; cells.level: levels(object@idents)}
 
 \item{slot.name}{the slot name of object: slot.name = "net" when extracting the inferred communications at the level of ligands/receptors; slot.name = "netP" when extracting the inferred communications at the level of signaling pathways}
 
@@ -30,6 +39,20 @@ subsetCommunication_internal(
 \item{pairLR.use}{a data frame consisting of one column named either "interaction_name" or "pathway_name", defining the interactions of interest}
 
 \item{thresh}{threshold of the p-value for determining significant interaction}
+
+\item{datasets}{select the inferred cell-cell communications from a particular `datasets` when inputing a data frame `net`}
+
+\item{ligand.pvalues, ligand.logFC, ligand.pct.1, ligand.pct.2}{set threshold for ligand genes
+
+ligand.pvalues: threshold for pvalues in the differential expression gene analysis (DEG)
+
+ligand.logFC: threshold for logFoldChange in the DEG analysis; When ligand.logFC > 0, keep upgulated genes; otherwise, kepp downregulated genes
+
+ligand.pct.1: threshold for the percent of expressed genes in the defined 'positive' cell group. keep genes with percent greater than ligand.pct.1
+
+ligand.pct.2: threshold for the percent of expressed genes in the cells except for the defined 'positive' cell group}
+
+\item{receptor.pvalues, receptor.logFC, receptor.pct.1, receptor.pct.2}{set threshold for receptor genes}
 }
 \value{
 A data frame of the inferred cell-cell communications of interest, consisting of source, target, interaction_name, pathway_name, prob and other information

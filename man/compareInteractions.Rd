@@ -7,13 +7,17 @@
 compareInteractions(
   object,
   measure = c("count", "weight"),
+  color.use = NULL,
   group = NULL,
   group.levels = NULL,
-  color.use = NULL,
+  group.facet = NULL,
+  group.facet.levels = NULL,
+  n.row = 1,
   color.alpha = 1,
   legend.title = NULL,
   width = 0.6,
   title.name = NULL,
+  digits = 3,
   xlabel = NULL,
   ylabel = NULL,
   remove.xtick = FALSE,
@@ -30,11 +34,17 @@ compareInteractions(
 
 \item{measure}{"count" or "weight". "count": comparing the number of interactions; "weight": comparing the total interaction weights (strength)}
 
+\item{color.use}{defining the color for each group of datasets}
+
 \item{group}{a vector giving the groups of different datasets to define colors of the bar plot. Default: only one group and a single color}
 
 \item{group.levels}{the factor level in the defined group}
 
-\item{color.use}{defining the color for each group of datasets}
+\item{group.facet}{Name of one metadata column defining faceting groups}
+
+\item{group.facet.levels}{the factor level in the defined group.facet}
+
+\item{n.row}{Number of rows in facet_grid()}
 
 \item{color.alpha}{transparency}
 
@@ -43,6 +53,8 @@ compareInteractions(
 \item{width}{bar width}
 
 \item{title.name}{main title of the plot}
+
+\item{digits}{integer indicating the number of decimal places (round) to be used when `measure` is `weight`.}
 
 \item{xlabel}{label of x-axis}
 
