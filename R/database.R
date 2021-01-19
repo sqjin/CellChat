@@ -128,6 +128,44 @@ extractGeneSubset <- function(geneSet, complex_input, geneIfo) {
 }
 
 
+#' Extract the signaling gene names from ligand-receptor pairs
+#'
+#' @param pairLR data frame must contain columns named `ligand` and `receptor`
+#' @param object a CellChat object
+#' @param complex_input complex in CellChatDB databse
+#' @param geneInfo official gene symbol
+#' @param combined whether combining the ligand genes and receptor genes
+#'
+#' @return
+#' @export
+extractGeneSubsetFromPair <- function(pairLR, object = NULL, complex_input = NULL, geneInfo = NULL, combined = TRUE) {
+  if (!all(c("ligand", "receptor") %in% colnames(pairLR))) {
+    stop("The input data frame must contain columns named `ligand` and `receptor`")
+  }
+  if (is.null(object)) {
+    if (is.null(complex_input) | is.null(geneInfo)) {
+      stop("Either `object` or `complex_input` and `geneInfo` should be provided!")
+    } else {
+      complex <- complex_input
+    }
+  } else {
+    complex <- object@DB$complex
+    geneInfo <- object@DB$geneInfo
+  }
+  geneL <- unique(pairLR$ligand)
+  geneR <- unique(pairLR$receptor)
+  geneL <- extractGeneSubset(geneL, complex, geneInfo)
+  geneR <- extractGeneSubset(geneR, complex, geneInfo)
+  geneLR <- c(geneL, geneR)
+  if (combined) {
+    return(geneLR)
+  } else {
+    return(list(geneL = geneL, geneR = geneR))
+  }
+}
+
+
+
 #' check the official Gene Symbol
 #'
 #' @param geneSet gene set to check

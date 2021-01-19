@@ -165,6 +165,7 @@ subsetData <- function(object, features = NULL) {
 #' @param group.dataset dataset origin information in a merged CellChat object; set it as one of the column names of meta slot when identifying the highly enriched genes in one dataset for each cell group
 #' @param pos.dataset the dataset name used for identifying highly enriched genes in this dataset for each cell group
 #' @param features.name a char name used for storing the over-expressed signaling genes in `object@var.features[[features.name]]`
+#' @param only.pos Only return positive markers
 #' @param features features used for identifying Over Expressed genes. default use all features
 #' @param return.object whether return the object; otherwise return a data frame consisting of over-expressed signaling genes associated with each cell group
 #' @param thresh.pc Threshold of the percent of cells expressed in one cluster
@@ -181,7 +182,7 @@ subsetData <- function(object, features = NULL) {
 #' `object@var.features[[paste0(features.name, ".info")]]` is a data frame returned from the differential expression analysis
 #' @export
 #'
-identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL, idents.use = NULL, invert = FALSE, group.dataset = NULL, pos.dataset = NULL, features.name = "features",  features = NULL, return.object = TRUE,
+identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL, idents.use = NULL, invert = FALSE, group.dataset = NULL, pos.dataset = NULL, features.name = "features",  only.pos = TRUE, features = NULL, return.object = TRUE,
                                        thresh.pc = 0, thresh.fc = 0, thresh.p = 0.05) {
   if (!is.list(object@var.features)) {
     stop("Please update your CellChat object via `updateCellChat()`")
@@ -277,7 +278,12 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
     data.1 <- apply(X = data.use[features, cell.use1, drop = FALSE],MARGIN = 1,FUN = mean.fxn)
     data.2 <- apply(X = data.use[features, cell.use2, drop = FALSE],MARGIN = 1,FUN = mean.fxn)
     FC <- (data.1 - data.2)
-    features.diff <- names(which(FC > thresh.fc))
+    if (only.pos) {
+      features.diff <- names(which(FC > thresh.fc))
+    } else {
+      features.diff <- names(which(abs(FC) > thresh.fc))
+    }
+
     features <- intersect(x = features, y = features.diff)
     if (length(x = features) == 0) {
       #  stop("No features pass thresh.fc threshold")
@@ -291,7 +297,8 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
       x = my.sapply(
         X = 1:nrow(x = data1),
         FUN = function(x) {
-          return(wilcox.test(data1[x, ], data2[x, ], alternative = "greater")$p.value)
+          # return(wilcox.test(data1[x, ], data2[x, ], alternative = "greater")$p.value)
+          return(wilcox.test(data1[x, ], data2[x, ])$p.value)
         }
       )
     )
@@ -301,11 +308,7 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
     #   method = "bonferroni",
     #   n = nrow(X)
     # )
-    if (is.null(group.dataset)) {
-      genes.de[[i]] <- data.frame(clusters = level.use[i], features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F])
-    } else {
-      genes.de[[i]] <- data.frame(clusters = level.use[i], datasets = pos.dataset, features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F])
-    }
+    genes.de[[i]] <- data.frame(clusters = level.use[i], features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F], stringsAsFactors = FALSE)
   }
 
   markers.all <- data.frame()
@@ -318,6 +321,15 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
         markers.all <- rbind(markers.all, gde)
       }
     }
+  }
+  if (only.pos & nrow(markers.all) > 0) {
+    markers.all <- subset(markers.all, subset = logFC > 0)
+  }
+  if (!is.null(group.dataset)) {
+    markers.all$datasets[markers.all$logFC > 0] <- pos.dataset
+    markers.all$datasets[markers.all$logFC < 0] <- setdiff(unique(labels.dataset), pos.dataset)
+    markers.all$datasets <- factor(markers.all$datasets, levels = levels(factor(object@meta[[group.dataset]])))
+    markers.all <- markers.all[order(markers.all$datasets, markers.all$pvalues, -markers.all$logFC), ]
   }
   markers.all$features <- as.character(markers.all$features)
 
@@ -796,12 +808,12 @@ colorRamp3 = function(breaks, colors, transparency = 0, space = "LAB") {
   colors = colors[!l]
 
   if(length(breaks) == 1) {
-    stop_wrap("You should have at least two distinct break values.")
+    stop("You should have at least two distinct break values.")
   }
 
 
   if(! space %in% c("RGB", "HSV", "HLS", "LAB", "XYZ", "sRGB", "LUV")) {
-    stop_wrap("`space` should be in 'RGB', 'HSV', 'HLS', 'LAB', 'XYZ', 'sRGB', 'LUV'")
+    stop("`space` should be in 'RGB', 'HSV', 'HLS', 'LAB', 'XYZ', 'sRGB', 'LUV'")
   }
 
   colors = t(grDevices::col2rgb(colors)/255)
@@ -819,7 +831,7 @@ colorRamp3 = function(breaks, colors, transparency = 0, space = "LAB") {
 
   fun = function(x = NULL, return_rgb = FALSE, max_value = 1) {
     if(is.null(x)) {
-      stop_wrap("Please specify `x`\n")
+      stop("Please specify `x`\n")
     }
 
     att = attributes(x)

@@ -57,9 +57,9 @@ CellChat <- methods::setClass("CellChat",
 #' @docType methods
 #'
 setMethod(f = "show", signature = "CellChat", definition = function(object) {
-  if (cellchat@options$mode == "single") {
+  if (object@options$mode == "single") {
     cat("An object of class", class(object), "created from a single dataset", "\n", nrow(object@data), "genes.\n",  ncol(object@data), "cells.")
-  } else if (cellchat@options$mode == "merged") {
+  } else if (object@options$mode == "merged") {
     cat("An object of class", class(object), "created from a merged object with multiple datasets", "\n", nrow(object@data.signaling), "signaling genes.\n",  ncol(object@data.signaling), "cells.")
   }
 

@@ -782,11 +782,11 @@ netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.n
   coords[1:m,2] <- seq(space.v, 0, by = -space.v/(m-1)); coords[(m+1):m1,2] <- seq(space.v, 0, by = -space.v/(m1-m-1));coords[(m1+1):nrow(net3),2] <- seq(space.v, 0, by = -space.v/(n1-1));
   coords_scale<-coords
 
-  V(g)$size<-vertex.weight
-  V(g)$color<-color.use3[V(g)]
-  V(g)$frame.color <- color.use3.frame[V(g)]
-  V(g)$label.color <- vertex.label.color
-  V(g)$label.cex<-vertex.label.cex
+  igraph::V(g)$size<-vertex.weight
+  igraph::V(g)$color<-color.use3[igraph::V(g)]
+  igraph::V(g)$frame.color <- color.use3.frame[igraph::V(g)]
+  igraph::V(g)$label.color <- vertex.label.color
+  igraph::V(g)$label.cex<-vertex.label.cex
   if(label.edge){
     E(g)$label<-E(g)$weight
     igraph::E(g)$label <- round(igraph::E(g)$label, digits = 1)
@@ -805,13 +805,13 @@ netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.n
   E(g)$arrow.size<-arrow.size
   E(g)$label.color<-edge.label.color
   E(g)$label.cex<-edge.label.cex
-  E(g)$color<-adjustcolor(V(g)$color[edge.start[,1]],alpha.edge)
+  E(g)$color<-adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
 
   label.dist <- c(rep(space.h*label.dist,m), rep(space.h*label.dist, m1-m),rep(0, nrow(net3)-m1))
   label.locs <- c(rep(-pi, m), rep(0, m1-m),rep(-pi, nrow(net3)-m1))
   # text.pos <- cbind(c(-space.h/1.5, space.h/10, space.h/1.2), space.v-space.v/10)
   text.pos <- cbind(c(-space.h/1.5, space.h/22, space.h/1.5), space.v-space.v/7)
-  add.vertex.shape("fcircle", clip=igraph.shape.noclip,plot=mycircle, parameters=list(vertex.frame.color=1, vertex.frame.width=1))
+  igraph::add.vertex.shape("fcircle", clip=igraph::igraph.shape.noclip,plot=mycircle, parameters=list(vertex.frame.color=1, vertex.frame.width=1))
   plot(g,edge.curved=edge.curved,layout=coords_scale,margin=margin,rescale=T,vertex.shape="fcircle", vertex.frame.width = c(rep(1,m1), rep(2,nrow(net3)-m1)),
        vertex.label.degree=label.locs, vertex.label.dist=label.dist, vertex.label.family="Helvetica")
   text(text.pos, c("Source","Target","Source"), cex = 0.8, col = c("#c51b7d","#c51b7d","#2f6661"))
@@ -960,19 +960,19 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
   }
 
   g <- graph_from_adjacency_matrix(net3, mode = "directed", weighted = T)
-  edge.start <- ends(g, es=E(g), names=FALSE)
+  edge.start <- ends(g, es=igraph::E(g), names=FALSE)
   coords <- matrix(NA, nrow(net3), 2)
   coords[1:m0,1] <- 0; coords[(m0+1):m1,1] <- space.h; coords[(m1+1):nrow(net3),1] <- space.h/2;
   coords[1:m0,2] <- seq(space.v, 0, by = -space.v/(m0-1)); coords[(m0+1):m1,2] <- seq(space.v, 0, by = -space.v/(m1-m0-1));coords[(m1+1):nrow(net3),2] <- seq(space.v, 0, by = -space.v/(n1-1));
   coords_scale<-coords
 
-  V(g)$size<-vertex.weight
-  V(g)$color<-color.use3[V(g)]
-  V(g)$frame.color <- color.use3.frame[V(g)]
-  V(g)$label.color <- vertex.label.color
-  V(g)$label.cex<-vertex.label.cex
+  igraph::V(g)$size<-vertex.weight
+  igraph::V(g)$color<-color.use3[igraph::V(g)]
+  igraph::V(g)$frame.color <- color.use3.frame[igraph::V(g)]
+  igraph::V(g)$label.color <- vertex.label.color
+  igraph::V(g)$label.cex<-vertex.label.cex
   if(label.edge){
-    E(g)$label<-E(g)$weight
+    igraph::E(g)$label<-igraph::E(g)$weight
     igraph::E(g)$label <- round(igraph::E(g)$label, digits = 1)
   }
   if (is.null(edge.weight.max)) {
@@ -980,21 +980,21 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
   }
   if (weight.scale == TRUE) {
    # E(g)$width<-0.3+edge.max.width/(max(E(g)$weight)-min(E(g)$weight))*(E(g)$weight-min(E(g)$weight))
-    E(g)$width<- 0.3+E(g)$weight/edge.weight.max*edge.width.max
+    igraph::E(g)$width<- 0.3+igraph::E(g)$weight/edge.weight.max*edge.width.max
   }else{
-    E(g)$width<-0.3+edge.width.max*E(g)$weight
+    igraph::E(g)$width<-0.3+edge.width.max*igraph::E(g)$weight
   }
-  E(g)$arrow.width<-arrow.width
-  E(g)$arrow.size<-arrow.size
-  E(g)$label.color<-edge.label.color
-  E(g)$label.cex<-edge.label.cex
-  E(g)$color<-adjustcolor(V(g)$color[edge.start[,1]],alpha.edge)
+  igraph::E(g)$arrow.width<-arrow.width
+  igraph::E(g)$arrow.size<-arrow.size
+  igraph::E(g)$label.color<-edge.label.color
+  igraph::E(g)$label.cex<-edge.label.cex
+  igraph::E(g)$color<-adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
 
   label.dist <- c(rep(space.h*label.dist,m), rep(space.h*label.dist, m1-m),rep(0, nrow(net3)-m1))
   label.locs <- c(rep(-pi, m0), rep(0, m1-m0),rep(-pi, nrow(net3)-m1))
   #text.pos <- cbind(c(-space.h/1.5, space.h/10, space.h/1.2), space.v-space.v/10)
   text.pos <- cbind(c(-space.h/1.5, space.h/22, space.h/1.5), space.v-space.v/7)
-  add.vertex.shape("fcircle", clip=igraph.shape.noclip,plot=mycircle, parameters=list(vertex.frame.color=1, vertex.frame.width=1))
+  igraph::add.vertex.shape("fcircle", clip=igraph::igraph.shape.noclip,plot=mycircle, parameters=list(vertex.frame.color=1, vertex.frame.width=1))
   plot(g,edge.curved=edge.curved,layout=coords_scale,margin=margin,rescale=T,vertex.shape="fcircle", vertex.frame.width = c(rep(1,m1), rep(2,nrow(net3)-m1)),
        vertex.label.degree=label.locs, vertex.label.dist=label.dist, vertex.label.family="Helvetica")
   text(text.pos, c("Source","Target","Source"), cex = 0.8, col = c("#c51b7d","#2f6661","#2f6661"))
@@ -1314,7 +1314,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     net <- net[, -idx]
   }
 
-  net[net < stats::quantile(net, probs = 1-top)] <- 0
+  net[abs(net) < stats::quantile(abs(net), probs = 1-top)] <- 0
 
   g <- graph_from_adjacency_matrix(net, mode = "directed", weighted = T)
   edge.start <- igraph::ends(g, es=igraph::E(g), names=FALSE)
@@ -1389,7 +1389,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
 #'
 #' This heatmap can be used to show differential number of interactions or interaction strength in the cell-cell communication network between two datasets;
 #' the number of interactions or interaction strength in a single dataset
-#' the signaling network in single dataset, defined by `signaling`
+#' the inferred cell-cell communication network in single dataset, defined by `signaling`
 #'
 #' When show differential number of interactions or interaction strength in the cell-cell communication network between two datasets, the width of edges represent the relative number of interactions or interaction strength.
 #' Red (or blue) colored edges represent increased (or decreased) signaling in the second dataset compared to the first one.
@@ -1414,6 +1414,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
 #' @param remove.isolate whether remove the isolate nodes in the communication network
+#' @param row.show,col.show a vector giving the index or the name of row or columns to show in the heatmap
 #' @importFrom methods slot
 #' @importFrom grDevices colorRampPalette
 #' @importFrom RColorBrewer brewer.pal
@@ -1422,7 +1423,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
 #' @export
 netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", "weight"), signaling = NULL, slot.name = c("netP", "net"), color.use = NULL, color.heatmap = c("#2166ac","#b2182b"),
                               title.name = NULL, width = NULL, height = NULL, font.size = 8, font.size.title = 10, cluster.rows = FALSE, cluster.cols = FALSE,
-                              sources.use = NULL, targets.use = NULL, remove.isolate = FALSE){
+                              sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, row.show = NULL, col.show = NULL){
   # obj1 <- object.list[[comparison[1]]]
   # obj2 <- object.list[[comparison[2]]]
   if (!is.null(measure)) {
@@ -1500,19 +1501,31 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     net <- net[-idx, ]
     net <- net[, -idx]
   }
+
   mat <- net
   if (is.null(color.use)) {
     color.use <- scPalette(ncol(mat))
   }
+  names(color.use) <- colnames(mat)
+
+  if (!is.null(row.show)) {
+    mat <- mat[row.show, ]
+  }
+  if (!is.null(col.show)) {
+    mat <- mat[ ,col.show]
+    color.use <- color.use[col.show]
+  }
+
+
   if (min(mat) < 0) {
     color.heatmap.use = colorRamp3(c(min(mat), 0, max(mat)), c(color.heatmap[1], "#f7f7f7", color.heatmap[2]))
     colorbar.break <- c(round(min(mat, na.rm = T), digits = 1), 0, round(max(mat, na.rm = T), digits = 1))
-    # color.heatmap.use = colorRamp2(c(seq(min(mat), -(max(mat)-min(max(mat)))/9, length.out = 4), 0, seq((max(mat)-min(max(mat)))/9, max(mat), length.out = 4)), RColorBrewer::brewer.pal(n = 9, name = color.heatmap))
+    # color.heatmap.use = colorRamp3(c(seq(min(mat), -(max(mat)-min(max(mat)))/9, length.out = 4), 0, seq((max(mat)-min(max(mat)))/9, max(mat), length.out = 4)), RColorBrewer::brewer.pal(n = 9, name = color.heatmap))
   } else {
     if (length(color.heatmap) == 3) {
-      color.heatmap.use = colorRamp2(c(0, min(mat), max(mat)), color.heatmap)
+      color.heatmap.use = colorRamp3(c(0, min(mat), max(mat)), color.heatmap)
     } else if (length(color.heatmap) == 2) {
-      color.heatmap.use = colorRamp2(c(min(mat), max(mat)), color.heatmap)
+      color.heatmap.use = colorRamp3(c(min(mat), max(mat)), color.heatmap)
     } else if (length(color.heatmap) == 1) {
       color.heatmap.use = grDevices::colorRampPalette((RColorBrewer::brewer.pal(n = 9, name = color.heatmap)))(100)
     }
@@ -1521,7 +1534,6 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
   # col_fun(as.vector(mat))
 
   df<- data.frame(group = colnames(mat)); rownames(df) <- colnames(mat)
-  names(color.use) <- colnames(mat)
   col_annotation <- HeatmapAnnotation(df = df, col = list(group = color.use),which = "column",
                                       show_legend = FALSE, show_annotation_name = FALSE,
                                       simple_anno_size = grid::unit(0.2, "cm"))
@@ -2814,11 +2826,14 @@ netVisual_embedding <- function(object, slot.name = "netP", type = c("functional
                                 xlabel = "Dim 1", ylabel = "Dim 2", title = NULL,
                                 font.size = 10, font.size.title = 12, do.label = T, show.legend = T, show.axes = T) {
   type <- match.arg(type)
-  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
-  Groups <- methods::slot(object, slot.name)$similarity[[type]]$group
+  comparison <- "single"
+  comparison.name <- paste(comparison, collapse = "-")
+
+  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
+  Groups <- methods::slot(object, slot.name)$similarity[[type]]$group[[comparison.name]]
   prob <- methods::slot(object, slot.name)$prob
   if (is.null(pathway.remove)) {
-    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix
+    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
   }
 
@@ -2887,11 +2902,13 @@ netVisual_embedding <- function(object, slot.name = "netP", type = c("functional
 #' @examples
 netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("functional","structural"), color.use = NULL, pathway.remove = NULL,  nCol = 1, dot.size = c(2, 6), label.size = 2.8, dot.alpha = 0.5,
                                       xlabel = NULL, ylabel = NULL, do.label = T, show.legend = F, show.axes = T) {
-  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
-  clusters <- methods::slot(object, slot.name)$similarity[[type]]$group
+  comparison <- "single"
+  comparison.name <- paste(comparison, collapse = "-")
+  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
+  clusters <- methods::slot(object, slot.name)$similarity[[type]]$group[[comparison.name]]
   prob <- methods::slot(object, slot.name)$prob
   if (is.null(pathway.remove)) {
-    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix
+    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
   }
 
@@ -2947,6 +2964,7 @@ netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("func
 #' @param object CellChat object
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
+#' @param comparison a numerical vector giving the datasets for comparison. Default are all datasets when object is a merged object
 #' @param pathway.remove a character vector defining the signaling to remove
 #' @param pathway.remove.show whether show the removed signaling names
 #' @param color.use defining the color for each cell group
@@ -2967,15 +2985,21 @@ netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("func
 #' @export
 #'
 #' @examples
-netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), color.use = NULL, point.shape = NULL, pathway.remove = NULL, pathway.remove.show = TRUE, dot.size = c(2, 6), label.size = 2.5, dot.alpha = 0.5,
+netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, color.use = NULL, point.shape = NULL, pathway.remove = NULL, pathway.remove.show = TRUE, dot.size = c(2, 6), label.size = 2.5, dot.alpha = 0.5,
                                         xlabel = "Dim 1", ylabel = "Dim 2", title = NULL,do.label = T, show.legend = T, show.axes = T) {
   type <- match.arg(type)
-  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
-  clusters <- methods::slot(object, slot.name)$similarity[[type]]$group
-  object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")
+  if (is.null(comparison)) {
+    comparison <- 1:length(unique(object@meta$datasets))
+  }
+  cat("2D visualization of signaling networks from datasets", as.character(comparison), '\n')
+  comparison.name <- paste(comparison, collapse = "-")
+
+  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
+  clusters <- methods::slot(object, slot.name)$similarity[[type]]$group[[comparison.name]]
+  object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")[comparison]
   prob <- list()
-  for (i in 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))) {
-    object.net <- methods::slot(object, slot.name)[[i]]
+  for (i in 1:length(comparison)) {
+    object.net <- methods::slot(object, slot.name)[[comparison[i]]]
     prob[[i]] = object.net$prob
   }
 
@@ -2984,7 +3008,7 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   }
 
   if (is.null(pathway.remove)) {
-    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix
+    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
   }
 
@@ -3054,6 +3078,7 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
 #' @param object CellChat object
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
+#' @param comparison a numerical vector giving the datasets for comparison. Default are all datasets when object is a merged object
 #' @param pathway.remove a character vector defining the signaling to remove
 #' @param color.use defining the color for each cell group
 #' @param nCol number of columns in the plot
@@ -3073,17 +3098,23 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
 #' @export
 #'
 #' @examples
-netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type = c("functional","structural"), color.use = NULL, nCol = 1, point.shape = NULL, pathway.remove = NULL, dot.size = c(2, 6), label.size = 2.8, dot.alpha = 0.5,
+netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, color.use = NULL, nCol = 1, point.shape = NULL, pathway.remove = NULL, dot.size = c(2, 6), label.size = 2.8, dot.alpha = 0.5,
                                               xlabel = NULL, ylabel = NULL, do.label = T, show.legend = F, show.axes = T) {
 
   type <- match.arg(type)
-  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr
-  clusters <- methods::slot(object, slot.name)$similarity[[type]]$group
+  if (is.null(comparison)) {
+    comparison <- 1:length(unique(object@meta$datasets))
+  }
+  cat("2D visualization of signaling networks from datasets", as.character(comparison), '\n')
+  comparison.name <- paste(comparison, collapse = "-")
 
-  object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")
+  Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
+  clusters <- methods::slot(object, slot.name)$similarity[[type]]$group[[comparison.name]]
+
+  object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")[comparison]
   prob <- list()
-  for (i in 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))) {
-    object.net <- methods::slot(object, slot.name)[[i]]
+  for (i in 1:length(comparison)) {
+    object.net <- methods::slot(object, slot.name)[[comparison[i]]]
     prob[[i]] = object.net$prob
   }
 
@@ -3092,7 +3123,7 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   }
 
   if (is.null(pathway.remove)) {
-    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix
+    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
   }
 
