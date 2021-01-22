@@ -2,7 +2,7 @@
 ---
 title: "Comparison analysis of multiple datasets using CellChat"
 author: "Suoqin Jin"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: 20 January, 2021
 output:
   html_document:
     toc: true
@@ -31,10 +31,7 @@ CellChat employs a top-down approach, i.e., starting with the big picture and th
 ## Load the required libraries
 ```{r message=FALSE,warning=FALSE}
 library(CellChat)
-library(ggplot2)                  
 library(patchwork)
-library(dplyr)
-library(igraph)
 ```
 
 ## Create a directory to save figures
@@ -140,6 +137,7 @@ for (i in 1:length(object.list)) {
 patchwork::wrap_plots(plots = gg)
 ```
 
+From the scatter plot, we can see that Inflam.DC and cDC1 emerge as one of the major source and targets in LS compared to NL. Fibroblast populations also become the major sources in LS. 
 
 # Part II: Identify the conserved and context-specific signaling pathways
 CellChat then can identify signaling networks with larger (or less) difference, signaling groups, and the conserved and context-specific signaling pathways based on their cell-cell communication networks among multiple biological conditions. 
@@ -187,8 +185,8 @@ We can identify the conserved and context-specific signaling pathways by simply 
 
 This bar graph can be plotted in a stacked mode or not. Significant signaling pathways were ranked based on differences in the overall information flow within the inferred networks between NL and LS skin. The top signaling pathways colored red are enriched in NL skin, and these colored green were enriched in the LS skin. 
 ```{r, fig.width=9,fig.height = 4, fig.wide = TRUE, fig.align = "center"}
-gg1 <- rankNet(cellchat, mode = "comparison", stacked = T)
-gg2 <- rankNet(cellchat, mode = "comparison", stacked = F)
+gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE)
+gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE)
 gg1 + gg2
 ```
 
@@ -233,6 +231,45 @@ gg1 + gg2
 NB: The ligand-receptor pairs shown in the bubble plot can be accessed via `signaling.LSIncreased = gg1$data`. 
 
 
+The above method for identifying the upgulated and down-regulated signaling is perfomed by comparing the communication probability between two datasets for each L-R pair and each pair of cell groups. Alternative, we can identify the upgulated and down-regulated signaling ligand-receptor pairs based on the differential gene expression analysis. Specifically, we perform differential expression analysis between two biological conditions (i.e., NL and LS) for each cell group, and then obtain the upgulated and down-regulated signaling based on the fold change of ligands in the sender cells and receptors in the receiver cells. Such analysis can be done as follows.
+```{r}
+# define a positive dataset, i.e., the dataset with positive fold change against the other dataset
+pos.dataset = "LS"
+# define a char name used for storing the results of differential expression analysis
+features.name = pos.dataset
+# perform differential expression analysis
+cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos.dataset = pos.dataset, features.name = features.name, only.pos = FALSE, thresh.pc = 0.1, thresh.fc = 0.1, thresh.p = 1)
+# map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
+net <- netMappingDEG(cellchat, features.name = features.name)
+# extract the ligand-receptor pairs with upregulated ligands in LS
+net.up <- subsetCommunication(cellchat, net = net, datasets = "LS",ligand.logFC = 0.2, receptor.logFC = NULL)
+# extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in LS
+net.down <- subsetCommunication(cellchat, net = net, datasets = "NL",ligand.logFC = -0.1, receptor.logFC = -0.1)
+```
+
+Since the signaling genes in the `net.up` and `net.down` might be complex with multi-subunits, we can do further deconvolution to obtain the individual signaling genes.
+```{r}
+gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
+gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
+```
+
+We then visualize the upgulated and down-regulated signaling ligand-receptor pairs using bubble plot or chord diagram. 
+```{r, fig.width=12, fig.height = 5, fig.align = "center"}
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = 4, targets.use = c(5:11), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = paste0("Up-regulated signaling in ", names(object.list)[2]))
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+gg2 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = 4, targets.use = c(5:11), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = paste0("Down-regulated signaling in ", names(object.list)[2]))
+gg1 + gg2
+```
+
+Visualize the upgulated and down-regulated signaling ligand-receptor pairs using Chord diagram
+```{r, fig.width=12,fig.height = 6, fig.wide = TRUE, fig.align = "center"}
+# Chord diagram
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_chord_gene(object.list[[2]], sources.use = 4, targets.use = c(5:11), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in ", names(object.list)[2]))
+netVisual_chord_gene(object.list[[1]], sources.use = 4, targets.use = c(5:11), slot.name = 'net', net = net.down, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Down-regulated signaling in ", names(object.list)[2]))
+```
+
 # Part IV: Visually compare cell-cell communication using Hierarchy plot, Circle plot or Chord diagram
 Similar to the CellChat analysis of individual dataset, we can visualize the cell-cell communication network using Hierarchy plot, Circle plot or Chord diagram. 
 
@@ -245,6 +282,16 @@ par(mfrow = c(1,2), xpd=TRUE)
 for (i in 1:length(object.list)) {
   netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
 }
+```
+
+```{r, fig.width=11,fig.height = 5, fig.wide = TRUE, fig.align = "center"}
+pathways.show <- c("CXCL") 
+par(mfrow = c(1,2), xpd=TRUE)
+ht <- list()
+for (i in 1:length(object.list)) {
+  ht[[i]] <- netVisual_heatmap(object.list[[i]], signaling = pathways.show, color.heatmap = "Reds",title.name = paste(pathways.show, "signaling ",names(object.list)[i]))
+}
+ComplexHeatmap::draw(ht[[1]] + ht[[2]], ht_gap = unit(0.5, "cm"))
 ```
 
 ```{r, fig.width=12,fig.height = 6, fig.wide = TRUE, fig.align = "center"}
