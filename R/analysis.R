@@ -2340,9 +2340,11 @@ netAnalysis_signalingRole_heatmap <- function(object, signaling = NULL, pattern 
   pSum <- -1/log(pSum)
   pSum[is.na(pSum)] <- 0
   idx1 <- which(is.infinite(pSum) | pSum < 0)
-  values.assign <- seq(max(pSum)*1.1, max(pSum)*1.5, length.out = length(idx1))
-  position <- sort(pSum.original[idx1], index.return = TRUE)$ix
-  pSum[idx1] <- values.assign[match(1:length(idx1), position)]
+  if (length(idx1) > 0) {
+    values.assign <- seq(max(pSum)*1.1, max(pSum)*1.5, length.out = length(idx1))
+    position <- sort(pSum.original[idx1], index.return = TRUE)$ix
+    pSum[idx1] <- values.assign[match(1:length(idx1), position)]
+  }
   ha1 = rowAnnotation(Strength = anno_barplot(pSum, border = FALSE), show_annotation_name = FALSE)
   
   if (min(mat, na.rm = T) == max(mat, na.rm = T)) {
