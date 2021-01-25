@@ -1079,23 +1079,26 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
   thresh <- stats::quantile(net, probs = 1-top)
   net[net < thresh] <- 0
 
-  if ((!is.null(sources.use)) | (!is.null(targets.use))) {
+ if ((!is.null(sources.use)) | (!is.null(targets.use))) {
+    if (is.null(rownames(net))) {
+      stop("The input weighted matrix should have rownames!")
+    }
+    cells.level <- rownames(net)
     df.net <- reshape2::melt(net, value.name = "value")
     colnames(df.net)[1:2] <- c("source","target")
     # keep the interactions associated with sources and targets of interest
     if (!is.null(sources.use)){
       if (is.numeric(sources.use)) {
-        sources.use <- levels(object@idents)[sources.use]
+        sources.use <- cells.level[sources.use]
       }
       df.net <- subset(df.net, source %in% sources.use)
     }
     if (!is.null(targets.use)){
       if (is.numeric(targets.use)) {
-        targets.use <- levels(object@idents)[targets.use]
+        targets.use <- cells.level[targets.use]
       }
       df.net <- subset(df.net, target %in% targets.use)
     }
-    cells.level <- levels(object@idents)
     df.net$source <- factor(df.net$source, levels = cells.level)
     df.net$target <- factor(df.net$target, levels = cells.level)
     df.net$value[is.na(df.net$value)] <- 0
