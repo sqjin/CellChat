@@ -69,7 +69,7 @@ Please check the tutorial directory of the repo.
 
 - Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. CellChat can be installed on a normal computer within few mins.
 
-## Help
+## Help or Suggestion
 If you have any question, comment or suggestion, please post it in the 'Issues' section or contact cellchat.package@gmail.com.
 
 ## Preprint
