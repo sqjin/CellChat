@@ -1519,11 +1519,9 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     mat <- mat[ ,col.show]
     color.use <- color.use[col.show]
   }
-
-
-  if (min(mat) < 0) {
+if (min(mat) < 0) {
     color.heatmap.use = colorRamp3(c(min(mat), 0, max(mat)), c(color.heatmap[1], "#f7f7f7", color.heatmap[2]))
-    colorbar.break <- c(round(min(mat, na.rm = T), digits = 1), 0, round(max(mat, na.rm = T), digits = 1))
+    colorbar.break <- c(round(min(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",min(mat, na.rm = T)))+1), 0, round(max(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",max(mat, na.rm = T)))+1))
     # color.heatmap.use = colorRamp3(c(seq(min(mat), -(max(mat)-min(max(mat)))/9, length.out = 4), 0, seq((max(mat)-min(max(mat)))/9, max(mat), length.out = 4)), RColorBrewer::brewer.pal(n = 9, name = color.heatmap))
   } else {
     if (length(color.heatmap) == 3) {
@@ -1533,9 +1531,8 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     } else if (length(color.heatmap) == 1) {
       color.heatmap.use = grDevices::colorRampPalette((RColorBrewer::brewer.pal(n = 9, name = color.heatmap)))(100)
     }
-    colorbar.break <- c(round(min(mat, na.rm = T), digits = 1), round(max(mat, na.rm = T), digits = 1))
+    colorbar.break <- c(round(min(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",min(mat, na.rm = T)))+1), round(max(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",max(mat, na.rm = T)))+1))
   }
-  # col_fun(as.vector(mat))
 
   df<- data.frame(group = colnames(mat)); rownames(df) <- colnames(mat)
   col_annotation <- HeatmapAnnotation(df = df, col = list(group = color.use),which = "column",
