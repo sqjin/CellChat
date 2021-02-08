@@ -47,7 +47,7 @@ devtools::install_github("sqjin/CellChat")
 Some users might have issues when installing CellChat pacakge due to different operating systems and new R version. Please check the following solutions:
 
 - **Installation on Mac OX with R > 3.6**: Please re-install [Xquartz](https://community.rstudio.com/t/imager-package-does-not-work-in-r-3-6-1/38119).
-- **Installation on Windows, Linux and Centos**: Please check the solution [here](https://github.com/sqjin/CellChat/issues/5).  
+- **Installation on Windows, Linux and Centos**: Please check the solution for [Windows](https://github.com/sqjin/CellChat/issues/5) and [Linux](https://github.com/sqjin/CellChat/issues/131).  
 
 
 
