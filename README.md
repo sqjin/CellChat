@@ -6,6 +6,12 @@
 </p>
 
 ## Important update!!
+February 17, 2021 (Version 1.0.0)
+
+* CellChat paper is now officially published in Nature Communications. Compared to the preprint, we have now experimentally validated CellChat's predictions on embryonic skin using RNAscope technique, applied CellChat to a human diseased skin dataset and updated many others. 
+* We have now developed a [standalone CellChat Shiny App](https://github.com/sqjin/CellChatShiny) for interactive exploration of the cell-cell communication analyzed by CellChat. Want to share your results with your collaborators like biologists for further exploration? Try it out! 
+
+
 January 05, 2021 (Version 0.5.0)
 
 * Slight changes of CellChat object (Please update your previously calculated CellChat object via `updateCellChat()`)
@@ -27,7 +33,7 @@ In addition to infer the intercellular communication from any given scRNA-seq da
 - It provides an easy-to-use tool for extracting and visualizing high-order information of the inferred networks. For example, it allows ready prediction of major signaling inputs and outputs for all cell populations and how these populations and signals coordinate together for functions.
 - It provides several visualization outputs to facilitate intuitive user-guided data interpretation.
 
-Check out [our preprint on bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.21.214387v1) for the detailed methods and applications (It is now accepted for publication in Nature Communications, 2021).
+Check out [our paper (Jin et al., Nature Communications, 2021)](https://www.nature.com/articles/s41467-021-21246-9) for the detailed methods and applications.
 
 ## Installation
 
@@ -72,7 +78,6 @@ Please check the tutorial directory of the repo.
 ## Help or Suggestion
 If you have any question, comment or suggestion, please post it in the 'Issues' section or contact cellchat.package@gmail.com.
 
-## Preprint
-Suoqin Jin, Christian F. Guerrero-Juarez, Lihua Zhang, Ivan Chang, Peggy Myung, Maksim V. Plikus, Qing Nie. Inference and analysis of cell-cell communication using CellChat. bioRxiv 2020.07.21.214387; doi: https://doi.org/10.1101/2020.07.21.214387
-
+## How to cite?
+Suoqin Jin, Christian F. Guerrero-Juarez, Lihua Zhang, Ivan Chang, Raul Ramos, Chen-Hsiang Kuan, Peggy Myung, Maksim V. Plikus, Qing Nie. Inference and analysis of cell-cell communication using CellChat. Nature Communications, 12:1088 (2021). https://www.nature.com/articles/s41467-021-21246-9 
 
