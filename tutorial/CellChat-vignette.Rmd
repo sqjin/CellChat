@@ -34,11 +34,7 @@ Upon infering the intercellular communication network, CellChat provides functio
 ## Load the required libraries
 ```{r message=FALSE,warning=FALSE}
 library(CellChat)
-library(ggplot2)                  
 library(patchwork)
-library(ggalluvial)
-library(igraph)
-library(dplyr)
 options(stringsAsFactors = FALSE)
 ```
 
@@ -200,6 +196,9 @@ netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
 # Chord diagram
 par(mfrow=c(1,1))
 netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+# Heatmap
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
 ```
 
 For the chord diagram, CellChat has an independent function `netVisual_chord_cell` to flexibly visualize the signaling network by adjusting different parameters in the [circlize](https://github.com/jokergoo/circlize) package. For example, we can define a named char vector `group` to create multiple-group chord diagram, e.g., grouping cell clusters into different cell types. 
@@ -349,9 +348,14 @@ To intuitively show the associations of latent patterns with cell groups and lig
 
 To directly relate cell groups with their enriched signaling pathways, we set the elements in W and H to be zero if they are less than 1/R where R is the number of latent patterns. By using a less strict threshold, more enriched signaling pathways associated each cell group might be obtained. Using a contribution score of each cell group to each signaling pathway computed by multiplying W by H, we constructed a **dot plot** in which the dot size is proportion to the contribution score to show association between cell group and their enriched signaling pathways. USERS can also decrease the parameter `cutoff` to show more enriched signaling pathways associated each cell group. 
 
+Load required package for the communication pattern analysis
+```{r}
+library(NMF)
+library(ggalluvial)
+```
+
 Here we run `selectK` to infer the number of patterns.
 ```{r, fig.width=7,fig.height = 3, fig.wide = TRUE, fig.align = "center"}
-library(NMF)
 selectK(cellchat, pattern = "outgoing")
 ```
 Both Cophenetic and Silhouette values begin to drop suddenly when the number of outgoing patterns is 3. 
