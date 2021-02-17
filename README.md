@@ -23,7 +23,9 @@ January 05, 2021 (Version 0.5.0)
 
 We build a user-friendly web-based “[CellChat Explorer](http://www.cellchat.org/)” that contains two major components:
 - **Ligand-Receptor Interaction Explorer** that allows easy exploration of our novel ligand-receptor interaction database, a comprehensive recapitulation of known molecular compositions including multimeric complexes and co-factors. *Our database CellChatDB is a manually curated database of literature-supported ligand-receptor interactions in both **human and mouse***.
-- **Cell-Cell Communication Atlas Explorer** that allows easy exploration of the cell-cell communication for any given scRNA-seq dataset that has been processed by our R toolkit CellChat. 
+- **Cell-Cell Communication Atlas Explorer** that allows easy exploration of the cell-cell communication for any given scRNA-seq dataset that has been processed by our R toolkit CellChat.  
+
+We have now also developed a [standalone CellChat Shiny App](https://github.com/sqjin/CellChatShiny) for our Cell-Cell Communication Atlas Explorer. 
 
 ## Capabilities
 In addition to infer the intercellular communication from any given scRNA-seq data, CellChat provides functionality for further data exploration, analysis, and visualization. 
