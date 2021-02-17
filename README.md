@@ -8,7 +8,7 @@
 ## Important update!!
 February 17, 2021 (Version 1.0.0)
 
-* CellChat paper is now officially published in Nature Communications. Compared to the preprint, we have now experimentally validated CellChat's predictions on embryonic skin using RNAscope technique, applied CellChat to a human diseased skin dataset and updated many others. 
+* CellChat paper is now officially published [(Jin et al., Nature Communications, 2021)](https://www.nature.com/articles/s41467-021-21246-9). Compared to the preprint, we have now experimentally validated CellChat's predictions on embryonic skin using RNAscope technique, applied CellChat to a human diseased skin dataset and updated many others. 
 * We have now developed a [standalone CellChat Shiny App](https://github.com/sqjin/CellChatShiny) for interactive exploration of the cell-cell communication analyzed by CellChat. Want to share your results with your collaborators like biologists for further exploration? Try it out! 
 
 
