@@ -475,6 +475,9 @@ computeNetSimilarity <- function(object, slot.name = "netP", type = c("functiona
 
   comparison <- "single"
   comparison.name <- paste(comparison, collapse = "-")
+  if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$matrix)) {
+    methods::slot(object, slot.name)$similarity[[type]]$matrix <- NULL
+  }
   methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]] <- Similarity
   return(object)
 }
@@ -571,6 +574,9 @@ computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("f
   rownames(Similarity) <- signalingAll
   colnames(Similarity) <- rownames(Similarity)
 
+  if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$matrix)) {
+    methods::slot(object, slot.name)$similarity[[type]]$matrix <- NULL
+  }
   # methods::slot(object, slot.name)$similarity[[type]]$matrix <- Similarity
   methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]] <- Similarity
   return(object)
@@ -615,6 +621,9 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
   options(warn = -1)
   # dimension reduction
   Y <- runUMAP(Similarity, min.dist = 0.3, n.neighbors = k)
+  if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$dr)) {
+    methods::slot(object, slot.name)$similarity[[type]]$dr <- NULL
+  }
   methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]] <- Y
   return(object)
 }
@@ -703,6 +712,9 @@ netClustering <- function(object, slot.name = "netP", type = c("functional","str
     plot(rev(evL$values)[1:30])
     Z <- evL$vectors[,(ncol(evL$vectors)-k.eigen+1):ncol(evL$vectors)]
     clusters = kmeans(Z,k,nstart=20)$cluster
+  }
+  if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$group)) {
+    methods::slot(object, slot.name)$similarity[[type]]$group <- NULL
   }
   methods::slot(object, slot.name)$similarity[[type]]$group[[comparison.name]] <- clusters
   return(object)
@@ -2345,14 +2357,14 @@ netAnalysis_signalingRole_heatmap <- function(object, signaling = NULL, pattern 
     position <- sort(pSum.original[idx1], index.return = TRUE)$ix
     pSum[idx1] <- values.assign[match(1:length(idx1), position)]
   }
+
   ha1 = rowAnnotation(Strength = anno_barplot(pSum, border = FALSE), show_annotation_name = FALSE)
-  
+
   if (min(mat, na.rm = T) == max(mat, na.rm = T)) {
     legend.break <- max(mat, na.rm = T)
   } else {
     legend.break <- c(round(min(mat, na.rm = T), digits = 1), round(max(mat, na.rm = T), digits = 1))
   }
-
   ht1 = Heatmap(mat, col = color.heatmap.use, na_col = "white", name = "Relative strength",
                 bottom_annotation = col_annotation, top_annotation = ha2, right_annotation = ha1,
                 cluster_rows = cluster.rows,cluster_columns = cluster.rows,

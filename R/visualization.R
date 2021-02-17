@@ -1079,7 +1079,7 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
   thresh <- stats::quantile(net, probs = 1-top)
   net[net < thresh] <- 0
 
- if ((!is.null(sources.use)) | (!is.null(targets.use))) {
+  if ((!is.null(sources.use)) | (!is.null(targets.use))) {
     if (is.null(rownames(net))) {
       stop("The input weighted matrix should have rownames!")
     }
@@ -1308,7 +1308,6 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
-  net[is.na(net)] <- 0
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
@@ -1519,7 +1518,9 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     mat <- mat[ ,col.show]
     color.use <- color.use[col.show]
   }
-if (min(mat) < 0) {
+
+
+  if (min(mat) < 0) {
     color.heatmap.use = colorRamp3(c(min(mat), 0, max(mat)), c(color.heatmap[1], "#f7f7f7", color.heatmap[2]))
     colorbar.break <- c(round(min(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",min(mat, na.rm = T)))+1), 0, round(max(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",max(mat, na.rm = T)))+1))
     # color.heatmap.use = colorRamp3(c(seq(min(mat), -(max(mat)-min(max(mat)))/9, length.out = 4), 0, seq((max(mat)-min(max(mat)))/9, max(mat), length.out = 4)), RColorBrewer::brewer.pal(n = 9, name = color.heatmap))
@@ -1533,6 +1534,7 @@ if (min(mat) < 0) {
     }
     colorbar.break <- c(round(min(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",min(mat, na.rm = T)))+1), round(max(mat, na.rm = T), digits = nchar(sub(".*\\.(0*).*","\\1",max(mat, na.rm = T)))+1))
   }
+  # col_fun(as.vector(mat))
 
   df<- data.frame(group = colnames(mat)); rownames(df) <- colnames(mat)
   col_annotation <- HeatmapAnnotation(df = df, col = list(group = color.use),which = "column",
