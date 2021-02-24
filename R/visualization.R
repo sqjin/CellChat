@@ -2132,6 +2132,8 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
   if (is.null(color.use)){
     color.use = scPalette(length(cell.levels))
     names(color.use) <- cell.levels
+  } else if (is.null(names(color.use))) {
+    names(color.use) <- cell.levels
   }
   grid.col <- color.use[order.sector]
   names(grid.col) <- order.sector
@@ -2364,6 +2366,9 @@ netVisual_chord_gene <- function(object, slot.name = "net", color.use = NULL,
   # define cell type color
   if (is.null(color.use)){
     color.use = scPalette(nlevels(object@idents))
+    names(color.use) <- levels(object@idents)
+    color.use <- color.use[levels(object@idents) %in% as.character(union(df$source,df$target))]
+  } else if (is.null(names(color.use))) {
     names(color.use) <- levels(object@idents)
     color.use <- color.use[levels(object@idents) %in% as.character(union(df$source,df$target))]
   }
