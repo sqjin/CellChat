@@ -1556,7 +1556,7 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
                 column_title = title.name,column_title_gp = gpar(fontsize = font.size.title),column_names_rot = 90,
                 row_title = "Sources (Sender)",row_title_gp = gpar(fontsize = font.size.title),row_title_rot = 90,
                 heatmap_legend_param = list(title_gp = gpar(fontsize = 8, fontface = "plain"),title_position = "leftcenter-rot",
-                                            border = NA, at = colorbar.break,
+                                            border = NA, #at = colorbar.break,
                                             legend_height = unit(20, "mm"),labels_gp = gpar(fontsize = 8),grid_width = unit(2, "mm"))
   )
   #  draw(ht1)
