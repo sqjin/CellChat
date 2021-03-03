@@ -127,8 +127,23 @@ setIdent <- function(object, ident.use = NULL, levels = NULL){
     object@idents <- factor(object@idents, levels = levels)
   }
   if (length(object@net) > 0) {
-    dimnames(object@net$prob) <- list(levels(object@idents), levels(object@idents), dimnames(object@net$prob)[[3]])
-    dimnames(object@net$pval) <- dimnames(object@net$prob)
+    if (all(dimnames(object@net$prob)[[1]] %in% levels(object@idents) )) {
+      message("Reorder cell groups! ")
+      cat("The cell group order before reordering is ", dimnames(object@net$prob)[[1]],'\n')
+      idx <- match(dimnames(object@net$prob)[[1]], levels(object@idents))
+      object@net$prob <- object@net$prob[idx, idx, ]
+      object@net$pval <- object@net$pval[idx, idx, ]
+      cat("The cell group order after reordering is ", dimnames(object@net$prob)[[1]],'\n')
+    } else {
+      message("Rename cell groups but do not change the order! ")
+      cat("The cell group order before renaming is ", dimnames(object@net$prob)[[1]],'\n')
+      dimnames(object@net$prob) <- list(levels(object@idents), levels(object@idents), dimnames(object@net$prob)[[3]])
+      dimnames(object@net$pval) <- dimnames(object@net$prob)
+      cat("The cell group order after renaming is ", dimnames(object@net$prob)[[1]],'\n')
+    }
+    warning("All the calculations after `computeCommunProb` should be re-run!!
+    These include but not limited to `computeCommunProbPathway`,`aggregateNet`, and `netAnalysis_computeCentrality`.")
+
   }
   return(object)
 }
