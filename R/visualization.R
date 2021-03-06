@@ -1547,7 +1547,11 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
   ha1 = rowAnnotation(Strength = anno_barplot(rowSums(abs(mat)), border = FALSE,gp = gpar(fill = color.use, col=color.use)), show_annotation_name = FALSE)
   ha2 = HeatmapAnnotation(Strength = anno_barplot(colSums(abs(mat)), border = FALSE,gp = gpar(fill = color.use, col=color.use)), show_annotation_name = FALSE)
 
-  mat[mat == 0] <- NA
+  if (sum(abs(mat) > 0) == 1) {
+    color.heatmap.use = c("white", color.heatmap.use)
+  } else {
+    mat[mat == 0] <- NA
+  }
   ht1 = Heatmap(mat, col = color.heatmap.use, na_col = "white", name = legend.name,
                 bottom_annotation = col_annotation, left_annotation =row_annotation, top_annotation = ha2, right_annotation = ha1,
                 cluster_rows = cluster.rows,cluster_columns = cluster.rows,
