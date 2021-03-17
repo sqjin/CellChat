@@ -737,6 +737,7 @@ netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.n
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
+  net[is.na(net)] <- 0
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
@@ -919,6 +920,7 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
+  net[is.na(net)] <- 0
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
@@ -1104,6 +1106,8 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
+  net[is.na(net)] <- 0
+
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
@@ -1496,6 +1500,7 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
+  net[is.na(net)] <- 0
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
