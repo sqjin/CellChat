@@ -506,12 +506,17 @@ computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("f
   comparison.name <- paste(comparison, collapse = "-")
   net <- list()
   signalingAll <- c()
+  object.net.nameAll <- c()
   # 1:length(setdiff(names(methods::slot(object, slot.name)), "similarity"))
   for (i in 1:length(comparison)) {
     object.net <- methods::slot(object, slot.name)[[comparison[i]]]
+    object.net.name <- names(methods::slot(object, slot.name))[comparison[i]]
+    object.net.nameAll <- c(object.net.nameAll, object.net.name)
     net[[i]] = object.net$prob
-    signalingAll <- c(signalingAll, dimnames(net[[i]])[[3]])
+    signalingAll <- c(signalingAll, paste0(dimnames(net[[i]])[[3]], "--", object.net.name))
+   # signalingAll <- c(signalingAll, dimnames(net[[i]])[[3]])
   }
+  names(net) <- object.net.nameAll
   net.dim <- sapply(net, dim)[3,]
   nnet <- sum(net.dim)
   position <- cumsum(net.dim); position <- c(0,position)
@@ -834,12 +839,14 @@ computeLaplacian <- function(CM, tol = 0.01) {
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param comparison1 a numerical vector giving the datasets for comparison. This should be the same as `comparison` in `computeNetSimilarityPairwise`
-#' @param comparison2 a numerical vector with two elements giving the datasets for comparison. If there are more than 2 datasets defined in `comparison1`, `comparison2` can be defined to indicate which two datasets used for computing the distance
-#' @param pathway.remove a character vector defining the signaling to remove
+#' @param comparison2 a numerical vector with two elements giving the datasets for comparison.
+#'
+#' If there are more than 2 datasets defined in `comparison1`, `comparison2` can be defined to indicate which two datasets used for computing the distance.
+#' e.g., comparison2 = c(1,3) indicates the first and third datasets defined in `comparison1` will be used for comparison.
 #' @param x.rotation rotation of x-labels
 #' @param title main title of the plot
 #' @param bar.w the width of bar plot
-#' @param color.use defining the color for each cell group
+#' @param color.use defining the color
 #' @param font.size font size
 #' @import ggplot2
 #' @importFrom methods slot
@@ -847,7 +854,7 @@ computeLaplacian <- function(CM, tol = 0.01) {
 #' @export
 #'
 #' @examples
-rankSimilarity <- function(object, slot.name = "netP", type = c("functional","structural"), comparison1 = NULL,  comparison2 = c(1,2), pathway.remove = NULL,
+rankSimilarity <- function(object, slot.name = "netP", type = c("functional","structural"), comparison1 = NULL,  comparison2 = c(1,2),
                            x.rotation = 90, title = NULL, color.use = NULL, bar.w = NULL, font.size = 8) {
   type <- match.arg(type)
 
@@ -856,31 +863,38 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
   }
   comparison.name <- paste(comparison1, collapse = "-")
   cat("Compute the distance of signaling networks between datasets", as.character(comparison1[comparison2]), '\n')
+  comparison2.name <- names(methods::slot(object, slot.name))[comparison1[comparison2]]
+  # net <- list()
+  # for (i in 1:length(comparison2)) {
+  #   net[[i]] = methods::slot(object, slot.name)[[comparison1[comparison2[i]]]]$prob
+  # }
 
-  net <- list()
-  for (i in 1:length(comparison2)) {
-    net[[i]] = methods::slot(object, slot.name)[[comparison1[comparison2[i]]]]$prob
-  }
-  net.dim <- sapply(net, dim)[3,]
-  position <- cumsum(net.dim); position <- c(0,position)
-  if (is.null(pathway.remove)) {
-    similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
-    pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
-    pathway.remove.idx <- which(rownames(similarity) %in% pathway.remove)
-  }
-  if (length(pathway.remove.idx) > 0) {
-    for (i in 1:length(pathway.remove.idx)) {
-      idx <- which(position - pathway.remove.idx[i] > 0)
-      position[idx[1]] <- position[idx[1]] - 1
-      if (idx[1] == 2) {
-        position[3] <- position[3] - 1
-      }
-    }
-  }
+  #net.dim <- sapply(net, dim)[3,]
+  #position <- cumsum(net.dim); position <- c(0,position)
+  # if (is.null(pathway.remove)) {
+  #   similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
+  #   pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
+  #   pathway.remove.idx <- which(rownames(similarity) %in% pathway.remove)
+  # }
+
+  # if (length(pathway.remove.idx) > 0) {
+  #   for (i in 1:length(pathway.remove.idx)) {
+  #     idx <- which(position - pathway.remove.idx[i] > 0)
+  #     if (!is.null(idx)) {
+  #       position[idx[1]] <- position[idx[1]] - 1
+  #       if (idx[1] == 2) {
+  #         position[3] <- position[3] - 1
+  #       }
+  #     }
+  #   }
+  # }
 
   Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
-  data1 <- Y[(position[comparison2[1]]+1):position[comparison2[1]+1], ]
-  data2 <- Y[(position[comparison2[2]]+1):position[comparison2[2]+1], ]
+  group <- sub(".*--", "", rownames(Y))
+  data1 <- Y[group %in% comparison2.name[1], ]
+  data2 <- Y[group %in% comparison2.name[2], ]
+  rownames(data1) <- sub("--.*", "", rownames(data1))
+  rownames(data2) <- sub("--.*", "", rownames(data2))
 
   pathway.show = as.character(intersect(rownames(data1), rownames(data2)))
   data1 <- data1[pathway.show, ]

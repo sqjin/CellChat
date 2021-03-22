@@ -3027,6 +3027,7 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
+    pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
@@ -3044,13 +3045,13 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   for (i in 1:length(prob)) {
     probi <- prob[[i]]
     prob_sum.each[[i]] <- apply(probi, 3, sum)
-    signalingAll <- c(signalingAll, paste0(names(prob_sum.each[[i]]),"-",object.names[i]))
+    signalingAll <- c(signalingAll, paste0(names(prob_sum.each[[i]]),"--",object.names[i]))
   }
   prob_sum <- unlist(prob_sum.each)
   names(prob_sum) <- signalingAll
 
-  group <- sub(".*-", "", names(prob_sum))
-  labels = sub("-.*", "", names(prob_sum))
+  group <- sub(".*--", "", names(prob_sum))
+  labels = sub("--.*", "", names(prob_sum))
 
   df <- data.frame(x = Y[,1], y = Y[, 2], Commun.Prob. = prob_sum/max(prob_sum),
                    labels = as.character(labels), clusters = as.factor(clusters), group = factor(group, levels = unique(group)))
