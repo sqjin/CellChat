@@ -2372,7 +2372,7 @@ netAnalysis_signalingRole_heatmap <- function(object, signaling = NULL, pattern 
     pSum[idx1] <- values.assign[match(1:length(idx1), position)]
   }
 
-  ha1 = rowAnnotation(Strength = anno_barplot(pSum, border = FALSE), show_annotation_name = FALSE)
+  ha1 = rowAnnotation(Strength = anno_barplot(rowSums(mat.ori), border = FALSE), show_annotation_name = FALSE)
 
   if (min(mat, na.rm = T) == max(mat, na.rm = T)) {
     legend.break <- max(mat, na.rm = T)
