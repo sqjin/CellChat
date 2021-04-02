@@ -714,6 +714,7 @@ netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.n
   options(warn = -1)
   thresh <- stats::quantile(net, probs = 1-top)
   net[net < thresh] <- 0
+  cells.level <- rownames(net)
 
   if ((!is.null(sources.use)) | (!is.null(targets.use))) {
     df.net <- reshape2::melt(net, value.name = "value")
@@ -721,17 +722,16 @@ netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.n
     # keep the interactions associated with sources and targets of interest
     if (!is.null(sources.use)){
       if (is.numeric(sources.use)) {
-        sources.use <- levels(object@idents)[sources.use]
+        sources.use <- cells.level[sources.use]
       }
       df.net <- subset(df.net, source %in% sources.use)
     }
     if (!is.null(targets.use)){
       if (is.numeric(targets.use)) {
-        targets.use <- levels(object@idents)[targets.use]
+        targets.use <- cells.level[targets.use]
       }
       df.net <- subset(df.net, target %in% targets.use)
     }
-    cells.level <- levels(object@idents)
     df.net$source <- factor(df.net$source, levels = cells.level)
     df.net$target <- factor(df.net$target, levels = cells.level)
     df.net$value[is.na(df.net$value)] <- 0
@@ -897,6 +897,7 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
   options(warn = -1)
   thresh <- stats::quantile(net, probs = 1-top)
   net[net < thresh] <- 0
+  cells.level <- rownames(net)
 
   if ((!is.null(sources.use)) | (!is.null(targets.use))) {
     df.net <- reshape2::melt(net, value.name = "value")
@@ -904,17 +905,16 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
     # keep the interactions associated with sources and targets of interest
     if (!is.null(sources.use)){
       if (is.numeric(sources.use)) {
-        sources.use <- levels(object@idents)[sources.use]
+        sources.use <- cells.level[sources.use]
       }
       df.net <- subset(df.net, source %in% sources.use)
     }
     if (!is.null(targets.use)){
       if (is.numeric(targets.use)) {
-        targets.use <- levels(object@idents)[targets.use]
+        targets.use <- cells.level[targets.use]
       }
       df.net <- subset(df.net, target %in% targets.use)
     }
-    cells.level <- levels(object@idents)
     df.net$source <- factor(df.net$source, levels = cells.level)
     df.net$target <- factor(df.net$target, levels = cells.level)
     df.net$value[is.na(df.net$value)] <- 0
