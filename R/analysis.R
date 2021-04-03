@@ -2372,7 +2372,7 @@ netAnalysis_signalingRole_heatmap <- function(object, signaling = NULL, pattern 
     pSum[idx1] <- values.assign[match(1:length(idx1), position)]
   }
 
-  ha1 = rowAnnotation(Strength = anno_barplot(rowSums(mat.ori), border = FALSE), show_annotation_name = FALSE)
+  ha1 = rowAnnotation(Strength = anno_barplot(pSum, border = FALSE), show_annotation_name = FALSE)
 
   if (min(mat, na.rm = T) == max(mat, na.rm = T)) {
     legend.break <- max(mat, na.rm = T)
@@ -2385,7 +2385,7 @@ netAnalysis_signalingRole_heatmap <- function(object, signaling = NULL, pattern 
                 row_names_side = "left",row_names_rot = 0,row_names_gp = gpar(fontsize = font.size),column_names_gp = gpar(fontsize = font.size),
                 width = unit(width, "cm"), height = unit(height, "cm"),
                 column_title = title,column_title_gp = gpar(fontsize = font.size.title),column_names_rot = 90,
-                heatmap_legend_param = list(title = "Relative strength", title_gp = gpar(fontsize = 8, fontface = "plain"),title_position = "leftcenter-rot",
+                heatmap_legend_param = list(title_gp = gpar(fontsize = 8, fontface = "plain"),title_position = "leftcenter-rot",
                                             border = NA, at = legend.break,
                                             legend_height = unit(20, "mm"),labels_gp = gpar(fontsize = 8),grid_width = unit(2, "mm"))
   )
