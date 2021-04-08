@@ -669,6 +669,7 @@ netClustering <- function(object, slot.name = "netP", type = c("functional","str
   comparison.name <- paste(comparison, collapse = "-")
 
   Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
+  Y[is.na(Y)] <- 0
   data.use <- Y
   if (methods == "kmeans") {
     if (!is.null(k)) {
