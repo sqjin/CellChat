@@ -9,8 +9,9 @@ computeCommunProb(
   type = c("triMean", "truncatedMean", "median"),
   trim = NULL,
   LR.use = NULL,
-  raw.use = FALSE,
+  raw.use = TRUE,
   population.size = FALSE,
+  do.fast = TRUE,
   nboot = 100,
   seed.use = 1L,
   Kh = 0.5,
@@ -27,13 +28,18 @@ When setting `type = "truncatedMean"`, a value should be assigned to 'trim',  pr
 
 \item{LR.use}{a subset of ligand-receptor interactions used in inferring communication network}
 
-\item{raw.use}{whether use the raw data or the projected data.
-Set raw.use = FALSE to use the projected data when analyzing single-cell data with shallow sequencing depth because the projected data could help to reduce the dropout effects of signaling genes, in particular for possible zero expression of subunits of ligands/receptors.
-Set raw.use = TRUE when analyzing high-quality data}
+\item{raw.use}{whether use the raw data (i.e., `object@data.signaling`) or the projected data (i.e., `object@data.project`).
+Set raw.use = FALSE to use the projected data when analyzing single-cell data with shallow sequencing depth because the projected data could help to reduce the dropout effects of signaling genes, in particular for possible zero expression of subunits of ligands/receptors.}
 
 \item{population.size}{whether consider the proportion of cells in each group across all sequenced cells.
 Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the potential artifact of population size.
 Set population.size = TRUE if analyzing unsorted single-cell transcriptomes, with the reason that abundant cell populations tend to send collectively stronger signals than the rare cell populations.}
+
+\item{do.fast}{whether run the code in a fast version. In the fast version, all the calculation is based on average expression per cell group; in the previous version, calculation of ligand and receptor expression is also dependent on the number of cells.
+
+To further speed up on large-scale datasets, 1) USER can downsample the data using the function 'subset' from Seurat package (e.g., pbmc.small <- subset(pbmc, downsample = 500)), or using the function `sketchData` from CellChat, in particular for the large cell clusters;
+
+2) we are still looking for methods on faster calculation of average expression per group}
 
 \item{nboot}{threshold of p-values}
 
@@ -46,7 +52,9 @@ Set population.size = TRUE if analyzing unsorted single-cell transcriptomes, wit
 \value{
 A CellChat object with updated slot 'net':
 
-object@net$prob is the inferred communication probability (strength) array, where the first, second and third dimensions represent a source, target and ligand-receptor pair, respectively. USER can access all the inferred cell-cell communications using the function 'subsetCommunication(object)', which returns a data frame.
+object@net$prob is the inferred communication probability (strength) array, where the first, second and third dimensions represent a source, target and ligand-receptor pair, respectively.
+
+USER can access all the inferred cell-cell communications using the function 'subsetCommunication(object)', which returns a data frame.
 
 object@net$pval is the corresponding p-values of each interaction
 }

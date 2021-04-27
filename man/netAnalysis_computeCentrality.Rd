@@ -5,14 +5,14 @@
 \title{Compute the network centrality scores allowing identification of dominant senders, receivers, mediators and influencers in all inferred communication networks}
 \usage{
 netAnalysis_computeCentrality(
-  object,
+  object = NULL,
   slot.name = "netP",
   net = NULL,
   net.name = NULL
 )
 }
 \arguments{
-\item{object}{CellChat object}
+\item{object}{CellChat object; If object = NULL, USER must provide `net`}
 
 \item{slot.name}{the slot name of object that is used to compute centrality measures of signaling networks}
 

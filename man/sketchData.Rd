@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{sketchData}
 \alias{sketchData}
-\title{Downsampling single cell data}
+\title{Downsampling single cell data using geometric sketching algorithm}
 \usage{
 sketchData(X, percent, dimPC = 50)
 }
@@ -14,8 +14,8 @@ sketchData(X, percent, dimPC = 50)
 \item{dimPC}{the number of components to use}
 }
 \value{
-
+A vector consisting of the index to use for downsampling
 }
 \description{
-Downsampling single cell data
+USERs need to install the python package `pip install geosketch` (https://github.com/brianhie/geosketch)
 }

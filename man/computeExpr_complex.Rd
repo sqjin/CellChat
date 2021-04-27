@@ -2,14 +2,14 @@
 % Please edit documentation in R/modeling.R
 \name{computeExpr_complex}
 \alias{computeExpr_complex}
-\title{Compute the expression of complex using geometric mean}
+\title{Compute the expression of complex in individual cells using geometric mean}
 \usage{
 computeExpr_complex(complex_input, data.use, complex)
 }
 \arguments{
 \item{complex_input}{the complex_input from CellChatDB}
 
-\item{data.use}{data matrix}
+\item{data.use}{data matrix (row are genes and columns are cells or cell groups)}
 
 \item{complex}{the names of complex}
 }
@@ -17,5 +17,5 @@ computeExpr_complex(complex_input, data.use, complex)
 
 }
 \description{
-Compute the expression of complex using geometric mean
+Compute the expression of complex in individual cells using geometric mean
 }

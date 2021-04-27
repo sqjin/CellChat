@@ -16,7 +16,7 @@ mergeCellChat(
 
 \item{add.names}{A vector containing the name of each dataset}
 
-\item{merge.data}{whether merging the data for all genes}
+\item{merge.data}{whether merging the data for ALL genes. Default only merges the data of signaling genes}
 
 \item{cell.prefix}{whether prefix cell names}
 }
