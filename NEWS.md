@@ -10,6 +10,8 @@
 * `computeCommunProb` now supports a faster calculation and displays a ProgressBar
 * `computeCommunProbPathway` now returns the significant pathways that are ordered based on the total communication probabilities
 
+## Publish a new release
+* The first release was published as version 1.0.0 before updating to version 1.1.0 
 
 # CellChat 1.0.0 (2021-02-17)
 
