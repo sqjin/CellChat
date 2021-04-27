@@ -63,13 +63,15 @@ scaleMat <- function(x, scale, na.rm=TRUE){
   )
 }
 
-#' Downsampling single cell data
+#' Downsampling single cell data using geometric sketching algorithm
+#'
+#' USERs need to install the python package `pip install geosketch` (https://github.com/brianhie/geosketch)
 #'
 #' @param X input data (samples in rows, features in columns)
 #' @param percent the percent of data to sketch
 #' @param dimPC the number of components to use
 #' @importFrom reticulate import
-#' @return
+#' @return A vector consisting of the index to use for downsampling
 #' @export
 #'
 sketchData <- function(X, percent, dimPC = 50) {
@@ -204,6 +206,7 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
   }
   if (is.null(data.use)) {
     X <- object@data.signaling
+    if (nrow(X) < 3) {stop("Please check `object@data.signaling` and ensure that you have run `subsetData` and that the data matrix `object@data.signaling` looks OK.")}
   } else {
     X <- data.use
   }

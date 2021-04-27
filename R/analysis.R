@@ -157,7 +157,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #'
 #' NB: This function was previously named as `netAnalysis_signalingRole`.  The previous function `netVisual_signalingRole` is now named as `netAnalysis_signalingRole_network`.
 #'
-#' @param object CellChat object
+#' @param object CellChat object; If object = NULL, USER must provide `net`
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param net compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net
 #' @param net.name a character vector giving the name of signaling networks
@@ -169,7 +169,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @return
 #' @export
 #'
-netAnalysis_computeCentrality <- function(object, slot.name = "netP", net = NULL, net.name = NULL) {
+netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL) {
   if (is.null(net)) {
     net = methods::slot(object, slot.name)$prob
   }
@@ -195,8 +195,12 @@ netAnalysis_computeCentrality <- function(object, slot.name = "netP", net = NULL
     centr.all <- as.list(computeCentralityLocal(net))
   }
   names(centr.all) <- net.name
-  slot(object, slot.name)$centr <- centr.all
-  return(object)
+  if (is.null(object)) {
+    return(centr.all)
+  } else {
+    slot(object, slot.name)$centr <- centr.all
+    return(object)
+  }
 }
 
 
@@ -2228,6 +2232,7 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
   num.link <- rowSums(num.link) + colSums(num.link)-diag(num.link)
   df <- data.frame(x = outgoing.cells, y = incoming.cells, labels = names(incoming.cells),
                    Count = num.link)
+  df$labels <- factor(df$labels, levels = names(incoming.cells))
   if (!is.null(group)) {
     df$Group <- group
   }
@@ -2264,6 +2269,172 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
     gg <- gg + ggrepel::geom_text_repel(mapping = aes(label = labels, colour = labels), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5)
   }
 
+  if (!show.legend) {
+    gg <- gg + theme(legend.position = "none")
+  }
+
+  if (!show.axes) {
+    gg <- gg + theme_void()
+  }
+
+  gg
+
+}
+
+#' 2D visualization of differential outgoing and incoming signaling associated with one cell group
+#'
+#'
+#' @param object A merged CellChat object
+#' @param idents.use the cell group names of interest. Should be one of `levels(object@idents$joint)`
+#' @param color.use a vector with three elements: the first is for coloring shared pathways, the second is for specific pathways in the first dataset, and the third is for specific pathways in the second dataset
+#' @param comparison an index vector giving the two datasets for comparison
+#' @param signaling a char vector containing signaling pathway names. signaling = NULL: Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+#' @param signaling.label a char vector giving the signaling names to show when labeling each point
+#' @param top.label the fraction of signaling pathways to label
+#' @param signaling.exclude signaling pathways to exclude when plotting
+#' @param slot.name the slot name of object
+#' @param point.shape point shape
+#' @param label.size font size of the text
+#' @param dot.alpha transparency
+#' @param dot.size a range defining the size of the symbol
+#' @param xlabel label of x-axis
+#' @param ylabel label of y-axis
+#' @param title main title of the plot
+#' @param font.size font size of the text
+#' @param font.size.title font size of the title
+#' @param do.label label the each point
+#' @param show.legend whether show the legend
+#' @param show.axes whether show the axes
+#' @import ggplot2
+#' @importFrom ggrepel geom_text_repel
+#' @importFrom methods slot
+#' @importFrom plyr mapvalues
+#' @return ggplot object
+#' @export
+#'
+netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use = c("grey10", "#F8766D", "#00BFC4"), comparison = c(1,2), signaling = NULL, signaling.label = NULL, top.label = 1, signaling.exclude = NULL, slot.name = "netP", dot.size = 2.5, point.shape = c(21, 22, 24, 23), label.size = 3, dot.alpha = 0.6,
+                                                 xlabel = NULL, ylabel = NULL, title = NULL,
+                                                 font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
+  if (is.list(object@net[[1]])) {
+    dataset.name <- names(object@net)
+    message(paste0("Visualizing differential outgoing and incoming signaling changes from ", dataset.name[comparison[1]], " to ", dataset.name[comparison[2]]))
+    title <- paste0("Signaling changes of ", idents.use, " (", dataset.name[comparison[1]], " vs. ", dataset.name[comparison[2]], ")")
+    if (length(slot(object, slot.name)[[1]]$centr) == 0) {
+      stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
+    }
+    cell.levels <- levels(object@idents$joint)
+    if (is.null(xlabel) | is.null(ylabel)) {
+      xlabel = "Differential outgoing interaction strength"
+      ylabel = "Differential incoming interaction strength"
+    }
+
+  } else {
+    message("Visualizing outgoing and incoming signaling on a single object \n")
+    title <- paste0("Signaling patterns of ", idents.use)
+    if (length(slot(object, slot.name)$centr) == 0) {
+      stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
+    }
+    cell.levels <- levels(object@idents)
+  }
+  if (!(idents.use %in% cell.levels)) {
+    stop("Please check the input cell group names!")
+  }
+  if (is.null(signaling)) {
+    signaling <- union(object@netP[[comparison[1]]]$pathways, object@netP[[comparison[2]]]$pathways)
+  }
+  if (!is.null(signaling.exclude)) {
+    signaling <- setdiff(signaling, signaling.exclude)
+  }
+  mat.all.merged <- list()
+  for (ii in 1:length(comparison)) {
+    centr <- slot(object, slot.name)[[comparison[ii]]]$centr
+    outgoing <- matrix(0, nrow = length(cell.levels), ncol = length(centr))
+    incoming <- matrix(0, nrow = length(cell.levels), ncol = length(centr))
+    dimnames(outgoing) <- list(cell.levels, names(centr))
+    dimnames(incoming) <- dimnames(outgoing)
+    for (i in 1:length(centr)) {
+      outgoing[,i] <- centr[[i]]$outdeg
+      incoming[,i] <- centr[[i]]$indeg
+    }
+    mat.out <- t(outgoing)
+    mat.in <- t(incoming)
+
+    mat.all <- array(0, dim = c(length(signaling),ncol(mat.out),2))
+    mat.t <-list(mat.out, mat.in)
+    for (i in 1:2) {
+      mat = mat.t[[i]]
+      mat1 <- mat[rownames(mat) %in% signaling, , drop = FALSE]
+      mat <- matrix(0, nrow = length(signaling), ncol = ncol(mat))
+      idx <- match(rownames(mat1), signaling)
+      mat[idx[!is.na(idx)], ] <- mat1
+      dimnames(mat) <- list(signaling, colnames(mat1))
+      mat.all[,,i] = mat
+    }
+    dimnames(mat.all) <- list(dimnames(mat)[[1]], dimnames(mat)[[2]], c("outgoing", "incoming"))
+    mat.all.merged[[ii]] <- mat.all
+  }
+  mat.all.merged.use <- list(mat.all.merged[[1]][,idents.use,], mat.all.merged[[2]][,idents.use,])
+  idx.specific <- mat.all.merged.use[[1]] * mat.all.merged.use[[2]]
+  out.specific.signaling <- rownames(idx.specific)[idx.specific[,1] == 0]
+  in.specific.signaling <- rownames(idx.specific)[idx.specific[,2] == 0]
+
+  mat.diff <- mat.all.merged.use[[2]] -  mat.all.merged.use[[1]]
+  idx <- rowSums(mat.diff) != 0
+  mat.diff <- mat.diff[idx, ]
+  out.specific.signaling <- rownames(mat.diff) %in% out.specific.signaling
+  in.specific.signaling <- rownames(mat.diff) %in% in.specific.signaling
+  out.in.specific.signaling <- as.logical(out.specific.signaling * in.specific.signaling)
+  specificity <- matrix(0, nrow = nrow(mat.diff), ncol = 1)
+  specificity[out.in.specific.signaling] <- 2 # both outgoing and incoming specific to one condition
+  specificity[setdiff(which(out.specific.signaling), which(out.in.specific.signaling))] <- 1 # only outgoing specific to one condition
+  specificity[setdiff(which(in.specific.signaling), which(out.in.specific.signaling))] <- -1 # only incoming specific to one condition
+
+
+  df <- as.data.frame(mat.diff)
+  df$specificity.out.in <- specificity
+  df$specificity = 0
+  df$specificity[(specificity != 0) & (rowSums(mat.diff >= 0) ==2)] = 1 # specific to dataset 2
+  df$specificity[(specificity != 0) & (rowSums(mat.diff <= 0) ==2)] = -1  # specific to dataset 1
+
+  # change number to char
+  out.in.category <- c("Shared", "Incoming specific", "Outgoing specific", "Incoming & Outgoing specific")
+  specificity.category <- c("Shared", paste0(dataset.name[comparison[1]]," specific"), paste0(dataset.name[comparison[2]]," specific"))
+  df$specificity.out.in <- plyr::mapvalues(df$specificity.out.in, from = c(0,-1,1,2),to = out.in.category)
+  df$specificity.out.in <- factor(df$specificity.out.in, levels = out.in.category)
+  df$specificity <- plyr::mapvalues(df$specificity, from = c(0,-1,1),to = specificity.category)
+  df$specificity <- factor(df$specificity, levels = specificity.category)
+
+  point.shape.use <- point.shape[out.in.category %in% unique(df$specificity.out.in)]
+  df$specificity.out.in = droplevels(df$specificity.out.in, exclude = setdiff(out.in.category,unique(df$specificity.out.in)))
+
+  color.use <- color.use[specificity.category %in% unique(df$specificity)]
+  df$specificity = droplevels(df$specificity, exclude = setdiff(specificity.category,unique(df$specificity)))
+
+  df$labels <- rownames(df)
+  gg <- ggplot(data = df, aes(outgoing, incoming)) +
+    geom_point(aes(colour = specificity, fill = specificity, shape = specificity.out.in), size = dot.size)
+  gg <- gg + theme_linedraw() +theme(panel.grid = element_blank()) +
+    geom_hline(yintercept=0,linetype="dashed", color = "grey50", size = 0.25) + geom_vline(xintercept=0, linetype="dashed", color = "grey50",size = 0.25) +
+    theme(text = element_text(size = font.size), legend.key.height = grid::unit(0.15, "in"))+
+    # guides(colour = guide_legend(override.aes = list(size = 3)))+
+    labs(title = title, x = xlabel, y = ylabel) + theme(plot.title = element_text(size= font.size.title, hjust = 0.5, face="plain"))+
+    # theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks = element_blank()) +
+    theme(axis.line.x = element_line(size = 0.25), axis.line.y = element_line(size = 0.25))
+  gg <- gg + scale_fill_manual(values = ggplot2::alpha(color.use, alpha = dot.alpha), drop = FALSE) + guides(fill=FALSE)
+  gg <- gg + scale_colour_manual(values = color.use, drop = FALSE)
+  gg <- gg + scale_shape_manual(values = point.shape.use)
+  gg <- gg + theme(legend.title = element_blank())
+  if (do.label) {
+    if (is.null(signaling.label)) {
+      thresh <- stats::quantile(abs(as.matrix(df[,1:2])), probs = 1-top.label)
+      idx = abs(df[,1]) > thresh | abs(df[,2]) > thresh
+      data.label <- df[idx,]
+    } else {
+      data.label <- df[rownames(df) %in% signaling.label, ]
+    }
+
+    gg <- gg + ggrepel::geom_text_repel(data = data.label, mapping = aes(label = labels, colour = specificity), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5)
+  }
   if (!show.legend) {
     gg <- gg + theme(legend.position = "none")
   }
