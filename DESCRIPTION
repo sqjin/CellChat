@@ -1,7 +1,7 @@
 Package: CellChat
 Type: Package
 Title: Inference and analysis of cell-cell communication from single-cell transcriptomics data 
-Version: 1.0.0
+Version: 1.1.0
 Author: Suoqin Jin
 Maintainer: Suoqin Jin <suoqin.jin@uci.edu>
 Description: an open source R package that infers, visualizes and analyzes the cell-cell communication networks from scRNA-seq data.
@@ -41,7 +41,8 @@ Imports:
     BiocGenerics,
     magrittr,
     patchwork,
-    colorspace
+    colorspace,
+    plyr
 LinkingTo: Rcpp, RcppEigen
 Suggests:
     rmarkdown, knitr, roxygen2, Seurat (>= 3.0.0), SingleCellExperiment, SummarizedExperiment, purrr
