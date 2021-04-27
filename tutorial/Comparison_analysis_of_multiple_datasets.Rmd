@@ -2,7 +2,7 @@
 ---
 title: "Comparison analysis of multiple datasets using CellChat"
 author: "Suoqin Jin"
-date: 20 January, 2021
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     toc: true
@@ -45,8 +45,10 @@ setwd(data.dir)
 USERS need to run CellChat on each dataset seperately and then merge different CellChat objects together.
 Please do `updateCellChat` if you have CellChat objects that are obtained using the earlier version (< 0.5.0). 
 ```{r}
-cellchat.NL <- readRDS(url("https://ndownloader.figshare.com/files/25954199"))
-cellchat.LS <- readRDS(url("https://ndownloader.figshare.com/files/25956518"))
+# cellchat.NL <- readRDS(url("https://ndownloader.figshare.com/files/25954199"))
+# cellchat.LS <- readRDS(url("https://ndownloader.figshare.com/files/25956518"))
+cellchat.NL <- readRDS("/Users/suoqinjin/Documents/CellChat/tutorial/cellchat_humanSkin_NL.rds")
+cellchat.LS <- readRDS("/Users/suoqinjin/Documents/CellChat/tutorial/cellchat_humanSkin_LS.rds")
 object.list <- list(NL = cellchat.NL, LS = cellchat.LS)
 cellchat <- mergeCellChat(object.list, add.names = names(object.list))
 cellchat
@@ -139,6 +141,14 @@ patchwork::wrap_plots(plots = gg)
 
 From the scatter plot, we can see that Inflam.DC and cDC1 emerge as one of the major source and targets in LS compared to NL. Fibroblast populations also become the major sources in LS. 
 
+Furthermore, we can identify the specific signaling changes of Inflam.DC and cDC1 between NL and LS. 
+## Identify signaling changes associated with one cell group
+```{r, fig.width=9,fig.height = 3, fig.wide = TRUE, fig.align = "center"}
+gg1 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = "Inflam. DC", signaling.exclude = "MIF")
+gg2 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = "cDC1", signaling.exclude = c("MIF"))
+patchwork::wrap_plots(plots = list(gg1,gg2))
+```
+
 # Part II: Identify the conserved and context-specific signaling pathways
 CellChat then can identify signaling networks with larger (or less) difference, signaling groups, and the conserved and context-specific signaling pathways based on their cell-cell communication networks among multiple biological conditions. 
 
@@ -217,6 +227,7 @@ draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
 ```
 
 # Part III: Identify the upgulated and down-regulated signaling ligand-receptor pairs
+## Identify dysfunctional signaling by comparing the communication probabities  
 We can compare the communication probabilities mediated by ligand-receptor pairs from some cell groups to other cell groups. This can be done by setting `comparison` in the function `netVisual_bubble`. 
 ```{r, fig.width=6, fig.height = 4, fig.align = "center"}
 netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:11),  comparison = c(1, 2), angle.x = 45)
@@ -230,7 +241,7 @@ gg1 + gg2
 ```
 NB: The ligand-receptor pairs shown in the bubble plot can be accessed via `signaling.LSIncreased = gg1$data`. 
 
-
+## Identify dysfunctional signaling by using differential expression analysis
 The above method for identifying the upgulated and down-regulated signaling is perfomed by comparing the communication probability between two datasets for each L-R pair and each pair of cell groups. Alternative, we can identify the upgulated and down-regulated signaling ligand-receptor pairs based on the differential gene expression analysis. Specifically, we perform differential expression analysis between two biological conditions (i.e., NL and LS) for each cell group, and then obtain the upgulated and down-regulated signaling based on the fold change of ligands in the sender cells and receptors in the receiver cells. Such analysis can be done as follows.
 ```{r}
 # define a positive dataset, i.e., the dataset with positive fold change against the other dataset
