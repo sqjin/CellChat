@@ -981,7 +981,7 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
         }
       }
       idx.t <- setdiff(1:nrow(prob), sources.use)
-      prob[idx.t, , ] <- 0
+      prob[idx.t, , ,drop=FALSE] <- 0
     }
     if (!is.null(targets.use)) {
       if (is.character(targets.use)) {
