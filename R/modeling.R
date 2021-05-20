@@ -375,7 +375,7 @@ computeCommunProbPathway <- function(object = NULL, net = NULL, pairLR.use = NUL
   group <- factor(pairLR.use$pathway_name, levels = pathways)
   prob.pathways <- aperm(apply(prob, c(1, 2), by, group, sum), c(2, 3, 1))
   pathways.sig <- pathways[apply(prob.pathways, 3, sum) != 0]
-  prob.pathways.sig <- prob.pathways[,,pathways.sig]
+  prob.pathways.sig <- prob.pathways[,,pathways.sig, drop=FALSE]
   idx <- sort(apply(prob.pathways.sig, 3, sum), decreasing=TRUE, index.return = TRUE)$ix
   pathways.sig <- pathways.sig[idx]
   prob.pathways.sig <- prob.pathways.sig[, , idx]
