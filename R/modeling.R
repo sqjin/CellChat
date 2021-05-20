@@ -378,7 +378,7 @@ computeCommunProbPathway <- function(object = NULL, net = NULL, pairLR.use = NUL
   prob.pathways.sig <- prob.pathways[,,pathways.sig, drop=FALSE]
   idx <- sort(apply(prob.pathways.sig, 3, sum), decreasing=TRUE, index.return = TRUE)$ix
   pathways.sig <- pathways.sig[idx]
-  prob.pathways.sig <- prob.pathways.sig[, , idx]
+  prob.pathways.sig <- prob.pathways.sig[, , idx, drop=FALSE]
 
   if (is.null(object)) {
     netP = list(pathways = pathways.sig, prob = prob.pathways.sig)
