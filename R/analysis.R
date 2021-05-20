@@ -49,7 +49,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
     pairLR <- pairLR[pairLR.name.use,]
   }
 
-  prob <- prob[,,pairLR.name.use]
+  prob <- prob[,,pairLR.name.use, drop=FALSE]
 
   if (length(dim(prob)) == 2) {
     prob <- replicate(1, prob, simplify="array")
@@ -992,7 +992,7 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
         }
       }
       idx.t <- setdiff(1:nrow(prob), targets.use)
-      prob[ ,idx.t, ] <- 0
+      prob[ ,idx.t, ,drop=FALSE] <- 0
     }
     if (sum(prob) == 0) {
       stop("No inferred communications for the input!")
@@ -1058,7 +1058,7 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
           }
         }
         idx.t <- setdiff(1:nrow(prob), targets.use)
-        prob[ ,idx.t, ] <- 0
+        prob[ ,idx.t, , drop=FALSE] <- 0
       }
       if (sum(prob) == 0) {
         stop("No inferred communications for the input!")
