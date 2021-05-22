@@ -62,7 +62,7 @@ searchPair <- function(signaling = c(), pairLR.use, key = c("pathway_name","liga
 #'
 subsetDB <- function(CellChatDB, search = c(), key = "annotation") {
   interaction_input <- CellChatDB$interaction
-  interaction_input <- interaction_input[interaction_input[[key]] == search, ]
+  interaction_input <- interaction_input[interaction_input[[key]] %in% search, ]
   CellChatDB$interaction <- interaction_input
   return(CellChatDB)
 }
