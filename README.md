@@ -2,7 +2,7 @@
 # CellChat: Inference and analysis of cell-cell communication
 
 <p align="center">
-  <img width="250"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
+  <img width="200"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
 </p>
 
 ## Important update!!
@@ -70,12 +70,7 @@ We build a user-friendly web-based “[CellChat Explorer](http://www.cellchat.or
 We also developed a [standalone CellChat Shiny App](https://github.com/sqjin/CellChatShiny) for our Cell-Cell Communication Atlas Explorer. 
 
 
-## System Requirements
-- Hardware requirements: CellChat package requires only a standard computer with enough RAM to support the in-memory operations.
-
-- Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. CellChat can be installed on a normal computer within few mins.
-
-## Help and Contribution
+## Help, Suggestion and Contribution
 If you have any question, comment or suggestion, please use github issue tracker to report coding related [issues](https://github.com/sqjin/CellChat/issues) of CellChat or contact cellchat.package@gmail.com. I will answer you timely, and please remind me again if you have not received response more than three days.  
 
 ### Before reporting an issue
@@ -85,7 +80,14 @@ If you have any question, comment or suggestion, please use github issue tracker
 - Users are encouraged to discuss issues and bugs using the github [issues](https://github.com/sqjin/CellChat/issues) instead of email exchanges.
 
 ### Contribution
-CellChat is an open source software package and any contribution is highly appreciated! We use GitHub's [Pull Request](https://github.com/sqjin/CellChat/pulls) mechanism for reviewing and accepting submissions of any contribution. Issue a pull request on the GitHub website to request that we merge your branch's changes into CellChat's master branch. Be sure to include a description of your changes in the pull request, as well as any other information that will help the CellChat developers involved in reviewing your code. 
+CellChat is an open source software package and any contribution is highly appreciated! 
+
+We use GitHub's [Pull Request](https://github.com/sqjin/CellChat/pulls) mechanism for reviewing and accepting submissions of any contribution. Issue a pull request on the GitHub website to request that we merge your branch's changes into CellChat's master branch. Be sure to include a description of your changes in the pull request, as well as any other information that will help the CellChat developers involved in reviewing your code. 
+
+## System Requirements
+- Hardware requirements: CellChat package requires only a standard computer with enough RAM to support the in-memory operations.
+
+- Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. CellChat can be installed on a normal computer within few mins.
 
 ## How to cite?
 Suoqin Jin, Christian F. Guerrero-Juarez, Lihua Zhang, Ivan Chang, Raul Ramos, Chen-Hsiang Kuan, Peggy Myung, Maksim V. Plikus, Qing Nie. Inference and analysis of cell-cell communication using CellChat. Nature Communications, 12:1088 (2021). https://www.nature.com/articles/s41467-021-21246-9 
