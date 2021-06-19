@@ -598,14 +598,24 @@ computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("f
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param comparison a numerical vector giving the datasets for comparison. No need to define for a single dataset. Default are all datasets when object is a merged object
-#' @param k the number of nearest neighbors in running umap
 #' @param pathway.remove a range of the number of patterns
+#' @param umap.method UMAP implementation to run.
+#'
+#' Can be umap-learn: Run the python umap-learn package; uwot: Runs umap via the uwot R package;  If umap.method = "uwot", please make sure you have installed the 'uwot' (https://github.com/jlmelville/uwot)
+#'
+#' @param n_neighbors the number of nearest neighbors in running umap
+#' @param min_dist This controls how tightly the embedding is allowed compress points together.
+#' Larger values ensure embedded points are moreevenly distributed, while smaller values allow the
+#' algorithm to optimise more accurately with regard to local structure. Sensible values are in the range 0.001 to 0.5.
+#' @param ... Parameters passing to umap
 #' @importFrom methods slot
 #' @return
 #' @export
 #'
 #' @examples
-netEmbedding <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, pathway.remove = NULL, k = NULL) {
+netEmbedding <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, pathway.remove = NULL,
+                         umap.method = c("umap-learn", "uwot"), n_neighbors = NULL,min_dist = 0.3,...) {
+  umap.method <- match.arg(umap.method)
   if (object@options$mode == "single") {
     comparison <- "single"
     cat("Manifold learning of the signaling networks for a single dataset", '\n')
@@ -624,12 +634,18 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
     pathway.remove.idx <- which(rownames(Similarity) %in% pathway.remove)
     Similarity <- Similarity[-pathway.remove.idx, -pathway.remove.idx]
   }
-  if (is.null(k)) {
-    k <- ceiling(sqrt(dim(Similarity)[1])) + 1
+  if (is.null(n_neighbors)) {
+    n_neighbors <- ceiling(sqrt(dim(Similarity)[1])) + 1
   }
   options(warn = -1)
   # dimension reduction
-  Y <- runUMAP(Similarity, min.dist = 0.3, n.neighbors = k)
+  umap.method = c("umap-learn", "uwot")
+  if (umap.method == "umap-learn") {
+    Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
+  } else if (umap.method == "uwot") {
+    Y <- uwot::umap(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
+  }
+
   if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$dr)) {
     methods::slot(object, slot.name)$similarity[[type]]$dr <- NULL
   }
@@ -1935,7 +1951,7 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
   if (!is.data.frame(net)) {
     prob <- net$prob
     pval <- net$pval
-    prob[pval > thresh] <- 0
+    prob[pval >= thresh] <- 0
     net <- reshape2::melt(prob, value.name = "prob")
     colnames(net)[1:3] <- c("source","target","interaction_name")
     net.pval <- reshape2::melt(pval, value.name = "pval")
@@ -2172,7 +2188,9 @@ netAnalysis_signalingRole_network <- function(object, signaling, slot.name = "ne
 #' 2D visualization of dominant senders (sources) and receivers (targets)
 #'
 #' @description
-#' This scatter plot shows the dominant senders (sources) and receivers (targets) in a 2D space. Dot size is proportional to the number of inferred links (both outgoing and incoming) associated with each cell group.
+#' This scatter plot shows the dominant senders (sources) and receivers (targets) in a 2D space.
+#' x-axis and y-axis are respectively the total outgoing or incoming communication probability associated with each cell group.
+#' Dot size is proportional to the number of inferred links (both outgoing and incoming) associated with each cell group.
 #' Dot colors indicate different cell groups. Dot shapes indicate different categories of cell groups if `group`` is defined.
 #'
 #' @param object CellChat object
@@ -2315,6 +2333,9 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
 netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use = c("grey10", "#F8766D", "#00BFC4"), comparison = c(1,2), signaling = NULL, signaling.label = NULL, top.label = 1, signaling.exclude = NULL, slot.name = "netP", dot.size = 2.5, point.shape = c(21, 22, 24, 23), label.size = 3, dot.alpha = 0.6,
                                                  xlabel = NULL, ylabel = NULL, title = NULL,
                                                  font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
+  if (is.list(object)) {
+    object <- mergeCellChat(object, add.names = names(object))
+  }
   if (is.list(object@net[[1]])) {
     dataset.name <- names(object@net)
     message(paste0("Visualizing differential outgoing and incoming signaling changes from ", dataset.name[comparison[1]], " to ", dataset.name[comparison[2]]))

@@ -67,23 +67,50 @@ scaleMat <- function(x, scale, na.rm=TRUE){
 #'
 #' USERs need to install the python package `pip install geosketch` (https://github.com/brianhie/geosketch)
 #'
-#' @param X input data (samples in rows, features in columns)
+#' @param object A data matrix (should have row names; samples in rows, features in columns) or a Seurat object.
+#'
+#' When object is a PCA or UMAP space, please set `do.PCA = FALSE`
+#'
+#' When object is a data matrix (cells in rows and genes in columns), it is better to use the highly variable genes. PCA will be done on this input data matrix.
 #' @param percent the percent of data to sketch
+#' @param idents A vector of identity classes to keep for sketching
+#' @param do.PCA whether doing PCA on the input data
 #' @param dimPC the number of components to use
 #' @importFrom reticulate import
-#' @return A vector consisting of the index to use for downsampling
+#' @return A vector of cell names to use for downsampling
 #' @export
 #'
-sketchData <- function(X, percent, dimPC = 50) {
+sketchData <- function(object, percent, idents = NULL, do.PCA = TRUE, dimPC = 30) {
   # pip install geosketch
   geosketch <- reticulate::import('geosketch')
-  # Get top PCs
-  X.pcs <- runPCA(X, dimPC = dimPC)
-  # Sketch percent of data.
-  sketch.size <- as.integer(percent*nrow(X))
+  if (is(object,"Seurat")) {
+    sketch.size <- as.integer(percent*ncol(object))
+    if (!is.null(idents)) {
+      object <- subset(object, idents = idents)
+    }
+    object <- object %>% #Seurat::NormalizeData(verbose = FALSE) %>%
+      FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+      RunPCA(pc.genes = object@var.genes, npcs = dimPC, verbose = FALSE)
+
+    X.pcs <- object@reductions$pca@cell.embeddings
+    cells.all <- Cells(object)
+
+  } else {
+    # Get top PCs
+    if (do.PCA) {
+      X.pcs <- runPCA(object, dimPC = dimPC)
+    } else {
+      X.pcs <- object
+    }
+
+    # Sketch percent of data.
+    sketch.size <- as.integer(percent*nrow(X))
+    cells.all <- rownames(object)
+  }
   sketch.index <- geosketch$gs(X.pcs, sketch.size)
   sketch.index <- unlist(sketch.index) + 1
-  return(sketch.index)
+  sketch.cells <- cells.all[sketch.index]
+  return(sketch.cells)
 }
 
 
@@ -119,22 +146,32 @@ addMeta <- function(object, meta, meta.name = NULL) {
 #' @param object CellChat object
 #' @param ident.use the name of the variable in object.meta;
 #' @param levels set the levels of factor
+#' @param display.warning whether display the warning message
 #' @return
 #' @export
 #'
 #' @examples
-setIdent <- function(object, ident.use = NULL, levels = NULL){
-  object@idents <- as.factor(object@meta[[ident.use]])
+setIdent <- function(object, ident.use = NULL, levels = NULL, display.warning = TRUE){
+  if (!is.null(ident.use)) {
+    object@idents <- as.factor(object@meta[[ident.use]])
+  }
+
   if (!is.null(levels)) {
     object@idents <- factor(object@idents, levels = levels)
+  }
+  if ("0" %in% as.character(object@idents)) {
+    stop("Cell labels cannot contain `0`! ")
   }
   if (length(object@net) > 0) {
     if (all(dimnames(object@net$prob)[[1]] %in% levels(object@idents) )) {
       message("Reorder cell groups! ")
       cat("The cell group order before reordering is ", dimnames(object@net$prob)[[1]],'\n')
-      idx <- match(dimnames(object@net$prob)[[1]], levels(object@idents))
-      object@net$prob <- object@net$prob[idx, idx, ]
-      object@net$pval <- object@net$pval[idx, idx, ]
+      # idx <- match(dimnames(object@net$prob)[[1]], levels(object@idents))
+      idx <- match(levels(object@idents), dimnames(object@net$prob)[[1]])
+      object@net$prob <- object@net$prob[idx, , ]
+      object@net$prob <- object@net$prob[, idx, ]
+      object@net$pval <- object@net$pval[idx, , ]
+      object@net$pval <- object@net$pval[, idx, ]
       cat("The cell group order after reordering is ", dimnames(object@net$prob)[[1]],'\n')
     } else {
       message("Rename cell groups but do not change the order! ")
@@ -143,12 +180,58 @@ setIdent <- function(object, ident.use = NULL, levels = NULL){
       dimnames(object@net$pval) <- dimnames(object@net$prob)
       cat("The cell group order after renaming is ", dimnames(object@net$prob)[[1]],'\n')
     }
-    warning("All the calculations after `computeCommunProb` should be re-run!!
+    if (display.warning) {
+      warning("All the calculations after `computeCommunProb` should be re-run!!
     These include but not limited to `computeCommunProbPathway`,`aggregateNet`, and `netAnalysis_computeCentrality`.")
+    }
+
 
   }
   return(object)
 }
+
+
+#' Update and re-order the cell group names after running `computeCommunProb`
+#'
+#' @param object CellChat object
+#' @param old.cluster.name A vector defining old cell group labels in `object@idents`; Default = NULL, which will use `levels(object@idents)`
+#' @param new.cluster.name A vector defining new cell group labels to rename
+#' @param new.order reset order of cell group labels
+#' @param new.cluster.metaname assign a name of the new labels, which will be the column name of new labels in `object@meta`
+#' @return An updated CellChat object
+#' @export
+#'
+updateClusterLabels <- function(object, old.cluster.name = NULL, new.cluster.name = NULL, new.order = NULL, new.cluster.metaname = "new.labels") {
+  if (is.null(old.cluster.name)) {
+    old.cluster.name <- levels(object@idents)
+  }
+  if (new.cluster.metaname %in% colnames(object@meta)) {
+    stop("Please define another `new.cluster.metaname` as it exists in `colnames(object@meta)`!")
+  }
+  if (!is.null(new.cluster.name)) {
+    labels.new <- plyr::mapvalues(object@idents, from = old.cluster.name, to = new.cluster.name)
+    object@meta[[new.cluster.metaname]] <- labels.new
+    object <- setIdent(object, ident.use = new.cluster.metaname, display.warning = FALSE)
+  } else {
+    new.cluster.metaname <- NULL
+    cat("Only reorder cell groups but do not rename cell groups!")
+  }
+
+  if (!is.null(new.order)) {
+    object <- setIdent(object, ident.use = new.cluster.metaname, levels = new.order, display.warning = FALSE)
+  }
+  message("We now re-run computeCommunProbPathway`,`aggregateNet`, and `netAnalysis_computeCentrality`...")
+  object <- computeCommunProbPathway(object)
+  ## calculate the aggregated network by counting the number of links or summarizing the communication probability
+  object <- aggregateNet(object)
+  # network importance analysis
+  object <-netAnalysis_computeCentrality(object, slot.name = "netP")
+  return(object)
+}
+
+
+
+
 
 #' Subset the expression data of signaling genes for saving computation cost
 #'
@@ -173,6 +256,9 @@ subsetData <- function(object, features = NULL) {
 
 
 #' Identify over-expressed signaling genes associated with each cell group
+#'
+#' USERS can use customized gene set as over-expressed signaling genes by setting `object@var.features[[features.name]] <- features.sig`
+#' The Bonferroni corrected/adjusted p value can be obtained via `object@var.features[[paste0(features.name, ".info")]]`. Note that by default `features.name = "features"`
 #'
 #' @param object CellChat object
 #' @param data.use a customed data matrix. Default: data.use = NULL and the expression matrix in the slot 'data.signaling' is used
@@ -321,12 +407,12 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
       )
     )
 
-    # pval.adj = stats::p.adjust(
-    #   p = pvalues,
-    #   method = "bonferroni",
-    #   n = nrow(X)
-    # )
-    genes.de[[i]] <- data.frame(clusters = level.use[i], features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F], stringsAsFactors = FALSE)
+    pval.adj = stats::p.adjust(
+      p = pvalues,
+      method = "bonferroni",
+      n = nrow(X)
+    )
+    genes.de[[i]] <- data.frame(clusters = level.use[i], features = as.character(rownames(data1)), pvalues = pvalues, logFC = FC[features], data.alpha[features,, drop = F],pvalues.adj = pval.adj, stringsAsFactors = FALSE)
   }
 
   markers.all <- data.frame()
@@ -710,50 +796,50 @@ runPCA <- function(data.use, do.fast = T, dimPC = 50, seed.use = 42, weight.by.v
 
 #' Run UMAP
 #' @param data.use input data matrix
-#' @param n.neighbors This determines the number of neighboring points used in
+#' @param n_neighbors This determines the number of neighboring points used in
 #' local approximations of manifold structure. Larger values will result in more
 #' global structure being preserved at the loss of detailed local structure. In general this parameter should often be in the range 5 to 50.
-#' @param n.components The dimension of the space to embed into.
-#' @param distance This determines the choice of metric used to measure distance in the input space.
-#' @param n.epochs the number of training epochs to be used in optimizing the low dimensional embedding. Larger values result in more accurate embeddings. If NULL is specified, a value will be selected based on the size of the input dataset (200 for large datasets, 500 for small).
-#' @param learning.rate The initial learning rate for the embedding optimization.
-#' @param min.dist This controls how tightly the embedding is allowed compress points together.
+#' @param n_components The dimension of the space to embed into.
+#' @param metric This determines the choice of metric used to measure distance in the input space.
+#' @param n_epochs the number of training epochs to be used in optimizing the low dimensional embedding. Larger values result in more accurate embeddings. If NULL is specified, a value will be selected based on the size of the input dataset (200 for large datasets, 500 for small).
+#' @param learning_rate The initial learning rate for the embedding optimization.
+#' @param min_dist This controls how tightly the embedding is allowed compress points together.
 #' Larger values ensure embedded points are moreevenly distributed, while smaller values allow the
 #' algorithm to optimise more accurately with regard to local structure. Sensible values are in the range 0.001 to 0.5.
 #' @param spread he effective scale of embedded points. In combination with min.dist this determines how clustered/clumped the embedded points are.
-#' @param set.op.mix.ratio Interpolate between (fuzzy) union and intersection as the set operation used to combine local fuzzy simplicial sets to obtain a global fuzzy simplicial sets.
-#' @param local.connectivity The local connectivity required - i.e. the number of nearest neighbors
+#' @param set_op_mix_ratio Interpolate between (fuzzy) union and intersection as the set operation used to combine local fuzzy simplicial sets to obtain a global fuzzy simplicial sets.
+#' @param local_connectivity The local connectivity required - i.e. the number of nearest neighbors
 #' that should be assumed to be connected at a local level. The higher this value the more connected
 #' the manifold becomes locally. In practice this should be not more than the local intrinsic dimension of the manifold.
-#' @param repulsion.strength Weighting applied to negative samples in low dimensional embedding
+#' @param repulsion_strength Weighting applied to negative samples in low dimensional embedding
 #' optimization. Values higher than one will result in greater weight being given to negative samples.
-#' @param negative.sample.rate The number of negative samples to select per positive sample in the
+#' @param negative_sample_rate The number of negative samples to select per positive sample in the
 #' optimization process. Increasing this value will result in greater repulsive force being applied, greater optimization cost, but slightly more accuracy.
 #' @param a More specific parameters controlling the embedding. If NULL, these values are set automatically as determined by min. dist and spread.
 #' @param b More specific parameters controlling the embedding. If NULL, these values are set automatically as determined by min. dist and spread.
 #' @param seed.use Set a random seed. By default, sets the seed to 42.
-#' @param metric.kwds,angular.rp.forest,verbose other parameters used in UMAP
+#' @param metric_kwds,angular_rp_forest,verbose other parameters used in UMAP
 #' @import reticulate
 #' @export
 #'
 runUMAP <- function(
   data.use,
-  n.neighbors = 30L,
-  n.components = 2L,
-  distance = "correlation",
-  n.epochs = NULL,
-  learning.rate = 1.0,
-  min.dist = 0.3,
+  n_neighbors = 30L,
+  n_components = 2L,
+  metric = "correlation",
+  n_epochs = NULL,
+  learning_rate = 1.0,
+  min_dist = 0.3,
   spread = 1.0,
-  set.op.mix.ratio = 1.0,
-  local.connectivity = 1L,
-  repulsion.strength = 1,
-  negative.sample.rate = 5,
+  set_op_mix_ratio = 1.0,
+  local_connectivity = 1L,
+  repulsion_strength = 1,
+  negative_sample_rate = 5,
   a = NULL,
   b = NULL,
   seed.use = 42L,
-  metric.kwds = NULL,
-  angular.rp.forest = FALSE,
+  metric_kwds = NULL,
+  angular_rp_forest = FALSE,
   verbose = FALSE){
   if (!reticulate::py_module_available(module = 'umap')) {
     stop("Cannot find UMAP, please install through pip (e.g. pip install umap-learn or reticulate::py_install(packages = 'umap-learn')).")
@@ -762,21 +848,21 @@ runUMAP <- function(
   reticulate::py_set_seed(seed.use)
   umap_import <- reticulate::import(module = "umap", delay_load = TRUE)
   umap <- umap_import$UMAP(
-    n_neighbors = as.integer(n.neighbors),
-    n_components = as.integer(n.components),
-    metric = distance,
-    n_epochs = n.epochs,
-    learning_rate = learning.rate,
-    min_dist = min.dist,
+    n_neighbors = as.integer(n_neighbors),
+    n_components = as.integer(n_components),
+    metric = metric,
+    n_epochs = n_epochs,
+    learning_rate = learning_rate,
+    min_dist = min_dist,
     spread = spread,
-    set_op_mix_ratio = set.op.mix.ratio,
-    local_connectivity = local.connectivity,
-    repulsion_strength = repulsion.strength,
-    negative_sample_rate = negative.sample.rate,
+    set_op_mix_ratio = set_op_mix_ratio,
+    local_connectivity = local_connectivity,
+    repulsion_strength = repulsion_strength,
+    negative_sample_rate = negative_sample_rate,
     a = a,
     b = b,
-    metric_kwds = metric.kwds,
-    angular_rp_forest = angular.rp.forest,
+    metric_kwds = metric_kwds,
+    angular_rp_forest = angular_rp_forest,
     verbose = verbose
   )
   Rumap <- umap$fit_transform

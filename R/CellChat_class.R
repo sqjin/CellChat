@@ -371,7 +371,8 @@ liftCellChat <- function(object, group.new = NULL) {
       # cat("Update slot object@net...", '\n')
       net <- object@net[[i]]
       group.i <- levels(idents[[i]])
-      group.existing <- group.max[group.max %in% group.i]
+     # group.existing <- group.max[group.max %in% group.i]
+      group.existing <- group.i[group.i %in% group.max]
       group.existing.index <- which(group.max %in% group.existing)
       for (net.j in names(net)) {
         values <- net[[net.j]]
@@ -464,7 +465,8 @@ liftCellChat <- function(object, group.new = NULL) {
     net <- object@net
     idents <- object@idents
     group.i <- levels(idents)
-    group.existing <- group.max[group.max %in% group.i]
+   # group.existing <- group.max[group.max %in% group.i]
+    group.existing <- group.i[group.i %in% group.max]
     group.existing.index <- which(group.max %in% group.existing)
     for (net.j in names(net)) {
       values <- net[[net.j]]

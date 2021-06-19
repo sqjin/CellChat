@@ -1225,6 +1225,7 @@ mycircle <- function(coords, v=NULL, params) {
 #' @param comparison a numerical vector giving the datasets for comparison in object.list; e.g., comparison = c(1,2)
 #' @param measure "count" or "weight". "count": comparing the number of interactions; "weight": comparing the total interaction weights (strength)
 #' @param color.use Colors represent different cell groups
+#' @param color.edge Colors for indicating whether the signaling is increased (`color.edge[1]`) or decreased (`color.edge[2]`)
 #' @param title.name the name of the title
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
@@ -1270,7 +1271,7 @@ mycircle <- function(coords, v=NULL, params) {
 #' @importFrom grDevices recordPlot
 #' @return  an object of class "recordedplot"
 #' @export
-netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("count", "weight", "count.merged", "weight.merged"), color.use = NULL,title.name = NULL, sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, top = 1,
+netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("count", "weight", "count.merged", "weight.merged"), color.use = NULL, color.edge = c('#b2182b','#2166ac'), title.name = NULL, sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, top = 1,
                                       weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = 15, vertex.label.cex=1,vertex.label.color= "black",
                                       edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6, label.edge = FALSE,edge.label.color='black',edge.label.cex=0.8,
                                       edge.curved=0.2,shape='circle',layout=in_circle(), margin=0.2,
@@ -1320,9 +1321,8 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     net <- net[-idx, ]
     net <- net[, -idx]
   }
-  if (top < 1) {
-    net[abs(net) < stats::quantile(abs(net), probs = 1-top, na.rm = TRUE)] <- 0
-  }
+
+  net[abs(net) < stats::quantile(abs(net), probs = 1-top)] <- 0
 
   g <- graph_from_adjacency_matrix(net, mode = "directed", weighted = T)
   edge.start <- igraph::ends(g, es=igraph::E(g), names=FALSE)
@@ -1355,7 +1355,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
   igraph::E(g)$label.color<-edge.label.color
   igraph::E(g)$label.cex<-edge.label.cex
   #igraph::E(g)$color<- grDevices::adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
-  igraph::E(g)$color <- ifelse(igraph::E(g)$weight > 0,'#b2182b','#2166ac')
+  igraph::E(g)$color <- ifelse(igraph::E(g)$weight > 0, color.edge[1],color.edge[2])
   igraph::E(g)$color <- grDevices::adjustcolor(igraph::E(g)$color, alpha.edge)
 
   igraph::E(g)$weight <- abs(igraph::E(g)$weight)
