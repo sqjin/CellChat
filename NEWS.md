@@ -1,5 +1,10 @@
+# CellChat 1.1.1 (2021-06-19)
+## New added functions
+* Add `updateClusterLabels` to update cell cluster labels without re-running the time-consuming function `computeCommunProb`.
+## Updated functions with minor changes
+`netAnalysis_signalingRole_scatter`, `setIdent`, `netVisual_diffInteraction`, `sketchData`, `identifyOverExpressedGenes`,`netEmbedding`,`runUMAP`
 
-# CellChat 1.1.0 (2020-04-26)
+# CellChat 1.1.0 (2021-04-26)
 ## New added functions
 * Add `subsetCellChat` to create a object using a portion of cells
 * Add `computeAveExpr` to compute the average expression per cell group
