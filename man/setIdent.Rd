@@ -4,7 +4,7 @@
 \alias{setIdent}
 \title{Set the default identity of cells}
 \usage{
-setIdent(object, ident.use = NULL, levels = NULL)
+setIdent(object, ident.use = NULL, levels = NULL, display.warning = TRUE)
 }
 \arguments{
 \item{object}{CellChat object}
@@ -12,6 +12,8 @@ setIdent(object, ident.use = NULL, levels = NULL)
 \item{ident.use}{the name of the variable in object.meta;}
 
 \item{levels}{set the levels of factor}
+
+\item{display.warning}{whether display the warning message}
 }
 \value{
 

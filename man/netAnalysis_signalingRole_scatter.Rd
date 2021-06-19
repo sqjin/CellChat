@@ -66,6 +66,8 @@ netAnalysis_signalingRole_scatter(
 ggplot object
 }
 \description{
-This scatter plot shows the dominant senders (sources) and receivers (targets) in a 2D space. Dot size is proportional to the number of inferred links (both outgoing and incoming) associated with each cell group.
+This scatter plot shows the dominant senders (sources) and receivers (targets) in a 2D space.
+x-axis and y-axis are respectively the total outgoing or incoming communication probability associated with each cell group.
+Dot size is proportional to the number of inferred links (both outgoing and incoming) associated with each cell group.
 Dot colors indicate different cell groups. Dot shapes indicate different categories of cell groups if `group`` is defined.
 }

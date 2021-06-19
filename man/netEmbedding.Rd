@@ -10,7 +10,10 @@ netEmbedding(
   type = c("functional", "structural"),
   comparison = NULL,
   pathway.remove = NULL,
-  k = NULL
+  umap.method = c("umap-learn", "uwot"),
+  n_neighbors = NULL,
+  min_dist = 0.3,
+  ...
 )
 }
 \arguments{
@@ -24,7 +27,17 @@ netEmbedding(
 
 \item{pathway.remove}{a range of the number of patterns}
 
-\item{k}{the number of nearest neighbors in running umap}
+\item{umap.method}{UMAP implementation to run.
+
+Can be umap-learn: Run the python umap-learn package; uwot: Runs umap via the uwot R package;  If umap.method = "uwot", please make sure you have installed the 'uwot' (https://github.com/jlmelville/uwot)}
+
+\item{n_neighbors}{the number of nearest neighbors in running umap}
+
+\item{min_dist}{This controls how tightly the embedding is allowed compress points together.
+Larger values ensure embedded points are moreevenly distributed, while smaller values allow the
+algorithm to optimise more accurately with regard to local structure. Sensible values are in the range 0.001 to 0.5.}
+
+\item{...}{Parameters passing to umap}
 }
 \value{
 
