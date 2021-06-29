@@ -22,7 +22,7 @@ If input is a Seurat or SingleCellExperiment object, the meta data in the object
 If input is a data matrix and group.by is NULL, the input `meta` should contain a column named 'labels',
 If input is a Seurat or SingleCellExperiment object, USER must provide `group.by` to define the cell groups. e.g, group.by = "ident" for Seurat object}
 
-\item{assay}{Assay to use when the input is a Seurat object}
+\item{assay}{Assay to use when the input is a Seurat object. NB: The data in the `integrated` assay is not suitable for CellChat analysis because it contains negative values.}
 
 \item{do.sparse}{whether use sparse format}
 }
@@ -41,7 +41,7 @@ cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels"
 
 # input is a Seurat object
 ## use the default cell identities of Seurat object
-# cellchat <- createCellChat(object = seurat.obj, group.by = "ident")
+# cellchat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "RNA")
 ## use other meta information as cell groups
 # cellchat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
 
