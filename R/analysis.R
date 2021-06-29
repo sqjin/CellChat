@@ -639,7 +639,6 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
   }
   options(warn = -1)
   # dimension reduction
-  umap.method = c("umap-learn", "uwot")
   if (umap.method == "umap-learn") {
     Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
   } else if (umap.method == "uwot") {

@@ -76,7 +76,7 @@ setMethod(f = "show", signature = "CellChat", definition = function(object) {
 #' @param group.by a char name of the variable in meta data, defining cell groups.
 #' If input is a data matrix and group.by is NULL, the input `meta` should contain a column named 'labels',
 #' If input is a Seurat or SingleCellExperiment object, USER must provide `group.by` to define the cell groups. e.g, group.by = "ident" for Seurat object
-#' @param assay Assay to use when the input is a Seurat object
+#' @param assay Assay to use when the input is a Seurat object. NB: The data in the `integrated` assay is not suitable for CellChat analysis because it contains negative values.
 #' @param do.sparse whether use sparse format
 # #' @param data is deprecated. Use `object`
 #'
@@ -92,7 +92,7 @@ setMethod(f = "show", signature = "CellChat", definition = function(object) {
 #'
 #' # input is a Seurat object
 #' ## use the default cell identities of Seurat object
-#' # cellchat <- createCellChat(object = seurat.obj, group.by = "ident")
+#' # cellchat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "RNA")
 #' ## use other meta information as cell groups
 #' # cellchat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
 #'
@@ -114,10 +114,16 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
     message("Create a CellChat object from a Seurat object")
     if (is.null(assay)) {
       assay = DefaultAssay(object)
+      if (assay == "integrated") {
+        warning("The data in the `integrated` assay is not suitable for CellChat analysis! Please use the `RNA` or `SCT` assay! ")
+      }
       cat(paste0("The `data` slot in the default assay is used. The default assay is ", assay),'\n')
     }
 
     data <- Seurat::GetAssayData(object, assay = assay, slot = "data") # normalized data matrix
+    if (min(data) < 0) {
+      stop("The data matrix contains negative values. Please ensure the normalized data matrix is used.")
+    }
     if (is.null(meta)) {
       cat("The `meta.data` slot in the Seurat object is used as cell meta information",'\n')
       meta <- object@meta.data
@@ -156,12 +162,14 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
               We now simply assign the colnames in the data matrix to the rownames of 'mata'!")
       rownames(meta) <- colnames(data)
     }
+  } else {
+    meta <- data.frame()
   }
 
   object <- methods::new(Class = "CellChat",
                          data = data,
                          meta = meta)
-  if (!is.null(meta)) {
+  if (!is.null(meta) & nrow(meta) > 0) {
     message("Set cell identities for the new CellChat object")
     if (!(group.by %in% colnames(meta))) {
       stop("The 'group.by' is not a column name in the `meta`, which will be used for cell grouping.")

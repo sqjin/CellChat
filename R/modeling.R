@@ -75,9 +75,9 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
          You may need to drop unused levels using 'droplevels' function. e.g.,
          `meta$labels = droplevels(meta$labels, exclude = setdiff(levels(meta$labels),unique(meta$labels)))`")
   }
-  if (all(data[1:5, ] == floor(data[1:5, ]))) {
-    stop("Please check your input data matrix and ensure that you use the normalized data instead of count data!")
-  }
+  # if (all(data[1:5, ] == floor(data[1:5, ]))) {
+  #   stop("Please check your input data matrix and ensure that you use the normalized data instead of count data!")
+  # }
 
 
   data.use <- data/max(data)
@@ -95,19 +95,18 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
     dataRavg.co.A.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avg, pairLRsig, type = "A")
     dataRavg.co.I.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avg, pairLRsig, type = "I")
     dataRavg <- dataRavg * dataRavg.co.A.receptor/dataRavg.co.I.receptor
-    # compute the proportion of cells in each cell group
+
     dataLavg2 <- t(replicate(nrow(dataLavg), as.numeric(table(group))/nC))
     dataRavg2 <- dataLavg2
 
-    # To compute the expression of agonist and antagonist, we first find the l-r pairs with agonist and antagonist
+    # compute the expression of agonist and antagonist
     index.agonist <- which(!is.na(pairLRsig$agonist) & pairLRsig$agonist != "")
     index.antagonist <- which(!is.na(pairLRsig$antagonist) & pairLRsig$antagonist != "")
-    # compute the communication probability
-    Prob <- array(0, dim = c(numCluster,numCluster,nLR)) # 3-dims array
+    # quantify the communication probability
+    Prob <- array(0, dim = c(numCluster,numCluster,nLR))
     Pval <- array(0, dim = c(numCluster,numCluster,nLR))
 
     set.seed(seed.use)
-    # compute the randomlized data matrix by permuting cell labels
     permutation <- replicate(nboot, sample.int(nC, size = nC))
     data.use.avg.boot <- my.sapply(
       X = 1:nboot,
@@ -120,10 +119,9 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
       simplify = FALSE
     )
     pb <- txtProgressBar(min = 0, max = nLR, style = 3, file = stderr())
-    
-    # compute the communication probability for each ligand-recepor pair
+
     for (i in 1:nLR) {
-      # communication probability attributes to ligand/receptor
+      # ligand/receptor
       dataLR <- Matrix::crossprod(matrix(dataLavg[i,], nrow = 1), matrix(dataRavg[i,], nrow = 1))
       P1 <- dataLR^n/(Kh^n + dataLR^n)
       if (sum(P1) == 0) {
@@ -132,7 +130,7 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
         p = 1
         Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
       } else {
-        # communication probability attributes to agonist and antagonist
+        # agonist and antagonist
         if (is.element(i, index.agonist)) {
           data.agonist <- computeExpr_agonist(data.use = data.use.avg, pairLRsig, cofactor_input, index.agonist = i, Kh = Kh,  n = n)
           P2 <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
@@ -145,27 +143,23 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
         } else {
           P3 <- matrix(1, nrow = numCluster, ncol = numCluster)
         }
-        # communication probability attributes to proportion of cells
+        # number of cells
         if (population.size) {
           P4 <- Matrix::crossprod(matrix(dataLavg2[i,], nrow = 1), matrix(dataRavg2[i,], nrow = 1))
         } else {
           P4 <- matrix(1, nrow = numCluster, ncol = numCluster)
         }
-        
-        # The observed communication probability, i.e., null hypothesis
+
         Pnull = P1*P2*P3*P4
         Prob[ , , i] <- Pnull
 
-        Pnull <- as.vector(Pnull) # convert to numeric vector
+        Pnull <- as.vector(Pnull)
 
-        # For each ligand-receptor pair, we recompute the randomlized communication probability by permuting the cell labels
+        #Pboot <- foreach(nE = 1:nboot) %dopar% {
         Pboot <- sapply(
           X = 1:nboot,
           FUN = function(nE) {
-            data.use.avgB <- data.use.avg.boot[[nE]] # the nE-th permuted data matrix
-            # Using the permutated data matrix, we will recompute the communication probability
-            
-            # ligand/receptor
+            data.use.avgB <- data.use.avg.boot[[nE]]
             dataLavgB <- computeExpr_LR(geneL[i], data.use.avgB, complex_input)
             dataRavgB <- computeExpr_LR(geneR[i], data.use.avgB, complex_input)
             # take account into the effect of co-activation and co-inhibition receptors
@@ -197,15 +191,13 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
             } else {
               P4.boot = matrix(1, nrow = numCluster, ncol = numCluster)
             }
-            # compute the overall permuted communciation probability
+
             Pboot = P1.boot*P2.boot*P3.boot*P4.boot
             return(as.vector(Pboot))
           }
         )
         Pboot <- matrix(unlist(Pboot), nrow=length(Pnull), ncol = nboot, byrow = FALSE)
-        # count the number of permutations where the permutated communication probability is higher than the observed communication probability
         nReject <- rowSums(Pboot - Pnull >= 0)
-        # calculate the pvalue from the permutation test
         p = nReject/nboot
         Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
       }
