@@ -1,3 +1,17 @@
+# CellChat 1.1.2 (2021-07-10)
+## New added functions
+* Add `netAnalysis_diff_signalingRole_scatter` for 2D visualization of differential signaling roles of each cell group when comparing mutiple datasets.
+
+## Updated functions with minor changes
+`netVisual`, `netVisual_aggregate`, `netVisual_individual`, `netVisual_hierarchy1`, `netVisual_hierarchy2`,`netVisual_circle`,`createCellChat`,`netAnalysis_computeCentrality` ,`netAnalysis_signalingRole_scatter`, `netAnalysis_signalingChanges_scatter`
+
+## Important changes
+* Add `thresh = 0.05` in `netAnalysis_computeCentrality` to only consider the significant interactions. This will slightly change (very likely quantitative instead of qualitative change) the results computed by previous version of CellChat. 
+* In the updated `netAnalysis_computeCentrality`, we now also compute unweighted outdegree (i.e., the total number of outgoing links) and indegree (i.e., the total number of incoming links). 
+* `netAnalysis_signalingRole_scatter` and `netAnalysis_signalingChanges_scatter` now support the comparison of the total number of outgoing and incoming links. 
+* Change the default setting for visualizing cell-cell communication network: 1) using `circle` plot instead of `hierarchy`; 2) using the same node size instead of different size (setting `vertex.weight = NULL` will give different size as in previous version of CellChat).  
+
+
 # CellChat 1.1.1 (2021-06-19)
 ## New added functions
 * Add `updateClusterLabels` to update cell cluster labels without re-running the time-consuming function `computeCommunProb`.
