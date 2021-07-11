@@ -64,6 +64,12 @@ scPalette <- function(n) {
 #' @param remove.isolate whether remove the isolate nodes in the communication network
 #' @param weight.scale whether scale the edge weight
 #' @param vertex.weight The weight of vertex: either a scale value or a vector
+
+#'
+#' Default is a scale value being 1, indicating all vertex is plotted in the same size;
+#'
+#' Set `vertex.weight` as a vector to plot vertex in different size; setting `vertex.weight = NULL` will have vertex with different size that are portional to the number of cells in each cell group.
+#'
 #' @param vertex.weight.max the maximum weight of vertex; defualt = max(vertex.weight)
 #' @param vertex.size.max the maximum vertex size for visualization
 #' @param edge.weight.max.individual the maximum weight of edge when plotting the individual L-R netwrok; defualt = max(net)
@@ -102,9 +108,9 @@ scPalette <- function(n) {
 #' @examples
 #'
 netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, top = 1, remove.isolate = FALSE,
-                      vertex.weight = NULL, vertex.weight.max = NULL, vertex.size.max = 15,
+                      vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL,
                       weight.scale = TRUE, edge.weight.max.individual = NULL, edge.weight.max.aggregate = NULL, edge.width.max=8,
-                      layout = c("hierarchy","circle","chord"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8,from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
+                      layout = c("circle","hierarchy","chord"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8,from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
                       out.format = c("svg","png"),
                       group = NULL,cell.order = NULL,small.gap = 1, big.gap = 10, scale = FALSE, reduce = -1, show.legend = FALSE, legend.pos.x = 20,legend.pos.y = 20, nCol = NULL,
                       ...) {
@@ -114,6 +120,13 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
   }
   if (is.null(vertex.weight)) {
     vertex.weight <- as.numeric(table(object@idents))
+  }
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
   }
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
@@ -381,6 +394,11 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 #' @param top the fraction of interactions to show
 #' @param weight.scale whether scale the edge weight
 #' @param vertex.weight The weight of vertex: either a scale value or a vector
+#'
+#' Default is a scale value being 1, indicating all vertex is plotted in the same size;
+#'
+#' Set `vertex.weight` as a vector to plot vertex in different size; setting `vertex.weight = NULL` will have vertex with different size that are portional to the number of cells in each cell group.
+#'
 #' @param vertex.weight.max the maximum weight of vertex; defualt = max(vertex.weight)
 #' @param vertex.size.max the maximum vertex size for visualization
 #' @param edge.weight.max the maximum weight of edge; defualt = max(net)
@@ -413,9 +431,9 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 #'
 #'
 netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, top = 1, remove.isolate = FALSE,
-                                vertex.weight = NULL, vertex.weight.max = NULL, vertex.size.max = 15,
+                                vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL,
                                 weight.scale = TRUE, edge.weight.max = NULL, edge.width.max=8,
-                                layout = c("hierarchy","circle","chord"), thresh = 0.05, from = NULL, to = NULL, bidirection = NULL, vertex.size = NULL,
+                                layout = c("circle","hierarchy","chord"), thresh = 0.05, from = NULL, to = NULL, bidirection = NULL, vertex.size = NULL,
                                 pt.title = 12, title.space = 6, vertex.label.cex = 0.8,
                                 group = NULL,cell.order = NULL,small.gap = 1, big.gap = 10, scale = FALSE, reduce = -1, show.legend = FALSE, legend.pos.x = 20,legend.pos.y = 20,
                                 ...) {
@@ -425,6 +443,13 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
   }
   if (is.null(vertex.weight)) {
     vertex.weight <- as.numeric(table(object@idents))
+  }
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
   }
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
 
@@ -509,12 +534,18 @@ return(gg)
 #' @param remove.isolate whether remove the isolate nodes in the communication network
 #' @param top the fraction of interactions to show
 #' @param weight.scale whether scale the edge weight
-#' @param vertex.weight The weight of vertex: either a scale value or a vector
+#' @param vertex.weight The weight of vertex: either a scale value or a vector.
+#'
+#' Default is a scale value being 1, indicating all vertex is plotted in the same size;
+#'
+#' Set `vertex.weight` as a vector to plot vertex in different size; setting `vertex.weight = NULL` will have vertex with different size that are portional to the number of cells in each cell group.
+#'
 #' @param vertex.weight.max the maximum weight of vertex; defualt = max(vertex.weight)
 #' @param vertex.size.max the maximum vertex size for visualization
 #' @param vertex.label.cex The label size of vertex in the network
 #' @param edge.weight.max the maximum weight of edge; defualt = max(net)
 #' @param edge.width.max The maximum edge width for visualization
+#' @param graphics.init whether do graphics initiation using par(...). If graphics.init=FALSE, USERS can use par() in a more fexible way
 #' @param layout "hierarchy", "circle" or "chord"
 #' @param height height of plot
 #' @param thresh threshold of the p-value for determining significant interaction
@@ -542,9 +573,9 @@ return(gg)
 #'
 #'
 netVisual_individual <- function(object, signaling, signaling.name = NULL, pairLR.use = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, top = 1, remove.isolate = FALSE,
-                                 vertex.weight = NULL, vertex.weight.max = NULL, vertex.size.max = 15, vertex.label.cex = 0.8,
-                                 weight.scale = TRUE, edge.weight.max = NULL, edge.width.max=8,
-                                 layout = c("hierarchy","circle","chord"), height = 5, thresh = 0.05, #from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
+                                 vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex = 0.8,
+                                 weight.scale = TRUE, edge.weight.max = NULL, edge.width.max=8, graphics.init = TRUE,
+                                 layout = c("circle","hierarchy","chord"), height = 5, thresh = 0.05, #from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
                                  group = NULL,cell.order = NULL,small.gap = 1, big.gap = 10, scale = FALSE, reduce = -1, show.legend = FALSE, legend.pos.x = 20, legend.pos.y = 20, nCol = NULL,
                                  ...) {
   layout <- match.arg(layout)
@@ -554,6 +585,14 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
   if (is.null(vertex.weight)) {
     vertex.weight <- as.numeric(table(object@idents))
   }
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
+  }
+
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = F)
 
   if (is.null(signaling.name)) {
@@ -612,7 +651,10 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
   }
 
   if (layout == "hierarchy") {
-    par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
+    if (graphics.init) {
+      par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
+    }
+
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
@@ -625,7 +667,10 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
 
   } else if (layout == "circle") {
    # par(mfrow=c(nRow,1))
-    par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+    if (graphics.init) {
+      par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+    }
+
     gg <- vector("list", length(pairLR.name.use))
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- pairLR$interaction_name_2[i]
@@ -633,7 +678,10 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
       gg[[i]] <- netVisual_circle(prob.i, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max, title.name = signalName_i,...)
     }
   } else if (layout == "chord") {
-    par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+    if (graphics.init) {
+      par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+    }
+
     gg <- vector("list", length(pairLR.name.use))
     for (i in 1:length(pairLR.name.use)) {
       title.name <- pairLR$interaction_name_2[i]
@@ -704,12 +752,19 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
 #' @return  an object of class "recordedplot"
 #' @export
 netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.name = NULL,  sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, top = 1,
-                                 weight.scale = FALSE, vertex.weight=20, vertex.weight.max = NULL, vertex.size.max = 15,
+                                 weight.scale = FALSE, vertex.weight=20, vertex.weight.max = NULL, vertex.size.max = NULL,
                                  edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6,
                                  label.dist = 2.8, space.v = 1.5, space.h = 1.6, shape= NULL, label.edge=FALSE,edge.curved=0, margin=0.2,
                                 vertex.label.cex=0.6,vertex.label.color= "black",arrow.width=1,arrow.size = 0.2,edge.label.color='black',edge.label.cex=0.5, vertex.size = NULL){
   if (!is.null(vertex.size)) {
     warning("'vertex.size' is deprecated. Use `vertex.weight`")
+  }
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
   }
   options(warn = -1)
   thresh <- stats::quantile(net, probs = 1-top)
@@ -887,12 +942,19 @@ netVisual_hierarchy1 <- function(net, vertex.receiver, color.use = NULL, title.n
 #' @return  an object of class "recordedplot"
 #' @export
 netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.name = NULL, sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, top = 1,
-                                weight.scale = FALSE, vertex.weight=20, vertex.weight.max = NULL, vertex.size.max = 15,
+                                weight.scale = FALSE, vertex.weight=20, vertex.weight.max = NULL, vertex.size.max = NULL,
                                 edge.weight.max = NULL, edge.width.max=8,alpha.edge = 0.6,
                                 label.dist = 2.8, space.v = 1.5, space.h = 1.6, shape= NULL, label.edge=FALSE,edge.curved=0, margin=0.2,
                                 vertex.label.cex=0.6,vertex.label.color= "black",arrow.width=1,arrow.size = 0.2,edge.label.color='black',edge.label.cex=0.5, vertex.size = NULL){
   if (!is.null(vertex.size)) {
     warning("'vertex.size' is deprecated. Use `vertex.weight`")
+  }
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
   }
   options(warn = -1)
   thresh <- stats::quantile(net, probs = 1-top)
@@ -1070,12 +1132,19 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
 #' @return  an object of class "recordedplot"
 #' @export
 netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, top = 1,
-                            weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = 15, vertex.label.cex=1,vertex.label.color= "black",
+                            weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex=1,vertex.label.color= "black",
                             edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6, label.edge = FALSE,edge.label.color='black',edge.label.cex=0.8,
                             edge.curved=0.2,shape='circle',layout=in_circle(), margin=0.2, vertex.size = NULL,
                             arrow.width=1,arrow.size = 0.2){
   if (!is.null(vertex.size)) {
     warning("'vertex.size' is deprecated. Use `vertex.weight`")
+  }
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
   }
   options(warn = -1)
   thresh <- stats::quantile(net, probs = 1-top)
@@ -3129,7 +3198,6 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
 
   Y <- methods::slot(object, slot.name)$similarity[[type]]$dr[[comparison.name]]
   clusters <- methods::slot(object, slot.name)$similarity[[type]]$group[[comparison.name]]
-
   object.names <- setdiff(names(methods::slot(object, slot.name)), "similarity")[comparison]
   prob <- list()
   for (i in 1:length(comparison)) {
@@ -3144,6 +3212,7 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
+    pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
@@ -3162,13 +3231,13 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   for (i in 1:length(prob)) {
     probi <- prob[[i]]
     prob_sum.each[[i]] <- apply(probi, 3, sum)
-    signalingAll <- c(signalingAll, paste0(names(prob_sum.each[[i]]),"-",object.names[i]))
+    signalingAll <- c(signalingAll, paste0(names(prob_sum.each[[i]]),"--",object.names[i]))
   }
   prob_sum <- unlist(prob_sum.each)
   names(prob_sum) <- signalingAll
 
-  group <- sub(".*-", "", names(prob_sum))
-  labels = sub("-.*", "", names(prob_sum))
+  group <- sub(".*--", "", names(prob_sum))
+  labels = sub("--.*", "", names(prob_sum))
 
   df <- data.frame(x = Y[,1], y = Y[, 2], Commun.Prob. = prob_sum/max(prob_sum),
                    labels = as.character(labels), clusters = as.factor(clusters), group = factor(group, levels = unique(group)))
@@ -3211,6 +3280,7 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   gg.combined
 
 }
+
 
 
 

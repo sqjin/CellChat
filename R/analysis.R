@@ -161,6 +161,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param net compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net
 #' @param net.name a character vector giving the name of signaling networks
+#' @param thresh threshold of the p-value for determining significant interaction
 #' @importFrom future nbrOfWorkers
 #' @importFrom methods slot
 #' @importFrom future.apply future_sapply
@@ -169,9 +170,13 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @return
 #' @export
 #'
-netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL) {
+netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL, thresh = 0.05) {
   if (is.null(net)) {
-    net = methods::slot(object, slot.name)$prob
+    prob <- methods::slot(object, slot.name)$prob
+    pval <- methods::slot(object, slot.name)$pval
+    pval[prob == 0] <- 1
+    prob[pval >= thresh] <- 0
+    net = prob
   }
   if (is.null(net.name)) {
     net.name <- dimnames(net)[[3]]
@@ -215,6 +220,8 @@ netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net
 computeCentralityLocal <- function(net) {
   centr <- vector("list")
   G <- igraph::graph_from_adjacency_matrix(net, mode = "directed", weighted = T)
+  centr$outdeg_unweighted <- rowSums(net > 0)
+  centr$indeg_unweighted <- colSums(net > 0)
   centr$outdeg <- igraph::strength(G, mode="out")
   centr$indeg <- igraph::strength(G, mode="in")
   centr$hub <- igraph::hub_score(G)$vector
@@ -960,6 +967,9 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @param cutoff.pvalue the cutoff of pvalue when doing Wilcoxon test; Default = 0.05
 #' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
 #' @param thresh threshold of the p-value for determining significant interaction
+#'
+#' @param do.flip whether flip the x-y axis
+#' @param x.angle,y.angle,x.hjust,y.hjust parameters for rotating and spacing axis labels
 #' @param axis.gap whetehr making gaps in y-axes
 #' @param ylim,segments,tick_width,rel_heights parameters in the function gg.gap when making gaps in y-axes
 #' e.g., ylim = c(0, 35), segments = list(c(11, 14),c(16, 28)), tick_width = c(5,2,5), rel_heights = c(0.8,0,0.1,0,0.1)
@@ -973,12 +983,12 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 
 #' @import ggplot2
 #' @importFrom methods slot
-#' @importFrom gg.gap gg.gap
 #' @return
 #' @export
 #'
 #' @examples
 rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL,  do.stat = FALSE, cutoff.pvalue = 0.05, tol = 0.05, thresh = 0.05, show.raw = FALSE, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
+                    do.flip = TRUE, x.angle = NULL, y.angle = 0, x.hjust = 1,y.hjust = 1,
                     axis.gap = FALSE, ylim = NULL, segments = NULL, tick_width = NULL, rel_heights = c(0.9,0,0.1)) {
   mode <- match.arg(mode)
   options(warn = -1)
@@ -1227,16 +1237,16 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
 
     if (stacked) {
       gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position ="fill") +
-        xlab("") + ylab("Relative information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+        xlab("") + ylab("Relative information flow") #+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       #  scale_y_discrete(breaks=c("0","0.5","1")) +
       gg <- gg + geom_hline(yintercept = 0.5, linetype="dashed", color = "grey50", size=0.5)
     } else {
       if (show.raw) {
         gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
-          xlab("") + ylab("Information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+          xlab("") + ylab("Information flow") #+ coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       } else {
         gg <- ggplot(df, aes(x=name, y=contribution.scaled, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
-          xlab("") + ylab("Information flow") + coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+          xlab("") + ylab("Information flow") #+ coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       }
 
       if (axis.gap) {
@@ -1248,9 +1258,26 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
                        rel_heights = rel_heights)
       }
     }
-    gg <- gg +  CellChat_theme_opts() + theme_classic() + theme(axis.text=element_text(size=font.size), axis.title.y = element_text(size=font.size))
-    gg <- gg + scale_fill_manual(name = "", values = color.use) + theme(axis.text.y = element_text(colour = colors.text))
+    gg <- gg +  CellChat_theme_opts() + theme_classic()
+    if (do.flip) {
+      gg <- gg + coord_flip() + theme(axis.text.y = element_text(colour = colors.text))
+      if (is.null(x.angle)) {
+        x.angle = 0
+      }
+
+    } else {
+      if (is.null(x.angle)) {
+        x.angle = 45
+      }
+      gg <- gg + scale_x_discrete(limits = rev) + theme(axis.text.x = element_text(colour = rev(colors.text)))
+
+    }
+
+    gg <- gg + theme(axis.text=element_text(size=font.size), axis.title.y = element_text(size=font.size))
+    gg <- gg + scale_fill_manual(name = "", values = color.use)
     gg <- gg + guides(fill = guide_legend(reverse = TRUE))
+    gg <- gg + theme(axis.text.x = element_text(angle = x.angle, hjust=x.hjust),
+                     axis.text.y = element_text(angle = y.angle, hjust=y.hjust))
     if (!is.null(title)) {
       gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
     }
@@ -1984,7 +2011,7 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
     if (!("datasets" %in% colnames(net))) {
       stop("Please run `identifyOverExpressedGenes` and `netMappingDEG` before selecting 'datasets'")
     }
-    net <- net[net$datasets == datasets, , drop = FALSE]
+    net <- net[net$datasets %in% datasets, , drop = FALSE]
   }
   if (!is.null(ligand.pvalues)){
     if (!("ligand.pvalues" %in% colnames(net))) {
@@ -2202,6 +2229,14 @@ netAnalysis_signalingRole_network <- function(object, signaling, slot.name = "ne
 #' @param label.size font size of the text
 #' @param dot.alpha transparency
 #' @param dot.size a range defining the size of the symbol
+#' @param x.measure The measure used as x-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+#'
+#' Default = "outdeg" is the weighted outgoing links (i.e., Outgoing interaction strength). If setting as "outdeg_unweighted", it represents the total number of outgoing signaling.
+#'
+#' @param y.measure The measure used as y-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+#'
+#' Default = "indeg" is the weighted incoming links (i.e., Incoming interaction strength). If setting as "indeg_unweighted", it represents the total number of incoming signaling.
+#'
 #' @param xlabel label of x-axis
 #' @param ylabel label of y-axis
 #' @param title main title of the plot
@@ -2217,10 +2252,13 @@ netAnalysis_signalingRole_network <- function(object, signaling, slot.name = "ne
 #' @export
 #'
 netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.use = NULL, slot.name = "netP", group = NULL, weight.MinMax = NULL, dot.size = c(2, 6), point.shape = c(21, 22, 24, 23, 25, 8, 3), label.size = 3, dot.alpha = 0.6,
-                                        xlabel = "Outgoing interaction strength", ylabel = "Incoming interaction strength", title = NULL,
-                                        font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
+                                              x.measure = "outdeg", y.measure = "indeg",xlabel = "Outgoing interaction strength", ylabel = "Incoming interaction strength", title = NULL,
+                                              font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
   if (length(slot(object, slot.name)$centr) == 0) {
     stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
+  }
+  if (sum(c(x.measure, y.measure) %in% names(slot(object, slot.name)$centr[[1]])) !=2) {
+    stop(paste0("`x.measure, y.measure` should be one of ", paste(names(slot(object, slot.name)$centr[[1]]),collapse=", "), '\n', "`outdeg_unweighted` is only supported for version >= 1.1.2"))
   }
   centr <- slot(object, slot.name)$centr
   outgoing <- matrix(0, nrow = nlevels(object@idents), ncol = length(centr))
@@ -2228,8 +2266,8 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
   dimnames(outgoing) <- list(levels(object@idents), names(centr))
   dimnames(incoming) <- dimnames(outgoing)
   for (i in 1:length(centr)) {
-    outgoing[,i] <- centr[[i]]$outdeg
-    incoming[,i] <- centr[[i]]$indeg
+    outgoing[,i] <- centr[[i]][[x.measure]]
+    incoming[,i] <- centr[[i]][[y.measure]]
   }
   if (is.null(signaling)) {
     message("Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways")
@@ -2298,10 +2336,180 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
 
 }
 
+
+
+#' 2D visualization of differential signaling roles (dominant senders (sources) or receivers (targets) ) of each cell group when comparing mutiple datasets
+#'
+#' @description
+#' This scatter plot shows the differential signaling roles (dominant senders (sources) or receivers (targets) in a 2D space.
+#'
+#' x-axis and y-axis are respectively the differential outgoing or incoming communication probability associated with each cell group.
+#' Dot colors indicate different cell groups. Dot shapes indicate different categories of cell groups if `group`` is defined.
+#'
+#' Positive values indicate the increase in the second dataset while negative values indicate the increase in the first dataset
+#'
+#' @param object A merged CellChat object of a list of CellChat objects
+#' @param color.use defining the color for each cell group
+#' @param comparison an index vector giving the two datasets for comparison
+#' @param signaling a char vector containing signaling pathway names. signaling = NULL: Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+#' @param signaling.exclude signaling pathways to exclude
+#' @param idents.exclude cell groups to exclude. This is useful when zooming into the small changes
+#' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
+#' @param group a vector to categorize the cell groups, e.g., categorize the cell groups into two major categories: immune cells and fibroblasts
+#' @param point.shape point shape when group is not NULL
+#' @param label.size font size of the text
+#' @param dot.alpha transparency
+#' @param dot.size the size of the symbol
+#' @param x.measure The measure used as x-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+#'
+#' Default = "outdeg" is the weighted outgoing links (i.e., Outgoing interaction strength). If setting as "outdeg_unweighted", it represents the total number of outgoing signaling.
+#'
+#' @param y.measure The measure used as y-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+#'
+#' Default = "indeg" is the weighted incoming links (i.e., Incoming interaction strength). If setting as "indeg_unweighted", it represents the total number of incoming signaling.
+#'
+#' @param xlabel label of x-axis
+#' @param ylabel label of y-axis
+#' @param title main title of the plot
+#' @param font.size font size of the text
+#' @param font.size.title font size of the title
+#' @param do.label label the each point
+#' @param show.legend whether show the legend
+#' @param show.axes whether show the axes
+#' @import ggplot2
+#' @importFrom ggrepel geom_text_repel
+#' @importFrom methods slot
+#' @return ggplot object
+#' @export
+#'
+netAnalysis_diff_signalingRole_scatter <- function(object, color.use = NULL, comparison = c(1,2), signaling = NULL, signaling.exclude = NULL, idents.exclude = NULL, slot.name = "netP", group = NULL, dot.size = 2.5, point.shape = c(21, 22, 24, 23, 25, 8, 3), label.size = 3, dot.alpha = 0.6,
+                                                   x.measure = "outdeg", y.measure = "indeg", xlabel = "Outgoing interaction strength", ylabel = "Incoming interaction strength", title = NULL,
+                                                   font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
+  if (is.list(object)) {
+    object <- mergeCellChat(object, add.names = names(object))
+  }
+  if (!is.list(object@net[[1]])) {
+    stop("This function cannot be applied to a single cellchat object from one dataset!")
+  }
+
+  dataset.name <- names(object@net)
+  message(paste0("Visualizing differential outgoing and incoming signaling changes from ", dataset.name[comparison[1]], " to ", dataset.name[comparison[2]]))
+  title <- paste0("Signaling changes ", " (", dataset.name[comparison[1]], " vs. ", dataset.name[comparison[2]], ")")
+
+  cell.levels <- levels(object@idents$joint)
+  if (is.null(xlabel) | is.null(ylabel)) {
+    xlabel = "Differential outgoing interaction strength"
+    ylabel = "Differential incoming interaction strength"
+  }
+  if (is.null(signaling)) {
+    signaling <- union(object@netP[[comparison[1]]]$pathways, object@netP[[comparison[2]]]$pathways)
+  }
+  if (!is.null(signaling.exclude)) {
+    signaling <- setdiff(signaling, signaling.exclude)
+  }
+
+  mat.all.merged <- list()
+  for (ii in 1:length(comparison)) {
+    if (length(slot(object, slot.name)[[comparison[ii]]]$centr) == 0) {
+      stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores for each dataset seperately! ")
+    }
+    if (sum(c(x.measure, y.measure) %in% names(slot(object, slot.name)[[comparison[ii]]]$centr[[1]])) !=2) {
+      stop(paste0("`x.measure, y.measure` should be one of ", paste(names(slot(object, slot.name)[[comparison[ii]]]$centr[[1]]),collapse=", "), '\n', "`outdeg_unweighted` is only supported for version >= 1.1.2"))
+    }
+
+    centr <- slot(object, slot.name)[[comparison[ii]]]$centr
+    outgoing <- matrix(0, nrow = length(cell.levels), ncol = length(centr))
+    incoming <- matrix(0, nrow = length(cell.levels), ncol = length(centr))
+    dimnames(outgoing) <- list(cell.levels, names(centr))
+    dimnames(incoming) <- dimnames(outgoing)
+    for (i in 1:length(centr)) {
+      outgoing[,i] <- centr[[i]][[x.measure]]
+      incoming[,i] <- centr[[i]][[y.measure]]
+    }
+    mat.out <- t(outgoing)
+    mat.in <- t(incoming)
+
+    mat.all <- array(0, dim = c(length(signaling),ncol(mat.out),2))
+    mat.t <-list(mat.out, mat.in)
+    for (i in 1:length(comparison)) {
+      mat = mat.t[[i]]
+      mat1 <- mat[rownames(mat) %in% signaling, , drop = FALSE]
+      mat <- matrix(0, nrow = length(signaling), ncol = ncol(mat))
+      idx <- match(rownames(mat1), signaling)
+      mat[idx[!is.na(idx)], ] <- mat1
+      dimnames(mat) <- list(signaling, colnames(mat1))
+      mat.all[,,i] = mat
+    }
+    dimnames(mat.all) <- list(dimnames(mat)[[1]], dimnames(mat)[[2]], c("outgoing", "incoming"))
+    mat.all.merged[[ii]] <- mat.all
+
+  }
+
+  mat.diff <- mat.all.merged[[2]] -  mat.all.merged[[1]]
+
+  outgoing.diff <- colSums(mat.diff[ , , 1])
+  incoming.diff <- colSums(mat.diff[ , , 2])
+
+
+  df <- data.frame(x = outgoing.diff, y = incoming.diff, labels = names(incoming.diff))
+  df$labels <- factor(df$labels, levels = names(incoming.diff))
+  if (!is.null(group)) {
+    df$Group <- group
+  }
+  if (is.null(color.use)) {
+    color.use <- scPalette(length(cell.levels))
+  }
+  if (!is.null(idents.exclude)) {
+    df <- df[!(df$labels %in% idents.exclude), ]
+    color.use <- color.use[!(cell.levels %in% idents.exclude)]
+    df$labels = droplevels(df$labels, exclude = setdiff(levels(df$labels),unique(df$labels)))
+  }
+
+  if (!is.null(group)) {
+    gg <- ggplot(data = df, aes(x, y)) +
+      geom_point(aes(colour = labels, fill = labels, shape = Group), size = dot.size)
+  } else {
+    gg <- ggplot(data = df, aes(x, y)) +
+      geom_point(aes(colour = labels, fill = labels), size = dot.size)
+  }
+
+  gg <- gg + CellChat_theme_opts() + theme_linedraw() +theme(panel.grid = element_blank()) +
+    geom_hline(yintercept=0,linetype="dashed", color = "grey50", size = 0.25) + geom_vline(xintercept=0, linetype="dashed", color = "grey50",size = 0.25) +
+    theme(text = element_text(size = font.size), legend.key.height = grid::unit(0.15, "in"))+
+    # guides(colour = guide_legend(override.aes = list(size = 3)))+
+    labs(title = title, x = xlabel, y = ylabel) + theme(plot.title = element_text(size= font.size.title, face="plain", hjust = 0.5))+
+    # theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks = element_blank()) +
+    theme(axis.line.x = element_line(size = 0.25), axis.line.y = element_line(size = 0.25))
+  gg <- gg + scale_fill_manual(values = ggplot2::alpha(color.use, alpha = dot.alpha), drop = FALSE) + guides(fill=FALSE)
+  gg <- gg + scale_colour_manual(values = color.use, drop = FALSE) + guides(colour=FALSE)
+  if (!is.null(group)) {
+    gg <- gg + scale_shape_manual(values = point.shape[1:length(unique(df$Group))])
+  }
+  if (do.label) {
+    gg <- gg + ggrepel::geom_text_repel(mapping = aes(label = labels, colour = labels), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5)
+  }
+
+  if (!show.legend) {
+    gg <- gg + theme(legend.position = "none")
+  }
+
+  if (!show.axes) {
+    gg <- gg + theme_void()
+  }
+
+  gg
+
+}
+
+
+
 #' 2D visualization of differential outgoing and incoming signaling associated with one cell group
 #'
+#' @description
+#' Positive values indicate the increase in the second dataset while negative values indicate the increase in the first dataset
 #'
-#' @param object A merged CellChat object
+#'
+#' @param object A merged CellChat object of a list of CellChat objects
 #' @param idents.use the cell group names of interest. Should be one of `levels(object@idents$joint)`
 #' @param color.use a vector with three elements: the first is for coloring shared pathways, the second is for specific pathways in the first dataset, and the third is for specific pathways in the second dataset
 #' @param comparison an index vector giving the two datasets for comparison
@@ -2313,7 +2521,15 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
 #' @param point.shape point shape
 #' @param label.size font size of the text
 #' @param dot.alpha transparency
-#' @param dot.size a range defining the size of the symbol
+#' @param dot.size the size of the symbol
+#' @param x.measure The measure used as x-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+#'
+#' Default = "outdeg" is the weighted outgoing links (i.e., Outgoing interaction strength). If setting as "outdeg_unweighted", it represents the total number of outgoing signaling.
+#'
+#' @param y.measure The measure used as y-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+#'
+#' Default = "indeg" is the weighted incoming links (i.e., Incoming interaction strength). If setting as "indeg_unweighted", it represents the total number of incoming signaling.
+#'
 #' @param xlabel label of x-axis
 #' @param ylabel label of y-axis
 #' @param title main title of the plot
@@ -2330,7 +2546,7 @@ netAnalysis_signalingRole_scatter <- function(object, signaling = NULL, color.us
 #' @export
 #'
 netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use = c("grey10", "#F8766D", "#00BFC4"), comparison = c(1,2), signaling = NULL, signaling.label = NULL, top.label = 1, signaling.exclude = NULL, slot.name = "netP", dot.size = 2.5, point.shape = c(21, 22, 24, 23), label.size = 3, dot.alpha = 0.6,
-                                                 xlabel = NULL, ylabel = NULL, title = NULL,
+                                                 x.measure = "outdeg", y.measure = "indeg", xlabel = "Differential outgoing interaction strength", ylabel = "Differential incoming interaction strength", title = NULL,
                                                  font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
   if (is.list(object)) {
     object <- mergeCellChat(object, add.names = names(object))
@@ -2339,9 +2555,7 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
     dataset.name <- names(object@net)
     message(paste0("Visualizing differential outgoing and incoming signaling changes from ", dataset.name[comparison[1]], " to ", dataset.name[comparison[2]]))
     title <- paste0("Signaling changes of ", idents.use, " (", dataset.name[comparison[1]], " vs. ", dataset.name[comparison[2]], ")")
-    if (length(slot(object, slot.name)[[1]]$centr) == 0) {
-      stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
-    }
+
     cell.levels <- levels(object@idents$joint)
     if (is.null(xlabel) | is.null(ylabel)) {
       xlabel = "Differential outgoing interaction strength"
@@ -2367,21 +2581,27 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
   }
   mat.all.merged <- list()
   for (ii in 1:length(comparison)) {
+    if (length(slot(object, slot.name)[[comparison[ii]]]$centr) == 0) {
+      stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores for each dataset seperately! ")
+    }
+    if (sum(c(x.measure, y.measure) %in% names(slot(object, slot.name)[[comparison[ii]]]$centr[[1]])) !=2) {
+      stop(paste0("`x.measure, y.measure` should be one of ", paste(names(slot(object, slot.name)[[comparison[ii]]]$centr[[1]]),collapse=", "), '\n', "`outdeg_unweighted` is only supported for version >= 1.1.2"))
+    }
     centr <- slot(object, slot.name)[[comparison[ii]]]$centr
     outgoing <- matrix(0, nrow = length(cell.levels), ncol = length(centr))
     incoming <- matrix(0, nrow = length(cell.levels), ncol = length(centr))
     dimnames(outgoing) <- list(cell.levels, names(centr))
     dimnames(incoming) <- dimnames(outgoing)
     for (i in 1:length(centr)) {
-      outgoing[,i] <- centr[[i]]$outdeg
-      incoming[,i] <- centr[[i]]$indeg
+      outgoing[,i] <- centr[[i]][[x.measure]]
+      incoming[,i] <- centr[[i]][[y.measure]]
     }
     mat.out <- t(outgoing)
     mat.in <- t(incoming)
 
     mat.all <- array(0, dim = c(length(signaling),ncol(mat.out),2))
     mat.t <-list(mat.out, mat.in)
-    for (i in 1:2) {
+    for (i in 1:length(comparison)) {
       mat = mat.t[[i]]
       mat1 <- mat[rownames(mat) %in% signaling, , drop = FALSE]
       mat <- matrix(0, nrow = length(signaling), ncol = ncol(mat))

@@ -129,6 +129,9 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
       meta <- object@meta.data
       meta$ident <- Seurat::Idents(object)
     }
+    if (is.null(group.by)) {
+      group.by <- "ident"
+    }
   }
   # SingleCellExperiment object as input
   if (is(object,"SingleCellExperiment")) {
@@ -142,6 +145,9 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
     if (is.null(meta)) {
       cat("The `colData` assay in the SingleCellExperiment object is used as cell meta information",'\n')
       meta <- as.data.frame(SingleCellExperiment::colData(object))
+    }
+    if (is.null(group.by)) {
+      stop("`group.by` should be defined!")
     }
   }
 
