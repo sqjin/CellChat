@@ -6,6 +6,8 @@
 </p>
 
 ## Important update!!
+July 10, 2021 (Version 1.1.2)
+
 For the version history and detailed important changes, please see the [NEWS file](https://github.com/sqjin/CellChat/blob/master/NEWS.md).
 
 April 26, 2021 (Version 1.1.0)
