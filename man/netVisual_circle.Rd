@@ -15,7 +15,7 @@ netVisual_circle(
   weight.scale = FALSE,
   vertex.weight = 20,
   vertex.weight.max = NULL,
-  vertex.size.max = 15,
+  vertex.size.max = NULL,
   vertex.label.cex = 1,
   vertex.label.color = "black",
   edge.weight.max = NULL,

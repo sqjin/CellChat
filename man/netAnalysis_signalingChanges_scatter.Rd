@@ -18,8 +18,10 @@ netAnalysis_signalingChanges_scatter(
   point.shape = c(21, 22, 24, 23),
   label.size = 3,
   dot.alpha = 0.6,
-  xlabel = NULL,
-  ylabel = NULL,
+  x.measure = "outdeg",
+  y.measure = "indeg",
+  xlabel = "Differential outgoing interaction strength",
+  ylabel = "Differential incoming interaction strength",
   title = NULL,
   font.size = 10,
   font.size.title = 10,
@@ -29,7 +31,7 @@ netAnalysis_signalingChanges_scatter(
 )
 }
 \arguments{
-\item{object}{A merged CellChat object}
+\item{object}{A merged CellChat object of a list of CellChat objects}
 
 \item{idents.use}{the cell group names of interest. Should be one of `levels(object@idents$joint)`}
 
@@ -47,13 +49,21 @@ netAnalysis_signalingChanges_scatter(
 
 \item{slot.name}{the slot name of object}
 
-\item{dot.size}{a range defining the size of the symbol}
+\item{dot.size}{the size of the symbol}
 
 \item{point.shape}{point shape}
 
 \item{label.size}{font size of the text}
 
 \item{dot.alpha}{transparency}
+
+\item{x.measure}{The measure used as x-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+
+Default = "outdeg" is the weighted outgoing links (i.e., Outgoing interaction strength). If setting as "outdeg_unweighted", it represents the total number of outgoing signaling.}
+
+\item{y.measure}{The measure used as y-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+
+Default = "indeg" is the weighted incoming links (i.e., Incoming interaction strength). If setting as "indeg_unweighted", it represents the total number of incoming signaling.}
 
 \item{xlabel}{label of x-axis}
 
@@ -75,5 +85,5 @@ netAnalysis_signalingChanges_scatter(
 ggplot object
 }
 \description{
-2D visualization of differential outgoing and incoming signaling associated with one cell group
+Positive values indicate the increase in the second dataset while negative values indicate the increase in the first dataset
 }

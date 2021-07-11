@@ -16,7 +16,7 @@ netVisual_hierarchy1(
   weight.scale = FALSE,
   vertex.weight = 20,
   vertex.weight.max = NULL,
-  vertex.size.max = 15,
+  vertex.size.max = NULL,
   edge.weight.max = NULL,
   edge.width.max = 8,
   alpha.edge = 0.6,
