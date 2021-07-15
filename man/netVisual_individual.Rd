@@ -15,14 +15,15 @@ netVisual_individual(
   targets.use = NULL,
   top = 1,
   remove.isolate = FALSE,
-  vertex.weight = NULL,
+  vertex.weight = 1,
   vertex.weight.max = NULL,
-  vertex.size.max = 15,
+  vertex.size.max = NULL,
   vertex.label.cex = 0.8,
   weight.scale = TRUE,
   edge.weight.max = NULL,
   edge.width.max = 8,
-  layout = c("hierarchy", "circle", "chord"),
+  graphics.init = TRUE,
+  layout = c("circle", "hierarchy", "chord"),
   height = 5,
   thresh = 0.05,
   group = NULL,
@@ -59,7 +60,11 @@ netVisual_individual(
 
 \item{remove.isolate}{whether remove the isolate nodes in the communication network}
 
-\item{vertex.weight}{The weight of vertex: either a scale value or a vector}
+\item{vertex.weight}{The weight of vertex: either a scale value or a vector.
+
+Default is a scale value being 1, indicating all vertex is plotted in the same size;
+
+Set `vertex.weight` as a vector to plot vertex in different size; setting `vertex.weight = NULL` will have vertex with different size that are portional to the number of cells in each cell group.}
 
 \item{vertex.weight.max}{the maximum weight of vertex; defualt = max(vertex.weight)}
 
@@ -72,6 +77,8 @@ netVisual_individual(
 \item{edge.weight.max}{the maximum weight of edge; defualt = max(net)}
 
 \item{edge.width.max}{The maximum edge width for visualization}
+
+\item{graphics.init}{whether do graphics initiation using par(...). If graphics.init=FALSE, USERS can use par() in a more fexible way}
 
 \item{layout}{"hierarchy", "circle" or "chord"}
 

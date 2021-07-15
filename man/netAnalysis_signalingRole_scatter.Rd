@@ -15,6 +15,8 @@ netAnalysis_signalingRole_scatter(
   point.shape = c(21, 22, 24, 23, 25, 8, 3),
   label.size = 3,
   dot.alpha = 0.6,
+  x.measure = "outdeg",
+  y.measure = "indeg",
   xlabel = "Outgoing interaction strength",
   ylabel = "Incoming interaction strength",
   title = NULL,
@@ -46,6 +48,14 @@ netAnalysis_signalingRole_scatter(
 
 \item{dot.alpha}{transparency}
 
+\item{x.measure}{The measure used as x-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+
+Default = "outdeg" is the weighted outgoing links (i.e., Outgoing interaction strength). If setting as "outdeg_unweighted", it represents the total number of outgoing signaling.}
+
+\item{y.measure}{The measure used as y-axis. This measure should be one of `names(slot(object, slot.name)$centr[[1]])` computed from `netAnalysis_computeCentrality`
+
+Default = "indeg" is the weighted incoming links (i.e., Incoming interaction strength). If setting as "indeg_unweighted", it represents the total number of incoming signaling.}
+
 \item{xlabel}{label of x-axis}
 
 \item{ylabel}{label of y-axis}
@@ -66,6 +76,8 @@ netAnalysis_signalingRole_scatter(
 ggplot object
 }
 \description{
-This scatter plot shows the dominant senders (sources) and receivers (targets) in a 2D space. Dot size is proportional to the number of inferred links (both outgoing and incoming) associated with each cell group.
+This scatter plot shows the dominant senders (sources) and receivers (targets) in a 2D space.
+x-axis and y-axis are respectively the total outgoing or incoming communication probability associated with each cell group.
+Dot size is proportional to the number of inferred links (both outgoing and incoming) associated with each cell group.
 Dot colors indicate different cell groups. Dot shapes indicate different categories of cell groups if `group`` is defined.
 }

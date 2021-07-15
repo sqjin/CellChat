@@ -2,20 +2,28 @@
 % Please edit documentation in R/utilities.R
 \name{sketchData}
 \alias{sketchData}
-\title{Downsampling single cell data}
+\title{Downsampling single cell data using geometric sketching algorithm}
 \usage{
-sketchData(X, percent, dimPC = 50)
+sketchData(object, percent, idents = NULL, do.PCA = TRUE, dimPC = 30)
 }
 \arguments{
-\item{X}{input data (samples in rows, features in columns)}
+\item{object}{A data matrix (should have row names; samples in rows, features in columns) or a Seurat object.
+
+When object is a PCA or UMAP space, please set `do.PCA = FALSE`
+
+When object is a data matrix (cells in rows and genes in columns), it is better to use the highly variable genes. PCA will be done on this input data matrix.}
 
 \item{percent}{the percent of data to sketch}
+
+\item{idents}{A vector of identity classes to keep for sketching}
+
+\item{do.PCA}{whether doing PCA on the input data}
 
 \item{dimPC}{the number of components to use}
 }
 \value{
-
+A vector of cell names to use for downsampling
 }
 \description{
-Downsampling single cell data
+USERs need to install the python package `pip install geosketch` (https://github.com/brianhie/geosketch)
 }

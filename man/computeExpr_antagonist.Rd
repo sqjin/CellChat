@@ -8,10 +8,8 @@ computeExpr_antagonist(
   data.use,
   pairLRsig,
   cofactor_input,
-  group,
   index.antagonist,
   Kh,
-  FunMean,
   n
 )
 }
@@ -22,13 +20,9 @@ computeExpr_antagonist(
 
 \item{cofactor_input}{the cofactor_input from CellChatDB}
 
-\item{group}{a factor defining the cell groups}
-
 \item{index.antagonist}{the index of antagonist in the database}
 
 \item{Kh}{a parameter in Hill function}
-
-\item{FunMean}{the function for computing mean expression per group}
 
 \item{n}{Hill coefficient}
 }

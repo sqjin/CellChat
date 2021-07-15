@@ -56,5 +56,6 @@ A CellChat object or a data frame. If returning a CellChat object, two new eleme
 `object@var.features[[paste0(features.name, ".info")]]` is a data frame returned from the differential expression analysis
 }
 \description{
-Identify over-expressed signaling genes associated with each cell group
+USERS can use customized gene set as over-expressed signaling genes by setting `object@var.features[[features.name]] <- features.sig`
+The Bonferroni corrected/adjusted p value can be obtained via `object@var.features[[paste0(features.name, ".info")]]`. Note that by default `features.name = "features"`
 }

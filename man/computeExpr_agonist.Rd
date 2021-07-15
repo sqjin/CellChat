@@ -4,16 +4,7 @@
 \alias{computeExpr_agonist}
 \title{Modeling the effect of agonist on the ligand-receptor interaction}
 \usage{
-computeExpr_agonist(
-  data.use,
-  pairLRsig,
-  cofactor_input,
-  group,
-  index.agonist,
-  Kh,
-  FunMean,
-  n
-)
+computeExpr_agonist(data.use, pairLRsig, cofactor_input, index.agonist, Kh, n)
 }
 \arguments{
 \item{data.use}{data matrix}
@@ -22,13 +13,9 @@ computeExpr_agonist(
 
 \item{cofactor_input}{the cofactor_input from CellChatDB}
 
-\item{group}{a factor defining the cell groups}
-
 \item{index.agonist}{the index of agonist in the database}
 
 \item{Kh}{a parameter in Hill function}
-
-\item{FunMean}{the function for computing mean expression per group}
 
 \item{n}{Hill coefficient}
 }

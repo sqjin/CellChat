@@ -10,7 +10,6 @@ rankSimilarity(
   type = c("functional", "structural"),
   comparison1 = NULL,
   comparison2 = c(1, 2),
-  pathway.remove = NULL,
   x.rotation = 90,
   title = NULL,
   color.use = NULL,
@@ -27,15 +26,16 @@ rankSimilarity(
 
 \item{comparison1}{a numerical vector giving the datasets for comparison. This should be the same as `comparison` in `computeNetSimilarityPairwise`}
 
-\item{comparison2}{a numerical vector with two elements giving the datasets for comparison. If there are more than 2 datasets defined in `comparison1`, `comparison2` can be defined to indicate which two datasets used for computing the distance}
+\item{comparison2}{a numerical vector with two elements giving the datasets for comparison.
 
-\item{pathway.remove}{a character vector defining the signaling to remove}
+If there are more than 2 datasets defined in `comparison1`, `comparison2` can be defined to indicate which two datasets used for computing the distance.
+e.g., comparison2 = c(1,3) indicates the first and third datasets defined in `comparison1` will be used for comparison.}
 
 \item{x.rotation}{rotation of x-labels}
 
 \item{title}{main title of the plot}
 
-\item{color.use}{defining the color for each cell group}
+\item{color.use}{defining the color}
 
 \item{bar.w}{the width of bar plot}
 

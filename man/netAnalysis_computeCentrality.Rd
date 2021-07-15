@@ -5,20 +5,23 @@
 \title{Compute the network centrality scores allowing identification of dominant senders, receivers, mediators and influencers in all inferred communication networks}
 \usage{
 netAnalysis_computeCentrality(
-  object,
+  object = NULL,
   slot.name = "netP",
   net = NULL,
-  net.name = NULL
+  net.name = NULL,
+  thresh = 0.05
 )
 }
 \arguments{
-\item{object}{CellChat object}
+\item{object}{CellChat object; If object = NULL, USER must provide `net`}
 
 \item{slot.name}{the slot name of object that is used to compute centrality measures of signaling networks}
 
 \item{net}{compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net}
 
 \item{net.name}{a character vector giving the name of signaling networks}
+
+\item{thresh}{threshold of the p-value for determining significant interaction}
 }
 \value{
 

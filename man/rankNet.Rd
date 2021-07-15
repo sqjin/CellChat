@@ -23,6 +23,11 @@ rankNet(
   title = NULL,
   bar.w = 0.75,
   font.size = 8,
+  do.flip = TRUE,
+  x.angle = NULL,
+  y.angle = 0,
+  x.hjust = 1,
+  y.hjust = 1,
   axis.gap = FALSE,
   ylim = NULL,
   segments = NULL,
@@ -66,6 +71,10 @@ rankNet(
 \item{bar.w}{the width of bar plot}
 
 \item{font.size}{font size}
+
+\item{do.flip}{whether flip the x-y axis}
+
+\item{x.angle, y.angle, x.hjust, y.hjust}{parameters for rotating and spacing axis labels}
 
 \item{axis.gap}{whetehr making gaps in y-axes}
 

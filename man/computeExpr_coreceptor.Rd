@@ -4,21 +4,16 @@
 \alias{computeExpr_coreceptor}
 \title{Modeling the effect of coreceptor on the ligand-receptor interaction}
 \usage{
-computeExpr_coreceptor(
-  cofactor_input,
-  data.use,
-  coreceptor.all,
-  index.coreceptor
-)
+computeExpr_coreceptor(cofactor_input, data.use, pairLRsig, type = c("A", "I"))
 }
 \arguments{
 \item{cofactor_input}{the cofactor_input from CellChatDB}
 
 \item{data.use}{data matrix}
 
-\item{coreceptor.all}{all the coreceptor in the database}
+\item{pairLRsig}{a data frame giving ligand-receptor interactions}
 
-\item{index.coreceptor}{the index of coreceptor in the database}
+\item{type}{when type == "A", computing expression of co-activation receptor; when type == "I", computing expression of co-inhibition receptor.}
 }
 \value{
 

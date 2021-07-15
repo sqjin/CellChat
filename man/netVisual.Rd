@@ -14,14 +14,14 @@ netVisual(
   targets.use = NULL,
   top = 1,
   remove.isolate = FALSE,
-  vertex.weight = NULL,
+  vertex.weight = 1,
   vertex.weight.max = NULL,
-  vertex.size.max = 15,
+  vertex.size.max = NULL,
   weight.scale = TRUE,
   edge.weight.max.individual = NULL,
   edge.weight.max.aggregate = NULL,
   edge.width.max = 8,
-  layout = c("hierarchy", "circle", "chord"),
+  layout = c("circle", "hierarchy", "chord"),
   height = 5,
   thresh = 0.05,
   pt.title = 12,
@@ -64,7 +64,11 @@ netVisual(
 
 \item{remove.isolate}{whether remove the isolate nodes in the communication network}
 
-\item{vertex.weight}{The weight of vertex: either a scale value or a vector}
+\item{vertex.weight}{The weight of vertex: either a scale value or a vector
+
+Default is a scale value being 1, indicating all vertex is plotted in the same size;
+
+Set `vertex.weight` as a vector to plot vertex in different size; setting `vertex.weight = NULL` will have vertex with different size that are portional to the number of cells in each cell group.}
 
 \item{vertex.weight.max}{the maximum weight of vertex; defualt = max(vertex.weight)}
 

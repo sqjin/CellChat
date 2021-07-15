@@ -46,7 +46,8 @@ CellChat requires two user inputs: one is the gene expression data of cells, and
 
 ```{r}
 # Here we load a scRNA-seq data matrix and its associated cell meta data
-load(url("https://ndownloader.figshare.com/files/25950872")) # This is a combined data from two biological conditions: normal and diseases
+#load(url("https://ndownloader.figshare.com/files/25950872")) # This is a combined data from two biological conditions: normal and diseases
+load("/Users/suoqinjin/Documents/CellChat/tutorial/data_humanSkin_CellChat.rda")
 data.input = data_humanSkin$data # normalized data matrix
 meta = data_humanSkin$meta # a dataframe with rownames containing cell mata data
 cell.use = rownames(meta)[meta$condition == "LS"] # extract the cell names from disease data
@@ -66,7 +67,7 @@ unique(meta$labels) # check the cell labels
 cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
 ```
 
-## Add cell information into *meta* slot of the object
+## Add cell information into *meta* slot of the object  (Optional)
 If cell mata information is not added when creating CellChat object, USERS can also add it later using `addMeta`, and set the default cell identities using `setIdent`.
 ```{r eval = FALSE}
 cellchat <- addMeta(cellchat, meta = meta)
@@ -101,23 +102,25 @@ To infer the cell state-specific communications, we identify over-expressed liga
 We also provide a function to project gene expression data onto protein-protein interaction (PPI) network. Specifically, a diffusion process is used to smooth genes’ expression values based on their neighbors’ defined in a high-confidence experimentally validated protein-protein network. This function is useful when analyzing single-cell data with shallow sequencing depth because the projection reduces the dropout effects of signaling genes, in particular for possible zero expression of subunits of ligands/receptors. One might be concerned about the possible artifact introduced by this diffusion process, however, it will only introduce very weak communications. USERS can also skip this step and set `raw.use = TRUE` in the function `computeCommunProb()`. 
 
 ```{r}
-cellchat <- subsetData(cellchat) # subset the expression data of signaling genes for saving computation cost
+# subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
 future::plan("multiprocess", workers = 4) # do parallel
 cellchat <- identifyOverExpressedGenes(cellchat)
 cellchat <- identifyOverExpressedInteractions(cellchat)
+# project gene expression data onto PPI network (optional)
 cellchat <- projectData(cellchat, PPI.human)
 ```
 
 # Part II: Inference of cell-cell communication network
 CellChat infers the biologically significant cell-cell communication by assigning each interaction with a probability value and peforming a permutation test. CellChat models the probability of cell-cell communication by integrating gene expression with prior known knowledge of the interactions between signaling ligands, receptors and their cofactors using the law of mass action. 
 
-The number of inferred ligand-receptor pairs clearly depends on the **method for calculating the average gene expression per cell group**. By default, CellChat uses a statistically robust mean method called 'trimean', which produces fewer interactions than other methods. However, we find that CellChat performs well at predicting stronger interactions, which is very helpful for narrowing down on interactions for further experimental validations. In `computeCommunProb`, we provide an option for using other methods, such as 5% and 10% truncated mean, to calculating the average gene expression. Of note, 'trimean' approximates 25% truncated mean, implying that the average gene expression is zero if the percent of expressed cells in one group is less than 25%. To use 10% truncated mean, USER can set `type = "truncatedMean"` and `trim = 0.1`. 
+The number of inferred ligand-receptor pairs clearly depends on the **method for calculating the average gene expression per cell group**. By default, CellChat uses a statistically robust mean method called 'trimean', which produces fewer interactions than other methods. However, we find that CellChat performs well at predicting stronger interactions, which is very helpful for narrowing down on interactions for further experimental validations. In `computeCommunProb`, we provide an option for using other methods, such as 5% and 10% truncated mean, to calculating the average gene expression. Of note, 'trimean' approximates 25% truncated mean, implying that the average gene expression is zero if the percent of expressed cells in one group is less than 25%. To use 10% truncated mean, USER can set `type = "truncatedMean"` and `trim = 0.1`. If very well-known signaling pathways in the studied biological process are not predicted, USER can try `truncatedMean` with different `trim` values. The function `computeAveExpr` can help to check the average expression of signaling genes of interest, e.g, `computeAveExpr(cellchat, features = c("CXCL12","CXCR4"), type =  "truncatedMean", trim = 0.1)`. 
 
 When analyzing unsorted single-cell transcriptomes, under the assumption that abundant cell populations tend to send collectively stronger signals than the rare cell populations, CellChat can also consider the effect of cell proportion in each cell group in the probability calculation. USER can set `population.size = TRUE`. 
 
 ## Compute the communication probability and infer cellular communication network
 ```{r}
-cellchat <- computeCommunProb(cellchat, raw.use = TRUE)
+cellchat <- computeCommunProb(cellchat)
 # Filter out the cell-cell communication if there are only few number of cells in certain cell groups
 cellchat <- filterCommunication(cellchat, min.cells = 10)
 ```

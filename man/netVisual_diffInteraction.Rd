@@ -9,6 +9,7 @@ netVisual_diffInteraction(
   comparison = c(1, 2),
   measure = c("count", "weight", "count.merged", "weight.merged"),
   color.use = NULL,
+  color.edge = c("#b2182b", "#2166ac"),
   title.name = NULL,
   sources.use = NULL,
   targets.use = NULL,
@@ -42,6 +43,8 @@ netVisual_diffInteraction(
 \item{measure}{"count" or "weight". "count": comparing the number of interactions; "weight": comparing the total interaction weights (strength)}
 
 \item{color.use}{Colors represent different cell groups}
+
+\item{color.edge}{Colors for indicating whether the signaling is increased (`color.edge[1]`) or decreased (`color.edge[2]`)}
 
 \item{title.name}{the name of the title}
 
