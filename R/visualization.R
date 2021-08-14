@@ -2696,6 +2696,7 @@ netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing"
     plot.data.long <- ggalluvial::to_lodes_form(plot.data, axes = 1:2, id = "connection")
     if (do.order) {
       mat = tapply(plot.data[["Contribution"]], list(plot.data[["Signaling"]], plot.data[["Pattern"]]), sum)
+      mat[is.na(mat)] <- 0; mat <- mat[-which(rowSums(mat) == 0), ]
       d <- dist(as.matrix(mat))
       hc <- hclust(d, "ave")
       k <- length(unique(grep("Pattern", plot.data.long$stratum[plot.data.long$Contribution != 0], value = T)))
@@ -3052,6 +3053,8 @@ netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("func
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param comparison a numerical vector giving the datasets for comparison. Default are all datasets when object is a merged object
+#' @param pathway.labeled a char vector giving the signaling names to show when labeling each point
+#' @param top.label the fraction of signaling pathways to label
 #' @param pathway.remove a character vector defining the signaling to remove
 #' @param pathway.remove.show whether show the removed signaling names
 #' @param color.use defining the color for each cell group
@@ -3072,7 +3075,7 @@ netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("func
 #' @export
 #'
 #' @examples
-netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, color.use = NULL, point.shape = NULL, pathway.remove = NULL, pathway.remove.show = TRUE, dot.size = c(2, 6), label.size = 2.5, dot.alpha = 0.5,
+netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, color.use = NULL, point.shape = NULL, pathway.labeled = NULL, top.label = 1, pathway.remove = NULL, pathway.remove.show = TRUE, dot.size = c(2, 6), label.size = 2.5, dot.alpha = 0.5,
                                         xlabel = "Dim 1", ylabel = "Dim 2", title = NULL,do.label = T, show.legend = T, show.axes = T) {
   type <- match.arg(type)
   if (is.null(comparison)) {
@@ -3142,7 +3145,21 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   gg <- gg + scale_colour_manual(values = color.use, drop = FALSE)
   gg <- gg + scale_shape_manual(values = point.shape[1:length(prob)])
   if (do.label) {
-    gg <- gg + ggrepel::geom_text_repel(mapping = aes(label = labels, colour = clusters, alpha=group), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5) + scale_alpha_discrete(range = c(1, 0.6))
+    if (is.null(pathway.labeled)) {
+      if (top.label < 1) {
+        if (length(comparison) == 2) {
+          g.t <- rankSimilarity(object, slot.name = slot.name, type = type, comparison1 = comparison)
+          pathway.labeled <- as.character(g.t$data$name[(nrow(g.t$data)-ceiling(top.label * nrow(g.t$data))+1):nrow(g.t$data) ])
+          data.label <- df[df$labels %in% pathway.labeled, , drop = FALSE]
+        }
+      } else {
+        data.label <- df
+      }
+
+    } else {
+      data.label <- df[df$labels %in% pathway.labeled, , drop = FALSE]
+    }
+    gg <- gg + ggrepel::geom_text_repel(data = data.label, mapping = aes(label = labels, colour = clusters, alpha=group), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5) + scale_alpha_discrete(range = c(1, 0.6))
   }
 
   if (length(pathway.remove) > 0 & pathway.remove.show) {
@@ -3158,7 +3175,6 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   }
   gg
 }
-
 
 
 #' Zoom into the 2D visualization of the joint manifold learning of signaling networks from two datasets
@@ -3338,11 +3354,12 @@ pieChart <- function(df, label.size = 2.5, color.use = NULL, title = "") {
   gg <- ggplot(df, aes(x="", y=value, fill=forcats::fct_inorder(group))) +
     geom_bar(stat="identity", width=1) +
     coord_polar("y", start=0)+theme_void() +
-    ggrepel::geom_text_repel(aes(label = prop), size= label.size, show.legend = F, nudge_x = 0)
+    ggrepel::geom_text_repel(aes(label = prop), size= label.size, show.legend = F, position = position_stack(vjust=0.5))
+    #ggrepel::geom_text_repel(aes(label = prop), size= label.size, show.legend = F, nudge_x = 0)
   gg <- gg + theme(legend.position="bottom", legend.direction = "vertical")
 
   if(!is.null(color.use)) {
-    gg <- gg + scale_color_manual(color.use)
+    gg <- gg + scale_fill_manual(values=color.use)
   }
 
   if (!is.null(title)) {

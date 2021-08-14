@@ -161,7 +161,6 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param net compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net
 #' @param net.name a character vector giving the name of signaling networks
-#' @param thresh threshold of the p-value for determining significant interaction
 #' @importFrom future nbrOfWorkers
 #' @importFrom methods slot
 #' @importFrom future.apply future_sapply
@@ -170,13 +169,9 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @return
 #' @export
 #'
-netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL, thresh = 0.05) {
+netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL) {
   if (is.null(net)) {
-    prob <- methods::slot(object, slot.name)$prob
-    pval <- methods::slot(object, slot.name)$pval
-    pval[prob == 0] <- 1
-    prob[pval >= thresh] <- 0
-    net = prob
+    net = methods::slot(object, slot.name)$prob
   }
   if (is.null(net.name)) {
     net.name <- dimnames(net)[[3]]
@@ -238,7 +233,7 @@ computeCentralityLocal <- function(net) {
     as.vector(matrix(0, nrow = nrow(net), ncol = 1))
   })
   centr$info <- tryCatch({
-    sna::infocent(net, diag = T, rescale = T, cmode = "lower")
+    sna::infocent(net, diag = T, rescale = T, cmode = "weak")
   }, error = function(e) {
     as.vector(matrix(0, nrow = nrow(net), ncol = 1))
   })
@@ -2601,7 +2596,7 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
 
     mat.all <- array(0, dim = c(length(signaling),ncol(mat.out),2))
     mat.t <-list(mat.out, mat.in)
-    for (i in 1:length(comparison)) {
+    for (i in 1:length(mat.t)) {
       mat = mat.t[[i]]
       mat1 <- mat[rownames(mat) %in% signaling, , drop = FALSE]
       mat <- matrix(0, nrow = length(signaling), ncol = ncol(mat))
@@ -2615,8 +2610,9 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
   }
   mat.all.merged.use <- list(mat.all.merged[[1]][,idents.use,], mat.all.merged[[2]][,idents.use,])
   idx.specific <- mat.all.merged.use[[1]] * mat.all.merged.use[[2]]
-  out.specific.signaling <- rownames(idx.specific)[idx.specific[,1] == 0]
-  in.specific.signaling <- rownames(idx.specific)[idx.specific[,2] == 0]
+  idx.specific2 <- mat.all.merged.use[[1]] + mat.all.merged.use[[2]]
+  out.specific.signaling <- rownames(idx.specific)[(idx.specific[,1] == 0) & (idx.specific2[,1] != 0)]
+  in.specific.signaling <- rownames(idx.specific)[(idx.specific[,2] == 0) & (idx.specific2[,2] != 0)]
 
   mat.diff <- mat.all.merged.use[[2]] -  mat.all.merged.use[[1]]
   idx <- rowSums(mat.diff) != 0
@@ -2639,9 +2635,9 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
   # change number to char
   out.in.category <- c("Shared", "Incoming specific", "Outgoing specific", "Incoming & Outgoing specific")
   specificity.category <- c("Shared", paste0(dataset.name[comparison[1]]," specific"), paste0(dataset.name[comparison[2]]," specific"))
-  df$specificity.out.in <- plyr::mapvalues(df$specificity.out.in, from = c(0,-1,1,2),to = out.in.category)
+  df$specificity.out.in <- plyr::mapvalues(df$specificity.out.in, from = c(0,-1,1,2),to = out.in.category, warn_missing = FALSE)
   df$specificity.out.in <- factor(df$specificity.out.in, levels = out.in.category)
-  df$specificity <- plyr::mapvalues(df$specificity, from = c(0,-1,1),to = specificity.category)
+  df$specificity <- plyr::mapvalues(df$specificity, from = c(0,-1,1),to = specificity.category, warn_missing = FALSE)
   df$specificity <- factor(df$specificity, levels = specificity.category)
 
   point.shape.use <- point.shape[out.in.category %in% unique(df$specificity.out.in)]
