@@ -11,6 +11,8 @@ netVisual_embeddingPairwise(
   comparison = NULL,
   color.use = NULL,
   point.shape = NULL,
+  pathway.labeled = NULL,
+  top.label = 1,
   pathway.remove = NULL,
   pathway.remove.show = TRUE,
   dot.size = c(2, 6),
@@ -36,6 +38,10 @@ netVisual_embeddingPairwise(
 \item{color.use}{defining the color for each cell group}
 
 \item{point.shape}{a numeric vector giving the point shapes. By default point.shape <- c(21, 0, 24, 23, 25, 10, 12), see available shapes at http://www.sthda.com/english/wiki/r-plot-pch-symbols-the-different-point-shapes-available-in-r}
+
+\item{pathway.labeled}{a char vector giving the signaling names to show when labeling each point}
+
+\item{top.label}{the fraction of signaling pathways to label}
 
 \item{pathway.remove}{a character vector defining the signaling to remove}
 
