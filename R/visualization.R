@@ -3103,7 +3103,8 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
     
     #***edit_1: keep dataset name as suffix, then later remove pathways from their corresponding datasets
     #***note: other option is to remove these pathways from all datasets, aka grepl and remove relevant parts of 'Y' and 'clusters'
-    #pathway.remove <- sub("--.*", "", pathway.remove)  }
+    #pathway.remove <- sub("--.*", "", pathway.remove)  
+  }
 
   if (length(pathway.remove) > 0) {
     for (i in 1:length(prob)) {
