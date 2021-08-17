@@ -3100,13 +3100,19 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
-    pathway.remove <- sub("--.*", "", pathway.remove)
-  }
+    
+    #***edit_1: keep dataset name as suffix, then later remove pathways from their corresponding datasets
+    #***note: other option is to remove these pathways from all datasets, aka grepl and remove relevant parts of 'Y' and 'clusters'
+    #pathway.remove <- sub("--.*", "", pathway.remove)  }
 
   if (length(pathway.remove) > 0) {
     for (i in 1:length(prob)) {
       probi <- prob[[i]]
-      pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
+
+      #***edit_2: only remove pathway if it was problematic in this particular dataset (based on suffix after "--")
+      #pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
+      pathway.remove.idx <- which(paste0(dimnames(probi)[[3]],"--",object.names[i]) %in% pathway.remove)
+      
       if (length(pathway.remove.idx) > 0) {
         probi <- probi[ , , -pathway.remove.idx]
       }
