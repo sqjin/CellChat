@@ -2072,7 +2072,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
       # par(mfrow = c(1,1), xpd=TRUE)
       # par(mar = c(5, 4, 4, 2))
       gg <- netVisual_chord_cell_internal(net, color.use = color.use, group = group, cell.order = cell.order, sources.use = sources.use, targets.use = targets.use,
-                                          lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
+                                          lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
                                           remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                           transparency = transparency, link.border = link.border,
                                           title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y = legend.pos.y, ...)
@@ -2091,7 +2091,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
         title.name <- pairLR$interaction_name_2[i]
         net <- prob[,,i]
         gg[[i]] <- netVisual_chord_cell_internal(net, color.use = color.use, group = group,cell.order = cell.order,sources.use = sources.use, targets.use = targets.use,
-                                                 lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
+                                                 lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
                                                  remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                                  transparency = transparency, link.border = link.border,
                                                  title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y = legend.pos.y, ...)
@@ -2100,7 +2100,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
 
   } else if (!is.null(net)) {
     gg <- netVisual_chord_cell_internal(net, color.use = color.use, group = group,cell.order = cell.order,sources.use = sources.use, targets.use = targets.use,
-                                        lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
+                                        lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
                                         remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                         transparency = transparency, link.border = link.border,
                                         title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x,legend.pos.y=legend.pos.y, ...)
@@ -2182,6 +2182,7 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
   }
   # remove the interactions with zero values
   net <- subset(net, prob > 0)
+  if(dim(net)[1]<=0){error("No interaction between those cells")}
   # create a fake data if keeping the cell types (i.e., sectors) without any interactions
   if (!remove.isolate) {
     cells.removed <- setdiff(cell.levels, as.character(union(net$source,net$target)))
