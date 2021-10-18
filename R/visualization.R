@@ -2182,7 +2182,7 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
   }
   # remove the interactions with zero values
   net <- subset(net, prob > 0)
-  if(dim(net)[1]<=0){error("No interaction between those cells")}
+  if(dim(net)[1]<=0){message("No interaction between those cells")}
   # create a fake data if keeping the cell types (i.e., sectors) without any interactions
   if (!remove.isolate) {
     cells.removed <- setdiff(cell.levels, as.character(union(net$source,net$target)))
@@ -2192,7 +2192,9 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
       net <- rbind(net, net.fake)
       link.visible <- net[, 1:2]
       link.visible$plot <- FALSE
-      link.visible$plot[1:(nrow(net) - nrow(net.fake))] <- TRUE
+      if(nrow(net) > nrow(net.fake)){
+        link.visible$plot[1:(nrow(net) - nrow(net.fake))] <- TRUE
+      }
       # directional <- net[, 1:2]
       # directional$plot <- 0
       # directional$plot[1:(nrow(net) - nrow(net.fake))] <- 1
