@@ -645,6 +645,8 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
     Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
   } else if (umap.method == "uwot") {
     Y <- uwot::umap(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
+    colnames(Y) <- paste0('UMAP', 1:ncol(Y))
+    rownames(Y) <- colnames(Similarity)
   }
 
   if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$dr)) {
