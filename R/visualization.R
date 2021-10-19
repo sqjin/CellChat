@@ -2072,7 +2072,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
       # par(mfrow = c(1,1), xpd=TRUE)
       # par(mar = c(5, 4, 4, 2))
       gg <- netVisual_chord_cell_internal(net, color.use = color.use, group = group, cell.order = cell.order, sources.use = sources.use, targets.use = targets.use,
-                                          lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
+                                          lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
                                           remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                           transparency = transparency, link.border = link.border,
                                           title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y = legend.pos.y, ...)
@@ -2091,7 +2091,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
         title.name <- pairLR$interaction_name_2[i]
         net <- prob[,,i]
         gg[[i]] <- netVisual_chord_cell_internal(net, color.use = color.use, group = group,cell.order = cell.order,sources.use = sources.use, targets.use = targets.use,
-                                                 lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
+                                                 lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
                                                  remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                                  transparency = transparency, link.border = link.border,
                                                  title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y = legend.pos.y, ...)
@@ -2100,7 +2100,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
 
   } else if (!is.null(net)) {
     gg <- netVisual_chord_cell_internal(net, color.use = color.use, group = group,cell.order = cell.order,sources.use = sources.use, targets.use = targets.use,
-                                        lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
+                                        lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
                                         remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                         transparency = transparency, link.border = link.border,
                                         title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x,legend.pos.y=legend.pos.y, ...)
@@ -2182,6 +2182,7 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
   }
   # remove the interactions with zero values
   net <- subset(net, prob > 0)
+  if(dim(net)[1]<=0){message("No interaction between those cells")}
   # create a fake data if keeping the cell types (i.e., sectors) without any interactions
   if (!remove.isolate) {
     cells.removed <- setdiff(cell.levels, as.character(union(net$source,net$target)))
@@ -2191,7 +2192,9 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
       net <- rbind(net, net.fake)
       link.visible <- net[, 1:2]
       link.visible$plot <- FALSE
-      link.visible$plot[1:(nrow(net) - nrow(net.fake))] <- TRUE
+      if(nrow(net) > nrow(net.fake)){
+        link.visible$plot[1:(nrow(net) - nrow(net.fake))] <- TRUE
+      }
       # directional <- net[, 1:2]
       # directional$plot <- 0
       # directional$plot[1:(nrow(net) - nrow(net.fake))] <- 1
@@ -3100,13 +3103,12 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
-    pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
     for (i in 1:length(prob)) {
       probi <- prob[[i]]
-      pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
+      pathway.remove.idx <- which(paste0(dimnames(probi)[[3]],"--",object.names[i]) %in% pathway.remove)
       if (length(pathway.remove.idx) > 0) {
         probi <- probi[ , , -pathway.remove.idx]
       }
