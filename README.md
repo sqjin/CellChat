@@ -73,7 +73,7 @@ We also developed a [standalone CellChat Shiny App](https://github.com/sqjin/Cel
 
 
 ## Help, Suggestion and Contribution
-If you have any question, comment or suggestion, please use github issue tracker to report coding related [issues](https://github.com/sqjin/CellChat/issues) of CellChat or contact cellchat.package@gmail.com. I will answer you timely, and please remind me again if you have not received response more than three days.  
+If you have any question, comment or suggestion, please use github issue tracker to report coding related [issues](https://github.com/sqjin/CellChat/issues) of CellChat. I will answer you timely, and please remind me again if you have not received response more than three days.  
 
 ### Before reporting an issue
 - First **check the GitHub [issues](https://github.com/sqjin/CellChat/issues)** to see if the same or a similar issues has been reported and resolved. This relieves the developers from addressing the same issues and helps them focus on adding new features!
