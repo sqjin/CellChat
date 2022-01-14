@@ -686,7 +686,7 @@ projectAndRecombine <- function(gene_expression, adj_matrix, alpha,
 #' @return the gene expression matrix projected onto the gene space defined by new_features
 #' @keywords internal
 projectOnNetwork <- function(gene_expression, new_features, missing.value=0) {
-  data_in_new_space = matrix(rep(0, length(new_features)*dim(gene_expression)[2]),nrow=length(new_features))
+  data_in_new_space = matrix(0, ncol=dim(gene_expression)[2], nrow=length(new_features))
   rownames(data_in_new_space) <- new_features
   colnames(data_in_new_space) <- colnames(gene_expression)
   genes_in_both <- intersect(rownames(data_in_new_space),rownames(gene_expression))
