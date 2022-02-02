@@ -150,7 +150,8 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 
 
   if (length(pairLR.name.use) == 0) {
-    stop(paste0('There is no significant communication of ', signaling.name))
+    warning(paste0('There is no significant communication of ', signaling.name))
+    return(NA)
   } else {
     pairLR <- pairLR[pairLR.name.use,]
   }
@@ -473,7 +474,8 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
 
 
   if (length(pairLR.name.use) == 0) {
-    stop(paste0('There is no significant communication of ', signaling.name))
+    warning(paste0('There is no significant communication of ', signaling.name))
+    return(NA)
   } else {
     pairLR <- pairLR[pairLR.name.use,]
   }
@@ -626,7 +628,8 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
   }
 
   if (length(pairLR.name.use) == 0) {
-    stop(paste0('There is no significant communication of ', signaling.name))
+    warning(paste0('There is no significant communication of ', signaling.name))
+    return(NA)
   } else {
     pairLR <- pairLR[pairLR.name.use,]
   }
@@ -2051,7 +2054,8 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
     }
 
     if (length(pairLR.name.use) == 0) {
-      stop(paste0('There is no significant communication of ', signaling))
+      warning(paste0('There is no significant communication of ', signaling))
+      return(NA)
     } else {
       pairLR <- pairLR[pairLR.name.use,]
     }
