@@ -1382,6 +1382,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
+  net[is.na(net)] <- 0
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
