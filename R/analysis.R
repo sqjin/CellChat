@@ -161,6 +161,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param net compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net
 #' @param net.name a character vector giving the name of signaling networks
+#' @param thresh threshold of the p-value for determining significant interaction
 #' @importFrom future nbrOfWorkers
 #' @importFrom methods slot
 #' @importFrom future.apply future_sapply
@@ -169,9 +170,13 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
 #' @return
 #' @export
 #'
-netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL) {
+netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net = NULL, net.name = NULL, thresh = 0.05) {
   if (is.null(net)) {
-    net = methods::slot(object, slot.name)$prob
+    prob <- methods::slot(object, slot.name)$prob
+    pval <- methods::slot(object, slot.name)$pval
+    pval[prob == 0] <- 1
+    prob[pval >= thresh] <- 0
+    net = prob
   }
   if (is.null(net.name)) {
     net.name <- dimnames(net)[[3]]
@@ -233,7 +238,7 @@ computeCentralityLocal <- function(net) {
     as.vector(matrix(0, nrow = nrow(net), ncol = 1))
   })
   centr$info <- tryCatch({
-    sna::infocent(net, diag = T, rescale = T, cmode = "weak")
+    sna::infocent(net, diag = T, rescale = T, cmode = "lower")
   }, error = function(e) {
     as.vector(matrix(0, nrow = nrow(net), ncol = 1))
   })
@@ -645,8 +650,6 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
     Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
   } else if (umap.method == "uwot") {
     Y <- uwot::umap(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
-    colnames(Y) <- paste0('UMAP', 1:ncol(Y))
-    rownames(Y) <- colnames(Similarity)
   }
 
   if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$dr)) {
@@ -948,18 +951,21 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 
 
 
-#' Rank signaling networks based on the information flow
+#' Rank signaling networks based on the information flow or the number of interactions
 #'
 #' This function can also be used to rank signaling from certain cell groups to other cell groups
 #'
 #' @param object CellChat object
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
+#' @param measure "weight" or "count". "weight": comparing the total interaction weights (strength); "count": comparing the number of interactions;
 #' @param mode "single","comparison"
 #' @param comparison a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets
 #' @param color.use defining the color for each cell group
 #' @param stacked whether plot the stacked bar plot
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
+#' @param signaling a vector giving the signaling pathway to show
+#' @param pairLR a vector giving the names of L-R pairs to show (e.g, pairLR = c("IL1A_IL1R1_IL1RAP","IL1B_IL1R1_IL1RAP"))
 #' @param do.stat whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets. Default = FALSE
 #' @param cutoff.pvalue the cutoff of pvalue when doing Wilcoxon test; Default = 0.05
 #' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
@@ -984,16 +990,25 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @export
 #'
 #' @examples
-rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL,  do.stat = FALSE, cutoff.pvalue = 0.05, tol = 0.05, thresh = 0.05, show.raw = FALSE, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
+rankNet <- function(object, slot.name = "netP", measure = c("weight","count"), mode = c("comparison", "single"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL,  signaling = NULL, pairLR = NULL, do.stat = FALSE, cutoff.pvalue = 0.05, tol = 0.05, thresh = 0.05, show.raw = FALSE, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
                     do.flip = TRUE, x.angle = NULL, y.angle = 0, x.hjust = 1,y.hjust = 1,
                     axis.gap = FALSE, ylim = NULL, segments = NULL, tick_width = NULL, rel_heights = c(0.9,0,0.1)) {
+  measure <- match.arg(measure)
   mode <- match.arg(mode)
   options(warn = -1)
   object.names <- names(methods::slot(object, slot.name))
+  if (measure == "weight") {
+    ylabel = "Information flow"
+  } else if (measure == "count") {
+    ylabel = "Number of interactions"
+  }
   if (mode == "single") {
     object1 <- methods::slot(object, slot.name)
     prob = object1$prob
     prob[object1$pval > thresh] <- 0
+    if (measure == "count") {
+      prob <- 1*(prob > 0)
+    }
     if (!is.null(sources.use)) {
       if (is.character(sources.use)) {
         if (all(sources.use %in% dimnames(prob)[[1]])) {
@@ -1022,12 +1037,17 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
 
     pSum <- apply(prob, 3, sum)
     pSum.original <- pSum
-    pSum <- -1/log(pSum)
-    pSum[is.na(pSum)] <- 0
-    idx1 <- which(is.infinite(pSum) | pSum < 0)
-    values.assign <- seq(max(pSum)*1.1, max(pSum)*1.5, length.out = length(idx1))
-    position <- sort(pSum.original[idx1], index.return = TRUE)$ix
-    pSum[idx1] <- values.assign[match(1:length(idx1), position)]
+    if (measure == "weight") {
+      pSum <- -1/log(pSum)
+      pSum[is.na(pSum)] <- 0
+      idx1 <- which(is.infinite(pSum) | pSum < 0)
+      values.assign <- seq(max(pSum)*1.1, max(pSum)*1.5, length.out = length(idx1))
+      position <- sort(pSum.original[idx1], index.return = TRUE)$ix
+      pSum[idx1] <- values.assign[match(1:length(idx1), position)]
+    } else if (measure == "count") {
+      pSum <- pSum.original
+    }
+
     pair.name <- names(pSum)
 
     df<- data.frame(name = pair.name, contribution = pSum.original, contribution.scaled = pSum, group = object.names[comparison[1]])
@@ -1040,9 +1060,21 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
         df <- df[-which(df$name == pair.name[i]), ]
       }
     }
+
+    if ((slot.name == "netP") && (!is.null(signaling))) {
+      df <- subset(df, name %in% signaling)
+    } else if ((slot.name == "netP") &&(!is.null(pairLR))) {
+      stop("You need to set `slot.name == 'net'` if showing specific L-R pairs ")
+    }
+    if ((slot.name == "net") && (!is.null(pairLR))) {
+      df <- subset(df, name %in% pairLR)
+    } else if ((slot.name == "net") && (!is.null(signaling))) {
+      stop("You need to set `slot.name == 'netP'` if showing specific signaling pathways ")
+    }
+
     gg <- ggplot(df, aes(x=name, y=contribution.scaled)) + geom_bar(stat="identity",width = bar.w) +
       theme_classic() + theme(axis.text=element_text(size=10),axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.y = element_text(size=10)) +
-      xlab("") + ylab("Information flow") + coord_flip()#+
+      xlab("") + ylab(ylabel) + coord_flip()#+
     if (!is.null(title)) {
       gg <- gg + ggtitle(title)+ theme(plot.title = element_text(hjust = 0.5))
     }
@@ -1059,6 +1091,9 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
       object.list <- methods::slot(object, slot.name)[[comparison[i]]]
       prob <- object.list$prob
       prob[object.list$pval > thresh] <- 0
+      if (measure == "count") {
+        prob <- 1*(prob > 0)
+      }
       prob.list[[i]] <- prob
       if (!is.null(sources.use)) {
         if (is.character(sources.use)) {
@@ -1086,25 +1121,30 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
         stop("No inferred communications for the input!")
       }
       pSum.original[[i]] <- apply(prob, 3, sum)
-      pSum[[i]] <- -1/log(pSum.original[[i]])
+      if (measure == "weight") {
+        pSum[[i]] <- -1/log(pSum.original[[i]])
+        pSum[[i]][is.na(pSum[[i]])] <- 0
+        idx[[i]] <- which(is.infinite(pSum[[i]]) | pSum[[i]] < 0)
+        pSum.original.all <- c(pSum.original.all, pSum.original[[i]][idx[[i]]])
+      } else if (measure == "count") {
+        pSum[[i]] <- pSum.original[[i]]
+      }
       pair.name[[i]] <- names(pSum.original[[i]])
-
-      pSum[[i]][is.na(pSum[[i]])] <- 0
-      idx[[i]] <- which(is.infinite(pSum[[i]]) | pSum[[i]] < 0)
-      pSum.original.all <- c(pSum.original.all, pSum.original[[i]][idx[[i]]])
       object.names.comparison <- c(object.names.comparison, object.names[comparison[i]])
     }
-
-    values.assign <- seq(max(unlist(pSum))*1.1, max(unlist(pSum))*1.5, length.out = length(unlist(idx)))
-    position <- sort(pSum.original.all, index.return = TRUE)$ix
-
-    for (i in 1:length(comparison)) {
-      if (i == 1) {
-        pSum[[i]][idx[[i]]] <- values.assign[match(1:length(idx[[i]]), position)]
-      } else {
-        pSum[[i]][idx[[i]]] <- values.assign[match(length(unlist(idx[1:i-1]))+1:length(unlist(idx[1:i])), position)]
+    if (measure == "weight") {
+      values.assign <- seq(max(unlist(pSum))*1.1, max(unlist(pSum))*1.5, length.out = length(unlist(idx)))
+      position <- sort(pSum.original.all, index.return = TRUE)$ix
+      for (i in 1:length(comparison)) {
+        if (i == 1) {
+          pSum[[i]][idx[[i]]] <- values.assign[match(1:length(idx[[i]]), position)]
+        } else {
+          pSum[[i]][idx[[i]]] <- values.assign[match(length(unlist(idx[1:i-1]))+1:length(unlist(idx[1:i])), position)]
+        }
       }
     }
+
+
 
     pair.name.all <- as.character(unique(unlist(pair.name)))
     df <- list()
@@ -1232,18 +1272,35 @@ rankNet <- function(object, slot.name = "netP", mode = c("comparison", "single")
       }
     }
 
+    if ((slot.name == "netP") && (!is.null(signaling))) {
+      df <- subset(df, name %in% signaling)
+    } else if ((slot.name == "netP") &&(!is.null(pairLR))) {
+      stop("You need to set `slot.name == 'net'` if showing specific L-R pairs ")
+    }
+    if ((slot.name == "net") && (!is.null(pairLR))) {
+      df <- subset(df, name %in% pairLR)
+    } else if ((slot.name == "net") && (!is.null(signaling))) {
+      stop("You need to set `slot.name == 'netP'` if showing specific signaling pathways ")
+    }
+
     if (stacked) {
-      gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position ="fill") +
-        xlab("") + ylab("Relative information flow") #+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+      gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position ="fill") # +
+      # xlab("") + ylab("Relative information flow") #+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       #  scale_y_discrete(breaks=c("0","0.5","1")) +
+      if (measure == "weight") {
+        gg <- gg + xlab("") + ylab("Relative information flow")
+      } else if (measure == "count") {
+        gg <- gg + xlab("") + ylab("Relative number of interactions")
+      }
+
       gg <- gg + geom_hline(yintercept = 0.5, linetype="dashed", color = "grey50", size=0.5)
     } else {
       if (show.raw) {
         gg <- ggplot(df, aes(x=name, y=contribution, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
-          xlab("") + ylab("Information flow") #+ coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+          xlab("") + ylab(ylabel) #+ coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       } else {
         gg <- ggplot(df, aes(x=name, y=contribution.scaled, fill = group)) + geom_bar(stat="identity",width = bar.w, position = position_dodge(0.8)) +
-          xlab("") + ylab("Information flow") #+ coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
+          xlab("") + ylab(ylabel) #+ coord_flip()#+ theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())
       }
 
       if (axis.gap) {
@@ -2514,6 +2571,7 @@ netAnalysis_diff_signalingRole_scatter <- function(object, color.use = NULL, com
 #' @param signaling.label a char vector giving the signaling names to show when labeling each point
 #' @param top.label the fraction of signaling pathways to label
 #' @param signaling.exclude signaling pathways to exclude when plotting
+#' @param xlims,ylims set x-Axis and y-Axis Limits for zoom into the plot. e.g., xlims = c(-0.05, 0.1), ylims = c(-0.01, 0.035)
 #' @param slot.name the slot name of object
 #' @param point.shape point shape
 #' @param label.size font size of the text
@@ -2542,7 +2600,7 @@ netAnalysis_diff_signalingRole_scatter <- function(object, color.use = NULL, com
 #' @return ggplot object
 #' @export
 #'
-netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use = c("grey10", "#F8766D", "#00BFC4"), comparison = c(1,2), signaling = NULL, signaling.label = NULL, top.label = 1, signaling.exclude = NULL, slot.name = "netP", dot.size = 2.5, point.shape = c(21, 22, 24, 23), label.size = 3, dot.alpha = 0.6,
+netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use = c("grey10", "#F8766D", "#00BFC4"), comparison = c(1,2), signaling = NULL, signaling.label = NULL, top.label = 1, signaling.exclude = NULL, xlims = NULL, ylims = NULL,slot.name = "netP", dot.size = 2.5, point.shape = c(21, 22, 24, 23), label.size = 3, dot.alpha = 0.6,
                                                  x.measure = "outdeg", y.measure = "indeg", xlabel = "Differential outgoing interaction strength", ylabel = "Differential incoming interaction strength", title = NULL,
                                                  font.size = 10, font.size.title = 10, do.label = T, show.legend = T, show.axes = T) {
   if (is.list(object)) {
@@ -2598,7 +2656,7 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
 
     mat.all <- array(0, dim = c(length(signaling),ncol(mat.out),2))
     mat.t <-list(mat.out, mat.in)
-    for (i in 1:length(mat.t)) {
+    for (i in 1:length(comparison)) {
       mat = mat.t[[i]]
       mat1 <- mat[rownames(mat) %in% signaling, , drop = FALSE]
       mat <- matrix(0, nrow = length(signaling), ncol = ncol(mat))
@@ -2612,9 +2670,9 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
   }
   mat.all.merged.use <- list(mat.all.merged[[1]][,idents.use,], mat.all.merged[[2]][,idents.use,])
   idx.specific <- mat.all.merged.use[[1]] * mat.all.merged.use[[2]]
-  idx.specific2 <- mat.all.merged.use[[1]] + mat.all.merged.use[[2]]
-  out.specific.signaling <- rownames(idx.specific)[(idx.specific[,1] == 0) & (idx.specific2[,1] != 0)]
-  in.specific.signaling <- rownames(idx.specific)[(idx.specific[,2] == 0) & (idx.specific2[,2] != 0)]
+  mat.sum <- mat.all.merged.use[[2]] +  mat.all.merged.use[[1]]
+  out.specific.signaling <- rownames(idx.specific)[(mat.sum[,1] != 0) & (idx.specific[,1] == 0)]
+  in.specific.signaling <- rownames(idx.specific)[(mat.sum[,2] != 0) & (idx.specific[,2] == 0)]
 
   mat.diff <- mat.all.merged.use[[2]] -  mat.all.merged.use[[1]]
   idx <- rowSums(mat.diff) != 0
@@ -2622,24 +2680,24 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
   out.specific.signaling <- rownames(mat.diff) %in% out.specific.signaling
   in.specific.signaling <- rownames(mat.diff) %in% in.specific.signaling
   out.in.specific.signaling <- as.logical(out.specific.signaling * in.specific.signaling)
-  specificity <- matrix(0, nrow = nrow(mat.diff), ncol = 1)
-  specificity[out.in.specific.signaling] <- 2 # both outgoing and incoming specific to one condition
-  specificity[setdiff(which(out.specific.signaling), which(out.in.specific.signaling))] <- 1 # only outgoing specific to one condition
-  specificity[setdiff(which(in.specific.signaling), which(out.in.specific.signaling))] <- -1 # only incoming specific to one condition
+  specificity.out.in <- matrix(0, nrow = nrow(mat.diff), ncol = 1)
+  specificity.out.in[out.in.specific.signaling] <- 2 # both outgoing and incoming specific to one condition
+  specificity.out.in[setdiff(which(out.specific.signaling), which(out.in.specific.signaling))] <- 1 # only outgoing specific to one condition
+  specificity.out.in[setdiff(which(in.specific.signaling), which(out.in.specific.signaling))] <- -1 # only incoming specific to one condition
 
 
   df <- as.data.frame(mat.diff)
-  df$specificity.out.in <- specificity
+  df$specificity.out.in <- specificity.out.in
   df$specificity = 0
-  df$specificity[(specificity != 0) & (rowSums(mat.diff >= 0) ==2)] = 1 # specific to dataset 2
-  df$specificity[(specificity != 0) & (rowSums(mat.diff <= 0) ==2)] = -1  # specific to dataset 1
+  df$specificity[(specificity.out.in != 0) & (rowSums(mat.diff >= 0) ==2)] = 1 # specific to dataset 2
+  df$specificity[(specificity.out.in != 0) & (rowSums(mat.diff <= 0) ==2)] = -1  # specific to dataset 1
 
   # change number to char
   out.in.category <- c("Shared", "Incoming specific", "Outgoing specific", "Incoming & Outgoing specific")
   specificity.category <- c("Shared", paste0(dataset.name[comparison[1]]," specific"), paste0(dataset.name[comparison[2]]," specific"))
-  df$specificity.out.in <- plyr::mapvalues(df$specificity.out.in, from = c(0,-1,1,2),to = out.in.category, warn_missing = FALSE)
+  df$specificity.out.in <- plyr::mapvalues(df$specificity.out.in, from = c(0,-1,1,2),to = out.in.category)
   df$specificity.out.in <- factor(df$specificity.out.in, levels = out.in.category)
-  df$specificity <- plyr::mapvalues(df$specificity, from = c(0,-1,1),to = specificity.category, warn_missing = FALSE)
+  df$specificity <- plyr::mapvalues(df$specificity, from = c(0,-1,1),to = specificity.category)
   df$specificity <- factor(df$specificity, levels = specificity.category)
 
   point.shape.use <- point.shape[out.in.category %in% unique(df$specificity.out.in)]
@@ -2658,10 +2716,17 @@ netAnalysis_signalingChanges_scatter <- function(object, idents.use, color.use =
     labs(title = title, x = xlabel, y = ylabel) + theme(plot.title = element_text(size= font.size.title, hjust = 0.5, face="plain"))+
     # theme(axis.text.x = element_blank(),axis.text.y = element_blank(),axis.ticks = element_blank()) +
     theme(axis.line.x = element_line(size = 0.25), axis.line.y = element_line(size = 0.25))
-  gg <- gg + scale_fill_manual(values = ggplot2::alpha(color.use, alpha = dot.alpha), drop = FALSE) + guides(fill=FALSE)
+  gg <- gg + scale_fill_manual(values = ggplot2::alpha(color.use, alpha = dot.alpha), drop = FALSE) + guides(fill="none")
   gg <- gg + scale_colour_manual(values = color.use, drop = FALSE)
   gg <- gg + scale_shape_manual(values = point.shape.use)
   gg <- gg + theme(legend.title = element_blank())
+  if (!is.null(xlims)) {
+    gg <- gg + xlim(xlims)
+  }
+  if (!is.null(ylims)) {
+    gg <- gg + ylim(ylims)
+  }
+
   if (do.label) {
     if (is.null(signaling.label)) {
       thresh <- stats::quantile(abs(as.matrix(df[,1:2])), probs = 1-top.label)
@@ -2912,7 +2977,58 @@ netMappingDEG <- function(object, features.name, thresh = 0.05) {
 }
 
 
+#' Compute and visualize the enrichment score of ligand-receptor pairs in one condition compared to another condition
+#'
+#' @param df a dataframe
+#' @param measure compute the enrichment score in terms of "ligand", "signaling",or "LR-pair"
+#' @param color.use defining the color for each group of datasets
+#' @param color.name the color names in RColorBrewer::brewer.pal
+#' @param n.color the number of colors
+#' @param species a vector giving the groups of different datasets to define colors of the bar plot. Default: only one group and a single color
+#' @param scale A vector of length 2 indicating the range of the size of the words.
+#' @param min.freq words with frequency below min.freq will not be plotted
+#' @param max.words Maximum number of words to be plotted. least frequent terms dropped
+#' @param random.order plot words in random order. If false, they will be plotted in decreasing frequency
+#' @param rot.per 	proportion words with 90 degree rotation
+#' @param seed set a seed
+#' @param ... Other parameters passing to wordcloud::wordcloud
+#' @import dplyr
+#' @return A ggplot object
+#' @export
+#'
+computeEnrichmentScore <- function(df, measure = c("ligand", "signaling","LR-pair"), species = c('mouse','human'), color.use = NULL, color.name = "Dark2", n.color = 8,
+                                   scale=c(4,.8), min.freq = 0, max.words = 200, random.order = FALSE, rot.per = 0,seed = 1,...) {
+  measure <- match.arg(measure)
+  species <- match.arg(species)
+  LRpairs <- as.character(unique(df$interaction_name))
+  ES <- vector(length = length(LRpairs))
+  for (i in 1:length(LRpairs)) {
+    df.i <- subset(df, interaction_name == LRpairs[i])
+    if (length(which(rowSums(is.na(df.i)) > 0)) > 0) {
+      df.i <- df.i[-which(rowSums(is.na(df.i)) > 0), ,drop = FALSE]
+    }
+    ES[i] = mean(abs(df.i$ligand.logFC) * abs(df.i$receptor.logFC) *abs(df.i$ligand.pct.2-df.i$ligand.pct.1)*abs(df.i$receptor.pct.2-df.i$receptor.pct.1))
+  }
+  if (species == "mouse") {
+    CellChatDB <- CellChatDB.mouse
+  } else if (species == 'human') {
+    CellChatDB <- CellChatDB.human
+  }
+  df.es <- CellChatDB$interaction[LRpairs, c("ligand",'receptor','pathway_name')]
+  df.es$score <- ES
+  # summarize the enrichment score
+  df.es.ensemble <- df.es %>% group_by(ligand) %>% summarize(avg = mean(score), total = sum(score))
 
+  set.seed(seed)
+  if (is.null(color.use)) {
+    color.use <- RColorBrewer::brewer.pal(n.color, color.name)
+  }
+
+  wordcloud::wordcloud(words = df.es.ensemble$ligand, freq = df.es.ensemble$total, min.freq = min.freq, max.words = max.words,scale=scale,
+                       random.order = random.order, rot.per = rot.per, colors = color.use,...)
+  return(df.es.ensemble)
+
+}
 
 
 
