@@ -390,6 +390,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
+#' @param idents.use a vector giving the index or the name of cell groups of interest.
 #' @param remove.isolate whether remove the isolate nodes in the communication network
 #' @param top the fraction of interactions to show
 #' @param weight.scale whether scale the edge weight
@@ -430,7 +431,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 #' @export
 #'
 #'
-netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, top = 1, remove.isolate = FALSE,
+netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, idents.use = NULL, top = 1, remove.isolate = FALSE,
                                 vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL,
                                 weight.scale = TRUE, edge.weight.max = NULL, edge.width.max=8,
                                 layout = c("circle","hierarchy","chord"), thresh = 0.05, from = NULL, to = NULL, bidirection = NULL, vertex.size = NULL,
@@ -486,11 +487,11 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
     prob <- replicate(1, prob, simplify="array")
     pval <- replicate(1, pval, simplify="array")
   }
- # prob <-(prob-min(prob))/(max(prob)-min(prob))
+  # prob <-(prob-min(prob))/(max(prob)-min(prob))
 
   if (layout == "hierarchy") {
     prob.sum <- apply(prob, c(1,2), sum)
-   # prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
+    # prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     if (is.null(edge.weight.max)) {
       edge.weight.max = max(prob.sum)
     }
@@ -504,8 +505,8 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
     gg <- recordPlot()
   } else if (layout == "circle") {
     prob.sum <- apply(prob, c(1,2), sum)
-   # prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
-    gg <- netVisual_circle(prob.sum, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
+    # prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
+    gg <- netVisual_circle(prob.sum, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
   } else if (layout == "chord") {
     prob.sum <- apply(prob, c(1,2), sum)
     gg <- netVisual_chord_cell_internal(prob.sum, color.use = color.use, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate,
@@ -515,7 +516,7 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
                                         title.name = paste0(signaling.name, " signaling pathway network"), show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y= legend.pos.y)
   }
 
-return(gg)
+  return(gg)
 
 }
 
@@ -1089,6 +1090,7 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
 #' @param title.name the name of the title
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
+#' @param idents.use a vector giving the index or the name of cell groups of interest.
 #' @param remove.isolate whether remove the isolate nodes in the communication network
 #' @param top the fraction of interactions to show
 #' @param weight.scale whether scale the weight
@@ -1131,7 +1133,7 @@ netVisual_hierarchy2 <-function(net, vertex.receiver, color.use = NULL, title.na
 #' @importFrom grDevices recordPlot
 #' @return  an object of class "recordedplot"
 #' @export
-netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use = NULL, targets.use = NULL, remove.isolate = FALSE, top = 1,
+netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use = NULL, targets.use = NULL, idents.use = NULL, remove.isolate = FALSE, top = 1,
                             weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex=1,vertex.label.color= "black",
                             edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6, label.edge = FALSE,edge.label.color='black',edge.label.cex=0.8,
                             edge.curved=0.2,shape='circle',layout=in_circle(), margin=0.2, vertex.size = NULL,
@@ -1150,7 +1152,7 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
   thresh <- stats::quantile(net, probs = 1-top)
   net[net < thresh] <- 0
 
-  if ((!is.null(sources.use)) | (!is.null(targets.use))) {
+  if ((!is.null(sources.use)) | (!is.null(targets.use)) | (!is.null(idents.use)) ) {
     if (is.null(rownames(net))) {
       stop("The input weighted matrix should have rownames!")
     }
@@ -1169,6 +1171,12 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
         targets.use <- cells.level[targets.use]
       }
       df.net <- subset(df.net, target %in% targets.use)
+    }
+    if (!is.null(idents.use)) {
+      if (is.numeric(idents.use)) {
+        idents.use <- cells.level[idents.use]
+      }
+      df.net <- filter(df.net, (source %in% idents.use) | (target %in% idents.use))
     }
     df.net$source <- factor(df.net$source, levels = cells.level)
     df.net$target <- factor(df.net$target, levels = cells.level)
@@ -1382,7 +1390,6 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
   }
-  net[is.na(net)] <- 0
 
   if (remove.isolate) {
     idx1 <- which(Matrix::rowSums(net) == 0)
@@ -1513,6 +1520,7 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     obj1 <- object@net[[comparison[1]]][[measure]]
     obj2 <- object@net[[comparison[2]]][[measure]]
     net.diff <- obj2 - obj1
+
     if (measure == "count") {
       if (is.null(title.name)) {
         title.name = "Differential number of interactions"
@@ -1579,6 +1587,10 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     idx <- intersect(idx1, idx2)
     net <- net[-idx, ]
     net <- net[, -idx]
+    if (length(idx) > 0) {
+      net <- net[-idx, ]
+      net <- net[, -idx]
+    }
   }
 
   mat <- net
@@ -1642,6 +1654,109 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
   #  draw(ht1)
   return(ht1)
 }
+
+
+#' Visualization of (differential) number of interactions
+#'
+#' @param object A merged CellChat object or a single CellChat object
+#' @param comparison a numerical vector giving the datasets for comparison in object.list; e.g., comparison = c(1,2)
+#' @param measure "count" or "weight". "count": comparing the number of interactions; "weight": comparing the total interaction weights (strength)
+#' @param sources.use a vector giving the index or the name of source cell groups
+#' @param targets.use a vector giving the index or the name of target cell groups.
+#' @param invert.source,invert.target retain the complementary set
+#' @param signaling a character vector giving the name of signaling networks in a single CellChat object
+#' @param slot.name the slot name of object. Set is to be "netP" if input signaling is a pathway name; Set is to be "net" if input signaling is a ligand-receptor pair
+#' @param color.use the character vector defining the color of each cell group
+#' @param title.name the name of the title
+#' @param x.lab.rot do rotation for the x-ticklabels
+#' @param ... Parameters passing to `barplot_internal`
+#' @importFrom methods slot
+#' @return  an object of ggplot
+#' @export
+netVisual_barplot <- function(object, comparison = c(1,2), measure = c("count", "weight"), sources.use = NULL, targets.use = NULL, invert.source = FALSE, invert.target = FALSE,signaling = NULL, slot.name = c("netP", "net"), color.use = NULL,
+                              title.name = NULL,x.lab.rot = FALSE,...){
+  if (!is.null(measure)) {
+    measure <- match.arg(measure)
+  }
+  slot.name <- match.arg(slot.name)
+  if (is.list(object@net[[1]])) {
+    message("Show differential number of interactions based on a merged object \n")
+    obj1 <- object@net[[comparison[1]]][[measure]]
+    obj2 <- object@net[[comparison[2]]][[measure]]
+    net.diff <- obj2 - obj1
+
+    if (measure == "count") {
+      if (is.null(title.name)) {
+        title.name = "Differential number of interactions"
+      }
+    } else if (measure == "weight") {
+      if (is.null(title.name)) {
+        title.name = "Differential interaction strength"
+      }
+    }
+  } else {
+    message("Show number of interactions based on a single object \n")
+    if (!is.null(signaling)) {
+      net.diff <- slot(object, slot.name)$prob[,,signaling]
+      if (is.null(title.name)) {
+        title.name = paste0(signaling, " signaling network")
+      }
+    } else if (!is.null(measure)) {
+      net.diff <- object@net[[measure]]
+      if (measure == "count") {
+        if (is.null(title.name)) {
+          title.name = "Number of interactions"
+        }
+      } else if (measure == "weight") {
+        if (is.null(title.name)) {
+          title.name = "Interaction strength"
+        }
+      }
+    }
+  }
+
+  net <- net.diff
+  cells.level <- rownames(net.diff)
+
+  if ((!is.null(sources.use)) | (!is.null(targets.use))) {
+    df.net <- reshape2::melt(net, value.name = "value")
+    colnames(df.net)[1:2] <- c("source","target")
+    # keep the interactions associated with sources and targets of interest
+    if (!is.null(sources.use)){
+      if (is.numeric(sources.use)) {
+        sources.use <- rownames(net.diff)[sources.use]
+      }
+      if (invert.source == TRUE) {
+        sources.use <- setdiff(rownames(net.diff), sources.use)
+      }
+      df.net <- subset(df.net, source %in% sources.use)
+    }
+    if (!is.null(targets.use)){
+      if (is.numeric(targets.use)) {
+        targets.use <- rownames(net.diff)[targets.use]
+      }
+      if (invert.target == TRUE) {
+        targets.use <- setdiff(rownames(net.diff), targets.use)
+      }
+      df.net <- subset(df.net, target %in% targets.use)
+    }
+
+    df.net$source <- factor(df.net$source, levels = cells.level[cells.level %in% unique(df.net$source)])
+    df.net$target <- factor(df.net$target, levels = cells.level[cells.level %in% unique(df.net$target)])
+  }
+
+  if (is.null(color.use)) {
+    color.use <- scPalette(length(cells.level))
+  }
+  names(color.use) <- cells.level
+  color.use <- color.use[cells.level %in% unique(df.net$target)]
+
+  gg <- barplot_internal(df.net, x = "target", y = "value", fill = "target", color.use = color.use, title.name = title.name,x.lab.rot = x.lab.rot,...)
+
+  return(gg)
+
+}
+
 
 #' Show all the significant interactions (L-R pairs) from some cell groups to other cell groups
 #'
@@ -2073,7 +2188,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
       # par(mfrow = c(1,1), xpd=TRUE)
       # par(mar = c(5, 4, 4, 2))
       gg <- netVisual_chord_cell_internal(net, color.use = color.use, group = group, cell.order = cell.order, sources.use = sources.use, targets.use = targets.use,
-                                          lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
+                                          lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
                                           remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                           transparency = transparency, link.border = link.border,
                                           title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y = legend.pos.y, ...)
@@ -2092,7 +2207,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
         title.name <- pairLR$interaction_name_2[i]
         net <- prob[,,i]
         gg[[i]] <- netVisual_chord_cell_internal(net, color.use = color.use, group = group,cell.order = cell.order,sources.use = sources.use, targets.use = targets.use,
-                                                 lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
+                                                 lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
                                                  remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                                  transparency = transparency, link.border = link.border,
                                                  title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x, legend.pos.y = legend.pos.y, ...)
@@ -2101,7 +2216,7 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
 
   } else if (!is.null(net)) {
     gg <- netVisual_chord_cell_internal(net, color.use = color.use, group = group,cell.order = cell.order,sources.use = sources.use, targets.use = targets.use,
-                                        lab.cex = lab.cex,small.gap = small.gap, big.gap = big.gap, annotationTrackHeight = annotationTrackHeight,
+                                        lab.cex = lab.cex,small.gap = small.gap, annotationTrackHeight = annotationTrackHeight,
                                         remove.isolate = remove.isolate, link.visible = link.visible, scale = scale, directional = directional,link.target.prop = link.target.prop, reduce = reduce,
                                         transparency = transparency, link.border = link.border,
                                         title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x,legend.pos.y=legend.pos.y, ...)
@@ -2142,7 +2257,6 @@ netVisual_chord_cell <- function(object, signaling = NULL, net = NULL, slot.name
 #' @param ... other parameters passing to chordDiagram
 #' @importFrom circlize circos.clear chordDiagram circos.track circos.text get.cell.meta.data
 #' @importFrom grDevices recordPlot
-#' @importFrom BiocGenerics union
 #' @return an object of class "recordedplot"
 #' @export
 
@@ -2183,7 +2297,6 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
   }
   # remove the interactions with zero values
   net <- subset(net, prob > 0)
-  if(dim(net)[1]<=0){message("No interaction between those cells")}
   # create a fake data if keeping the cell types (i.e., sectors) without any interactions
   if (!remove.isolate) {
     cells.removed <- setdiff(cell.levels, as.character(union(net$source,net$target)))
@@ -2193,9 +2306,7 @@ netVisual_chord_cell_internal <- function(net, color.use = NULL, group = NULL, c
       net <- rbind(net, net.fake)
       link.visible <- net[, 1:2]
       link.visible$plot <- FALSE
-      if(nrow(net) > nrow(net.fake)){
-        link.visible$plot[1:(nrow(net) - nrow(net.fake))] <- TRUE
-      }
+      link.visible$plot[1:(nrow(net) - nrow(net.fake))] <- TRUE
       # directional <- net[, 1:2]
       # directional$plot <- 0
       # directional$plot[1:(nrow(net) - nrow(net.fake))] <- 1
@@ -2700,7 +2811,6 @@ netAnalysis_river <- function(object, slot.name = "netP", pattern = c("outgoing"
     plot.data.long <- ggalluvial::to_lodes_form(plot.data, axes = 1:2, id = "connection")
     if (do.order) {
       mat = tapply(plot.data[["Contribution"]], list(plot.data[["Signaling"]], plot.data[["Pattern"]]), sum)
-      mat[is.na(mat)] <- 0; mat <- mat[-which(rowSums(mat) == 0), ]
       d <- dist(as.matrix(mat))
       hc <- hclust(d, "ave")
       k <- length(unique(grep("Pattern", plot.data.long$stratum[plot.data.long$Contribution != 0], value = T)))
@@ -3057,8 +3167,6 @@ netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("func
 #' @param slot.name the slot name of object that is used to compute centrality measures of signaling networks
 #' @param type "functional","structural"
 #' @param comparison a numerical vector giving the datasets for comparison. Default are all datasets when object is a merged object
-#' @param pathway.labeled a char vector giving the signaling names to show when labeling each point
-#' @param top.label the fraction of signaling pathways to label
 #' @param pathway.remove a character vector defining the signaling to remove
 #' @param pathway.remove.show whether show the removed signaling names
 #' @param color.use defining the color for each cell group
@@ -3079,7 +3187,7 @@ netVisual_embeddingZoomIn <- function(object, slot.name = "netP", type = c("func
 #' @export
 #'
 #' @examples
-netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, color.use = NULL, point.shape = NULL, pathway.labeled = NULL, top.label = 1, pathway.remove = NULL, pathway.remove.show = TRUE, dot.size = c(2, 6), label.size = 2.5, dot.alpha = 0.5,
+netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, color.use = NULL, point.shape = NULL, pathway.remove = NULL, pathway.remove.show = TRUE, dot.size = c(2, 6), label.size = 2.5, dot.alpha = 0.5,
                                         xlabel = "Dim 1", ylabel = "Dim 2", title = NULL,do.label = T, show.legend = T, show.axes = T) {
   type <- match.arg(type)
   if (is.null(comparison)) {
@@ -3104,12 +3212,13 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
+    pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
     for (i in 1:length(prob)) {
       probi <- prob[[i]]
-      pathway.remove.idx <- which(paste0(dimnames(probi)[[3]],"--",object.names[i]) %in% pathway.remove)
+      pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
       if (length(pathway.remove.idx) > 0) {
         probi <- probi[ , , -pathway.remove.idx]
       }
@@ -3148,21 +3257,7 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   gg <- gg + scale_colour_manual(values = color.use, drop = FALSE)
   gg <- gg + scale_shape_manual(values = point.shape[1:length(prob)])
   if (do.label) {
-    if (is.null(pathway.labeled)) {
-      if (top.label < 1) {
-        if (length(comparison) == 2) {
-          g.t <- rankSimilarity(object, slot.name = slot.name, type = type, comparison1 = comparison)
-          pathway.labeled <- as.character(g.t$data$name[(nrow(g.t$data)-ceiling(top.label * nrow(g.t$data))+1):nrow(g.t$data) ])
-          data.label <- df[df$labels %in% pathway.labeled, , drop = FALSE]
-        }
-      } else {
-        data.label <- df
-      }
-
-    } else {
-      data.label <- df[df$labels %in% pathway.labeled, , drop = FALSE]
-    }
-    gg <- gg + ggrepel::geom_text_repel(data = data.label, mapping = aes(label = labels, colour = clusters, alpha=group), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5) + scale_alpha_discrete(range = c(1, 0.6))
+    gg <- gg + ggrepel::geom_text_repel(mapping = aes(label = labels, colour = clusters, alpha=group), size = label.size, show.legend = F,segment.size = 0.2, segment.alpha = 0.5) + scale_alpha_discrete(range = c(1, 0.6))
   }
 
   if (length(pathway.remove) > 0 & pathway.remove.show) {
@@ -3178,6 +3273,7 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   }
   gg
 }
+
 
 
 #' Zoom into the 2D visualization of the joint manifold learning of signaling networks from two datasets
@@ -3357,12 +3453,11 @@ pieChart <- function(df, label.size = 2.5, color.use = NULL, title = "") {
   gg <- ggplot(df, aes(x="", y=value, fill=forcats::fct_inorder(group))) +
     geom_bar(stat="identity", width=1) +
     coord_polar("y", start=0)+theme_void() +
-    ggrepel::geom_text_repel(aes(label = prop), size= label.size, show.legend = F, position = position_stack(vjust=0.5))
-    #ggrepel::geom_text_repel(aes(label = prop), size= label.size, show.legend = F, nudge_x = 0)
+    ggrepel::geom_text_repel(aes(label = prop), size= label.size, show.legend = F, nudge_x = 0)
   gg <- gg + theme(legend.position="bottom", legend.direction = "vertical")
 
   if(!is.null(color.use)) {
-    gg <- gg + scale_fill_manual(values=color.use)
+    gg <- gg + scale_color_manual(color.use)
   }
 
   if (!is.null(title)) {
@@ -3374,15 +3469,14 @@ pieChart <- function(df, label.size = 2.5, color.use = NULL, title = "") {
 
 
 
-
-#' A Seurat wrapper function for plotting gene expression using violin plot or dot plot
+#' A Seurat wrapper function for plotting gene expression using violin plot, dot plot or bar plot
 #'
-#' This function create a Seurat object from an input CellChat object, and then plot gene expression distribution using a modified violin plot or dot plot based on Seurat's function.
-#' Please check \code{\link{StackedVlnPlot}} and \code{\link{dotPlot}} for detailed description of the arguments.
+#' This function create a Seurat object from an input CellChat object, and then plot gene expression distribution using a modified violin plot or dot plot based on Seurat's function or a bar plot.
+#' Please check \code{\link{StackedVlnPlot}},\code{\link{dotPlot}} and \code{\link{barPlot}}for detailed description of the arguments.
 #'
 #' USER can extract the signaling genes related to the inferred L-R pairs or signaling pathway using \code{\link{extractEnrichedLR}}, and then plot gene expression using Seurat package.
 #'
-#' @param object seurat object
+#' @param object CellChat object
 #' @param features Features to plot gene expression
 #' @param signaling a char vector containing signaling pathway names for searching
 #' @param enriched.only whether only return the identified enriched signaling genes in the database. Default = TRUE, returning the significantly enriched signaling interactions
@@ -3395,7 +3489,7 @@ pieChart <- function(df, label.size = 2.5, color.use = NULL, title = "") {
 #'
 #' @examples
 
-plotGeneExpression <- function(object, features = NULL, signaling = NULL, enriched.only = TRUE, type = c("violin", "dot"), color.use = NULL, group.by = NULL, ...) {
+plotGeneExpression <- function(object, features = NULL, signaling = NULL, enriched.only = TRUE, type = c("violin", "dot","bar"), color.use = NULL, group.by = NULL, ...) {
   type <- match.arg(type)
   meta <- object@meta
   if (is.list(object@idents)) {
@@ -3427,11 +3521,12 @@ plotGeneExpression <- function(object, features = NULL, signaling = NULL, enrich
   if (type == "violin") {
     gg <- StackedVlnPlot(w10x, features = feature.use, color.use = color.use, ...)
   } else if (type == "dot") {
-    gg <- dotPlot(w10x, features = feature.use, ...)
+    gg <- dotPlot(w10x, features = feature.use, color.use = color.use, ...)
+  } else if (type == "bar") {
+    gg <- barPlot(w10x, features = feature.use, color.use = color.use, ...)
   }
   return(gg)
 }
-
 
 
 #' Dot plot
@@ -3443,6 +3538,7 @@ plotGeneExpression <- function(object, features = NULL, signaling = NULL, enrich
 #' @param rotation whether rotate the plot
 #' @param colormap RColorbrewer palette to use (check available palette using RColorBrewer::display.brewer.all()). default will use customed color palette
 #' @param color.direction Sets the order of colours in the scale. If 1, the default, colours are as output by RColorBrewer::brewer.pal(). If -1, the order of colours is reversed.
+#' @param color.use defining the color for each condition/dataset
 #' @param idents Which classes to include in the plot (default is all)
 #' @param group.by Name of one or more metadata columns to group (color) cells by
 #' (for example, orig.ident); pass 'ident' to group by identity class
@@ -3464,13 +3560,13 @@ plotGeneExpression <- function(object, features = NULL, signaling = NULL, enrich
 #'
 #' @examples
 #' @import ggplot2
-dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.direction = 1, scale = TRUE, col.min = -2.5, col.max = 2.5, dot.scale = 6, assay = "RNA",
+dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.direction = 1,  color.use = c("#F8766D","#00BFC4"), scale = TRUE, col.min = -2.5, col.max = 2.5, dot.scale = 6, assay = "RNA",
                     idents = NULL, group.by = NULL, split.by = NULL, legend.width = 0.5,
                     angle.x = 45, hjust.x = 1, angle.y = 0, hjust.y = 0.5, show.legend = TRUE, ...) {
 
-  gg <- Seurat::DotPlot(object, features = features, assay = assay, cols = c("blue", "red"),
-                scale = scale, col.min = col.min, col.max = col.max, dot.scale = dot.scale,
-                idents = idents, group.by = group.by, split.by = split.by,...)
+  gg <- Seurat::DotPlot(object, features = features, assay = assay, cols = color.use,
+                        scale = scale, col.min = col.min, col.max = col.max, dot.scale = dot.scale,
+                        idents = idents, group.by = group.by, split.by = split.by,...)
   gg <- gg + theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
     theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10), axis.line = element_line(colour = 'black')) +
     theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5))+
@@ -3496,6 +3592,7 @@ dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.
 }
 
 
+
 #' Stacked Violin plot
 #'
 #' @param object seurat object
@@ -3504,6 +3601,8 @@ dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.
 #' @param colors.ggplot whether use ggplot color scheme; default: colors.ggplot = FALSE
 #' @param split.by Name of a metadata column to split plot by;
 #' @param idents Which classes to include in the plot (default is all)
+#' @param show.median whether show the median value
+#' @param median.size the shape size of the median
 #' @param show.text.y whther show y-axis text
 #' @param line.size line width in the violin plot
 #' @param pt.size size of the dots
@@ -3519,7 +3618,7 @@ dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.
 #' @import ggplot2
 #' @importFrom  patchwork wrap_plots
 StackedVlnPlot<- function(object, features, idents = NULL, split.by = NULL,
-                          color.use = NULL, colors.ggplot = FALSE,
+                          color.use = NULL, colors.ggplot = FALSE,show.median = FALSE, median.size = 1,
                           angle.x = 90, vjust.x = NULL, hjust.x = NULL, show.text.y = TRUE, line.size = NULL,
                           pt.size = 0,
                           plot.margin = margin(0, 0, 0, 0, "cm"),
@@ -3541,7 +3640,7 @@ StackedVlnPlot<- function(object, features, idents = NULL, split.by = NULL,
     hjust.x = hjust[angle == angle.x]
   }
 
-  plot_list<- purrr::map(features, function(x) modify_vlnplot(object = object, features = x, idents = idents, split.by = split.by, cols = color.use, pt.size = pt.size,
+  plot_list<- purrr::map(features, function(x) modify_vlnplot(object = object, features = x, idents = idents, split.by = split.by, cols = color.use, show.median = show.median, median.size = median.size, pt.size = pt.size,
                                                               show.text.y = show.text.y, line.size = line.size, ...))
 
   # Add back x-axis title to bottom plot. patchwork is going to support this?
@@ -3556,9 +3655,10 @@ StackedVlnPlot<- function(object, features, idents = NULL, split.by = NULL,
                             scale_y_continuous(breaks = c(y)) +
                             expand_limits(y = y))
 
-  p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
+  p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1) + patchwork::plot_layout(guides = "collect")
   return(p)
 }
+
 
 #' modified vlnplot
 #' @param object Seurat object
@@ -3566,6 +3666,8 @@ StackedVlnPlot<- function(object, features, idents = NULL, split.by = NULL,
 #' @param split.by Name of a metadata column to split plot by;
 #' @param idents Which classes to include in the plot (default is all)
 #' @param cols defining the color for each cell group
+#' @param show.median whether show the median value
+#' @param median.size the shape size of the median
 #' @param show.text.y whther show y-axis text
 #' @param line.size line width in the violin plot
 #' @param pt.size size of the dots
@@ -3578,6 +3680,8 @@ modify_vlnplot<- function(object,
                           idents = NULL,
                           split.by = NULL,
                           cols = NULL,
+                          show.median = FALSE,
+                          median.size = 1,
                           show.text.y = TRUE,
                           line.size = NULL,
                           pt.size = 0,
@@ -3586,11 +3690,13 @@ modify_vlnplot<- function(object,
   options(warn=-1)
   p<- Seurat::VlnPlot(object, features = features, cols = cols, pt.size = pt.size, idents = idents, split.by = split.by,  ... )  +
     xlab("") + ylab(features) + ggtitle("")
+  if (show.median) {
+    p <- p + stat_summary(fun.y=median, geom="point", shape=3, size=median.size)
+  }
   p <- p + theme(text = element_text(size = 10)) + theme(axis.line = element_line(size=line.size)) +
     theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 8), axis.line.x = element_line(colour = 'black', size=line.size),axis.line.y = element_line(colour = 'black', size= line.size))
   # theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5))
-  p <- p + theme(legend.position = "none",
-                 plot.title= element_blank(),
+  p <- p + theme(plot.title= element_blank(), # legend.position = "none",
                  axis.title.x = element_blank(),
                  axis.text.x = element_blank(),
                  axis.ticks.x = element_blank(),
@@ -3612,6 +3718,155 @@ modify_vlnplot<- function(object,
 extract_max<- function(p){
   ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
   return(ceiling(ymax))
+}
+
+
+#' Bar plot for average gene expression
+#'
+#' Please check \code{\link{barplot_internal}}for detailed description of the arguments.
+#'
+#' @param object seurat object
+#' @param features Features to plot (gene expression, metrics)
+#' @param color.use defining the color for each condition/dataset
+#' @param group.by Name of one or more metadata columns to group (color) cells by
+#' (for example, orig.ident); pass 'ident' to group by identity class
+#' @param method methods for computing the average gene expression per cell group. By default = "truncatedMean", where a value should be assigned to 'trim;
+#' @param trim the fraction (0 to 0.5) of observations to be trimmed from each end of x before the mean is computed.
+#' @param split.by Name of a metadata column to split plot by;
+#' @param assay Name of assay to use, defaults to the active assay
+#' @param x.lab.rot whether do rotation for the x.tick.label
+#' @param ncol number of columns to show in the plot
+#' @param ... Extra parameters passed to barplot_internal
+#' @return ggplot2 object
+#' @export
+#'
+#' @examples
+#' @import ggplot2
+barPlot <- function(object, features, group.by = NULL, split.by = NULL, color.use = NULL, method = c("truncatedMean", "triMean","median"),trim = 0.1, assay = "RNA",
+                    x.lab.rot = FALSE, ncol = 1, ...) {
+  method <- match.arg(method)
+  if (is.null(group.by)) {
+    labels = Idents(object)
+  } else {
+    labels = object@meta.data[,group.by]
+  }
+  FunMean <- switch(method,
+                    truncatedMean = function(x) mean(x, trim = trim, na.rm = TRUE),
+                    triMean = triMean,
+                    median = function(x) median(x, na.rm = TRUE))
+
+  if (!is.null(split.by)) {
+    group = object@meta.data[,split.by]
+    group.levels <- levels(group)
+    df <- data.frame()
+    for (i in 1:length(group.levels)) {
+      data = GetAssayData(object, slot = "data", assay = assay)[, group == group.levels[i]]
+      labels.use <- labels[group == group.levels[i]]
+      dataavg <- aggregate(t(data[features, ]), list(labels.use) , FUN = FunMean)
+      dataavg <- t(dataavg[,-1])
+      colnames(dataavg) <- levels(labels.use)
+      dataavg <- as.data.frame(dataavg)
+      dataavg$gene = rownames(dataavg)
+      df1 = reshape2::melt(dataavg, id.vars = c("gene"))
+      colnames(df1) <- c("gene","labels","value")
+      df1$condition = group.levels[i]
+      df = rbind(df, df1)
+    }
+    df$labels <- factor(df$labels, levels = levels(labels))
+    df$condition <- factor(df$condition, levels = group.levels)
+
+  } else {
+    data = GetAssayData(object, slot = "data", assay = assay)
+    dataavg <- aggregate(t(data[features, ]), list(labels) , FUN = FunMean)
+    dataavg <- t(dataavg[,-1])
+    colnames(dataavg) <- levels(labels)
+    dataavg$gene = rownames(dataavg)
+    df1 = reshape2::melt(dataavg, id.vars = c("gene"))
+    colnames(df1) <- c("gene","labels","value")
+    df1$condition = df1[,"labels"]
+    df = df1
+  }
+  gg <- list()
+  for (i in 1:length(features)) {
+    if (i < length(features)) {
+      df.use = subset(df, gene == features[i])
+      gg[[i]] <- barplot_internal(df.use, x = "labels", y = "value", fill = "condition",color.use = color.use,ylabel = features[i],remove.xtick = TRUE,x.lab.rot = x.lab.rot,...)
+    }else {
+      gg[[i]] <- barplot_internal(df.use, x = "labels", y = "value", fill = "condition",color.use = color.use,ylabel = features[i],remove.xtick = FALSE,x.lab.rot = x.lab.rot,...)
+    }
+  }
+
+  p<- patchwork::wrap_plots(plotlist = gg, ncol = ncol)+ patchwork::plot_layout(guides = "collect")
+  return(p)
+
+}
+
+#' Bar plot for dataframe
+#'
+#' @param df a dataframe
+#' @param x Name of one column to show on the x-axis
+#' @param y Name of one column to show on the y-axis
+#' @param fill Name of one column to compare the values
+#' @param color.use defining the color of bar plot;
+#' @param percent.y whether showing y-values as percentage
+#' @param width bar width
+#' @param legend.title Name of legend
+#' @param xlabel Name of x label
+#' @param ylabel Name of y label
+#' @param remove.xtick whether remove x tick
+#' @param title.name Name of the main title
+#' @param stat.add whether adding statistical test
+#' @param stat.method,label.x parameters for ggpubr::stat_compare_means
+#' @param show.legend Whether show the legend
+#' @param x.lab.rot Whether rorate the xtick labels
+#' @param size.text font size
+
+#' @import ggplot2
+#' @importFrom ggpubr stat_compare_means
+#'
+#' @return ggplot2 object
+#' @export
+barplot_internal <- function(df, x = "cellType", y = "value", fill = "condition", legend.title = NULL, width=0.6, title.name = NULL,
+                            xlabel = NULL, ylabel = NULL, color.use = NULL,remove.xtick = FALSE,
+                            stat.add = FALSE, stat.method = "wilcox.test", percent.y = FALSE, label.x = 1.5,
+                            show.legend = TRUE, x.lab.rot = FALSE, size.text = 10) {
+
+  gg <- ggplot(df, aes_string(x=x, y=y, fill = fill, color = fill)) + geom_bar(stat="identity", width=width, position=position_dodge()) +
+    theme_classic() + scale_x_discrete(limits = (levels(df$x))) + theme(axis.text.x = element_text(angle = 45, hjust = 1,size=10))
+
+  gg <- gg + ylab(ylabel) + xlab(xlabel) + theme_classic() +
+    labs(title = title.name) +  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5)) +
+    theme(text = element_text(size = size.text), axis.text = element_text(colour="black"))
+  if (!is.null(color.use)) {
+    gg <- gg + scale_fill_manual(values = alpha(color.use, alpha = 1), drop = FALSE)
+    gg <- gg + scale_color_manual(values = alpha(color.use, alpha = 1), drop = FALSE) + guides(colour = FALSE)
+  }
+  if (stat.add) {
+    gg <- gg + ggpubr::stat_compare_means(mapping = aes_string(group = fill), method = stat.method, label.x = label.x,
+                                          label = "p.format", size = 3)
+  }
+  # if (show.mean) {
+  #   gg <- gg + stat_summary(fun.y=mean, geom="point", shape=20, size=10, color="red", fill="red")
+  # }
+  if (remove.xtick) {
+    gg <- gg + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.x=element_blank())
+  }
+  if (percent.y) {
+    gg <- gg + scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+  }
+  if (is.null(legend.title)) {
+    gg <- gg + theme(legend.title = element_blank())
+  } else {
+    gg <- gg + guides(fill=guide_legend(legend.title))
+  }
+  if (!show.legend) {
+    gg <- gg + theme(legend.position = "none")
+  }
+  if (x.lab.rot) {
+    gg <- gg + theme(axis.text.x = element_text(angle = 45, hjust = 1, size=size.text))
+  }
+  gg
+  return(gg)
 }
 
 
