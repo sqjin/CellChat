@@ -629,7 +629,7 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
   }
   data.signaling.subset <- object@data.signaling[, cells.use.index]
 
-  meta.subset <- object@meta[cells.use.index, , drop = FALSE]
+  meta.subset <- object@meta[cells.use.index, ]
 
 
   if (object@options$mode == "merged") {
