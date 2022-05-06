@@ -10,12 +10,6 @@ May 07, 2022 (Version 1.4.0)
 
 We recently utilized CellChat to study the aging-induced signaling changes and thus updated some functions for better interpreting the inferred cell-cell communication. For the version history and detailed important changes, please see the [NEWS file](https://github.com/sqjin/CellChat/blob/master/NEWS.md).
 
-April 26, 2021 (Version 1.1.0)
-
-* New added functions: `subsetCellChat`, `computeAveExpr`, `sketchData`, `netAnalysis_signalingChanges_scatter`  
-* `computeCommunProb` now supports a faster calculation and displays a ProgressBar
-* `computeCommunProbPathway` now returns the significant pathways that are ordered based on the total communication probabilities
-
 
 ## Capabilities
 In addition to infer the intercellular communication from any given scRNA-seq data, CellChat provides functionality for further data exploration, analysis, and visualization. 
