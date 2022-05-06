@@ -8,7 +8,8 @@ netAnalysis_computeCentrality(
   object = NULL,
   slot.name = "netP",
   net = NULL,
-  net.name = NULL
+  net.name = NULL,
+  thresh = 0.05
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ netAnalysis_computeCentrality(
 \item{net}{compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net}
 
 \item{net.name}{a character vector giving the name of signaling networks}
+
+\item{thresh}{threshold of the p-value for determining significant interaction}
 }
 \value{
 
