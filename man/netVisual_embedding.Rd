@@ -9,6 +9,8 @@ netVisual_embedding(
   slot.name = "netP",
   type = c("functional", "structural"),
   color.use = NULL,
+  pathway.labeled = NULL,
+  top.label = 1,
   pathway.remove = NULL,
   pathway.remove.show = TRUE,
   dot.size = c(2, 6),
@@ -32,6 +34,10 @@ netVisual_embedding(
 \item{type}{"functional","structural"}
 
 \item{color.use}{defining the color for each cell group}
+
+\item{pathway.labeled}{a char vector giving the signaling names to show when labeling each point}
+
+\item{top.label}{the fraction of signaling pathways to label}
 
 \item{pathway.remove}{a character vector defining the signaling to remove}
 

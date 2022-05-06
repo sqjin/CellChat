@@ -10,6 +10,7 @@ netVisual_circle(
   title.name = NULL,
   sources.use = NULL,
   targets.use = NULL,
+  idents.use = NULL,
   remove.isolate = FALSE,
   top = 1,
   weight.scale = FALSE,
@@ -43,6 +44,8 @@ netVisual_circle(
 \item{sources.use}{a vector giving the index or the name of source cell groups}
 
 \item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{idents.use}{a vector giving the index or the name of cell groups of interest.}
 
 \item{remove.isolate}{whether remove the isolate nodes in the communication network}
 

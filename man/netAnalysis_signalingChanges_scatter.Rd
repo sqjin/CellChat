@@ -13,6 +13,8 @@ netAnalysis_signalingChanges_scatter(
   signaling.label = NULL,
   top.label = 1,
   signaling.exclude = NULL,
+  xlims = NULL,
+  ylims = NULL,
   slot.name = "netP",
   dot.size = 2.5,
   point.shape = c(21, 22, 24, 23),
@@ -46,6 +48,8 @@ netAnalysis_signalingChanges_scatter(
 \item{top.label}{the fraction of signaling pathways to label}
 
 \item{signaling.exclude}{signaling pathways to exclude when plotting}
+
+\item{xlims, ylims}{set x-Axis and y-Axis Limits for zoom into the plot. e.g., xlims = c(-0.05, 0.1), ylims = c(-0.01, 0.035)}
 
 \item{slot.name}{the slot name of object}
 

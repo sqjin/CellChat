@@ -2,17 +2,20 @@
 % Please edit documentation in R/analysis.R
 \name{rankNet}
 \alias{rankNet}
-\title{Rank signaling networks based on the information flow}
+\title{Rank signaling networks based on the information flow or the number of interactions}
 \usage{
 rankNet(
   object,
   slot.name = "netP",
+  measure = c("weight", "count"),
   mode = c("comparison", "single"),
   comparison = c(1, 2),
   color.use = NULL,
   stacked = FALSE,
   sources.use = NULL,
   targets.use = NULL,
+  signaling = NULL,
+  pairLR = NULL,
   do.stat = FALSE,
   cutoff.pvalue = 0.05,
   tol = 0.05,
@@ -40,6 +43,8 @@ rankNet(
 
 \item{slot.name}{the slot name of object that is used to compute centrality measures of signaling networks}
 
+\item{measure}{"weight" or "count". "weight": comparing the total interaction weights (strength); "count": comparing the number of interactions;}
+
 \item{mode}{"single","comparison"}
 
 \item{comparison}{a numerical vector giving the datasets for comparison; a single value means ranking for only one dataset and two values means ranking comparison for two datasets}
@@ -51,6 +56,10 @@ rankNet(
 \item{sources.use}{a vector giving the index or the name of source cell groups}
 
 \item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{signaling}{a vector giving the signaling pathway to show}
+
+\item{pairLR}{a vector giving the names of L-R pairs to show (e.g, pairLR = c("IL1A_IL1R1_IL1RAP","IL1B_IL1R1_IL1RAP"))}
 
 \item{do.stat}{whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets. Default = FALSE}
 

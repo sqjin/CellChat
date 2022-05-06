@@ -10,6 +10,7 @@ dotPlot(
   rotation = TRUE,
   colormap = "OrRd",
   color.direction = 1,
+  color.use = c("#F8766D", "#00BFC4"),
   scale = TRUE,
   col.min = -2.5,
   col.max = 2.5,
@@ -37,6 +38,8 @@ dotPlot(
 \item{colormap}{RColorbrewer palette to use (check available palette using RColorBrewer::display.brewer.all()). default will use customed color palette}
 
 \item{color.direction}{Sets the order of colours in the scale. If 1, the default, colours are as output by RColorBrewer::brewer.pal(). If -1, the order of colours is reversed.}
+
+\item{color.use}{defining the color for each condition/dataset}
 
 \item{scale}{whther show x-axis text}
 

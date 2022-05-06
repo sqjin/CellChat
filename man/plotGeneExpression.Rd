@@ -2,21 +2,21 @@
 % Please edit documentation in R/visualization.R
 \name{plotGeneExpression}
 \alias{plotGeneExpression}
-\title{A Seurat wrapper function for plotting gene expression using violin plot or dot plot}
+\title{A Seurat wrapper function for plotting gene expression using violin plot, dot plot or bar plot}
 \usage{
 plotGeneExpression(
   object,
   features = NULL,
   signaling = NULL,
   enriched.only = TRUE,
-  type = c("violin", "dot"),
+  type = c("violin", "dot", "bar"),
   color.use = NULL,
   group.by = NULL,
   ...
 )
 }
 \arguments{
-\item{object}{seurat object}
+\item{object}{CellChat object}
 
 \item{features}{Features to plot gene expression}
 
@@ -36,8 +36,8 @@ plotGeneExpression(
 
 }
 \description{
-This function create a Seurat object from an input CellChat object, and then plot gene expression distribution using a modified violin plot or dot plot based on Seurat's function.
-Please check \code{\link{StackedVlnPlot}} and \code{\link{dotPlot}} for detailed description of the arguments.
+This function create a Seurat object from an input CellChat object, and then plot gene expression distribution using a modified violin plot or dot plot based on Seurat's function or a bar plot.
+Please check \code{\link{StackedVlnPlot}},\code{\link{dotPlot}} and \code{\link{barPlot}}for detailed description of the arguments.
 }
 \details{
 USER can extract the signaling genes related to the inferred L-R pairs or signaling pathway using \code{\link{extractEnrichedLR}}, and then plot gene expression using Seurat package.

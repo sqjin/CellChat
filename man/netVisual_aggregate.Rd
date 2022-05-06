@@ -12,6 +12,7 @@ netVisual_aggregate(
   vertex.receiver = NULL,
   sources.use = NULL,
   targets.use = NULL,
+  idents.use = NULL,
   top = 1,
   remove.isolate = FALSE,
   vertex.weight = 1,
@@ -55,6 +56,8 @@ netVisual_aggregate(
 \item{sources.use}{a vector giving the index or the name of source cell groups}
 
 \item{targets.use}{a vector giving the index or the name of target cell groups.}
+
+\item{idents.use}{a vector giving the index or the name of cell groups of interest.}
 
 \item{top}{the fraction of interactions to show}
 
