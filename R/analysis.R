@@ -239,6 +239,7 @@ computeCentralityLocal <- function(net) {
   })
   centr$info <- tryCatch({
     sna::infocent(net, diag = T, rescale = T, cmode = "lower")
+    # sna::infocent(net, diag = T, rescale = T, cmode = "weak")
   }, error = function(e) {
     as.vector(matrix(0, nrow = nrow(net), ncol = 1))
   })
@@ -650,6 +651,8 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
     Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
   } else if (umap.method == "uwot") {
     Y <- uwot::umap(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
+    colnames(Y) <- paste0('UMAP', 1:ncol(Y))
+    rownames(Y) <- colnames(Similarity)
   }
 
   if (!is.list(methods::slot(object, slot.name)$similarity[[type]]$dr)) {
@@ -2990,6 +2993,7 @@ netMappingDEG <- function(object, features.name, thresh = 0.05) {
 #' @param max.words Maximum number of words to be plotted. least frequent terms dropped
 #' @param random.order plot words in random order. If false, they will be plotted in decreasing frequency
 #' @param rot.per 	proportion words with 90 degree rotation
+#' @param return.data whether return the data frame for plotting wordcloud
 #' @param seed set a seed
 #' @param ... Other parameters passing to wordcloud::wordcloud
 #' @import dplyr
@@ -2997,7 +3001,7 @@ netMappingDEG <- function(object, features.name, thresh = 0.05) {
 #' @export
 #'
 computeEnrichmentScore <- function(df, measure = c("ligand", "signaling","LR-pair"), species = c('mouse','human'), color.use = NULL, color.name = "Dark2", n.color = 8,
-                                   scale=c(4,.8), min.freq = 0, max.words = 200, random.order = FALSE, rot.per = 0,seed = 1,...) {
+                                   scale=c(4,.8), min.freq = 0, max.words = 200, random.order = FALSE, rot.per = 0,return.data = FALSE,seed = 1,...) {
   measure <- match.arg(measure)
   species <- match.arg(species)
   LRpairs <- as.character(unique(df$interaction_name))
@@ -3017,7 +3021,7 @@ computeEnrichmentScore <- function(df, measure = c("ligand", "signaling","LR-pai
   df.es <- CellChatDB$interaction[LRpairs, c("ligand",'receptor','pathway_name')]
   df.es$score <- ES
   # summarize the enrichment score
-  df.es.ensemble <- df.es %>% group_by(ligand) %>% summarize(avg = mean(score), total = sum(score))
+  df.es.ensemble <- df.es %>% group_by(ligand) %>% summarize(total = sum(score))  # avg = mean(score),
 
   set.seed(seed)
   if (is.null(color.use)) {
@@ -3026,8 +3030,9 @@ computeEnrichmentScore <- function(df, measure = c("ligand", "signaling","LR-pai
 
   wordcloud::wordcloud(words = df.es.ensemble$ligand, freq = df.es.ensemble$total, min.freq = min.freq, max.words = max.words,scale=scale,
                        random.order = random.order, rot.per = rot.per, colors = color.use,...)
-  return(df.es.ensemble)
-
+  if (return.data) {
+    return(df.es.ensemble)
+  }
 }
 
 
