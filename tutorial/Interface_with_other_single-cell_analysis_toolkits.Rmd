@@ -61,6 +61,8 @@ meta <- data.frame(group = labels, row.names = names(labels)) # create a datafra
 
 ## Extract the CellChat input files from a Scanpy object
 anndata provides a python class that can be used to store single-cell data. This data format is also use for storage in the scanpy package. We first read the data into R using the reticulate package to import the anndata module.
+
+Please also check the suggestions by other USERS (https://github.com/sqjin/CellChat/issues/300#issuecomment-1116343516)
 ```{r}
 library(reticulate)
 ad <- import("anndata", convert = FALSE)

@@ -47,8 +47,8 @@ Please do `updateCellChat` if you have CellChat objects that are obtained using 
 ```{r}
 # cellchat.NL <- readRDS(url("https://ndownloader.figshare.com/files/25954199"))
 # cellchat.LS <- readRDS(url("https://ndownloader.figshare.com/files/25956518"))
-cellchat.NL <- readRDS("/Users/suoqinjin/Documents/CellChat/tutorial/cellchat_humanSkin_NL.rds")
-cellchat.LS <- readRDS("/Users/suoqinjin/Documents/CellChat/tutorial/cellchat_humanSkin_LS.rds")
+cellchat.NL <- readRDS("/Users/jinsuoqin/Documents/CellChat/tutorial/cellchat_humanSkin_NL.rds")
+cellchat.LS <- readRDS("/Users/jinsuoqin/Documents/CellChat/tutorial/cellchat_humanSkin_LS.rds")
 object.list <- list(NL = cellchat.NL, LS = cellchat.LS)
 cellchat <- mergeCellChat(object.list, add.names = names(object.list))
 cellchat
@@ -279,6 +279,15 @@ Visualize the upgulated and down-regulated signaling ligand-receptor pairs using
 par(mfrow = c(1,2), xpd=TRUE)
 netVisual_chord_gene(object.list[[2]], sources.use = 4, targets.use = c(5:11), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in ", names(object.list)[2]))
 netVisual_chord_gene(object.list[[1]], sources.use = 4, targets.use = c(5:11), slot.name = 'net', net = net.down, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Down-regulated signaling in ", names(object.list)[2]))
+```
+
+Visualize the enriched ligands, signaling,or ligand-receptor pairs in one condition compared to another condition using wordcloud
+```{r, fig.width= 4,fig.height = 4, fig.wide = TRUE, fig.align = "center"}
+# visualize the enriched ligands in the first condition
+computeEnrichmentScore(net.down, species = 'human')
+
+# visualize the enriched ligands in the second condition
+computeEnrichmentScore(net.up, species = 'human')
 ```
 
 # Part IV: Visually compare cell-cell communication using Hierarchy plot, Circle plot or Chord diagram
