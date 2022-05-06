@@ -1,3 +1,10 @@
+# CellChat 1.4.0 (2022-05-07)
+## Updated functions with minor changes
+A number of functions have been updated with enhanced functionalities, such as `rankNet`, `netVisual_aggregate`, `netVisual_circle`, 'plotGeneExpression', `netVisual_embedding`.  
+
+## New added functions
+`computeEnrichmentScore`, 'netVisual_barplot', 'barPlot'
+
 # CellChat 1.1.3 (2021-08-14)
 ## Updated functions with minor changes
 `netAnalysis_computeCentrality`, `netVisual_embeddingPairwise`, `netAnalysis_signalingChanges_scatter`
