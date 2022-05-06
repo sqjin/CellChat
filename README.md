@@ -5,10 +5,10 @@
   <img width="200"  src="https://github.com/sqjin/CellChat/blob/master/CellChat_Logo.png">
 </p>
 
-## Important update!!
-August 14, 2021 (Version 1.1.3)
+## Update
+May 07, 2022 (Version 1.4.0)
 
-For the version history and detailed important changes, please see the [NEWS file](https://github.com/sqjin/CellChat/blob/master/NEWS.md).
+We recently utilized CellChat to study the aging-induced signaling changes and thus updated some functions for better interpreting the inferred cell-cell communication. For the version history and detailed important changes, please see the [NEWS file](https://github.com/sqjin/CellChat/blob/master/NEWS.md).
 
 April 26, 2021 (Version 1.1.0)
 
@@ -73,7 +73,7 @@ We also developed a [standalone CellChat Shiny App](https://github.com/sqjin/Cel
 
 
 ## Help, Suggestion and Contribution
-If you have any question, comment or suggestion, please use github issue tracker to report coding related [issues](https://github.com/sqjin/CellChat/issues) of CellChat. I will answer you timely, and please remind me again if you have not received response more than three days.  
+If you have any question, comment or suggestion, please use github issue tracker to report coding related [issues](https://github.com/sqjin/CellChat/issues) of CellChat. 
 
 ### Before reporting an issue
 - First **check the GitHub [issues](https://github.com/sqjin/CellChat/issues)** to see if the same or a similar issues has been reported and resolved. This relieves the developers from addressing the same issues and helps them focus on adding new features!
@@ -92,6 +92,6 @@ We use GitHub's [Pull Request](https://github.com/sqjin/CellChat/pulls) mechanis
 - Software requirements: This package is supported for macOS, Windows and Linux. The package has been tested on macOS: Mojave (10.14.5) and Windows 10. Dependencies of CellChat package are indicated in the Description file, and can be automatically installed when installing CellChat pacakge. CellChat can be installed on a normal computer within few mins.
 
 ## How to cite?
-Suoqin Jin, Christian F. Guerrero-Juarez, Lihua Zhang, Ivan Chang, Raul Ramos, Chen-Hsiang Kuan, Peggy Myung, Maksim V. Plikus, Qing Nie. Inference and analysis of cell-cell communication using CellChat. Nature Communications, 12:1088 (2021). https://www.nature.com/articles/s41467-021-21246-9 
+Suoqin Jin et al., Inference and analysis of cell-cell communication using CellChat. Nature Communications, 12:1088 (2021). https://www.nature.com/articles/s41467-021-21246-9 
 
 
