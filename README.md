@@ -13,6 +13,7 @@ then utilized it to study the aging-induced signaling changes during skin wound 
 
 For the version history and detailed important changes, please see the [NEWS file](https://github.com/sqjin/CellChat/blob/master/NEWS.md).
 
+We will release the tutorial of applying CellChat to spatial transcriptomics data soon. Keep tuned!
 
 ## Capabilities
 In addition to infer the intercellular communication from any given scRNA-seq data, CellChat provides functionality for further data exploration, analysis, and visualization. 
