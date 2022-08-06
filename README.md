@@ -95,7 +95,14 @@ Suoqin Jin et al., Inference and analysis of cell-cell communication using CellC
    </a>
 </p>
 
-<script type='text/javascript' id='clustrmaps' src='//cdn.clustrmaps.com/map_v2.js?cl=ffffff&w=a&t=n&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY'></script>
+
+<p align="center">
+  <a href="#">
+     <img src="https://clustrmaps.com/site/1bpq2" title="Visit tracker"><img src="//clustrmaps.com/map_v2.png?cl=ffffff&w=a&t=n&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY" />
+   </a>
+</p>
+
+<a href="https://clustrmaps.com/site/1bpq2" title="Visit tracker"><img src="//clustrmaps.com/map_v2.png?cl=ffffff&w=a&t=n&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY" /></a>
 
 <p align="center">
   <a href="https://clustrmaps.com/site/1bpq2" title="Visit tracker"><img src="//clustrmaps.com/map_v2.png?cl=ffffff&w=a&t=tt&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY&co=2d78ad&ct=ffffff" /></a>
