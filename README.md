@@ -88,4 +88,5 @@ We use GitHub's [Pull Request](https://github.com/sqjin/CellChat/pulls) mechanis
 ## How to cite?
 Suoqin Jin et al., Inference and analysis of cell-cell communication using CellChat. Nature Communications, 12:1088 (2021). https://www.nature.com/articles/s41467-021-21246-9 
 
+![](https://api.visitorbadge.io/api/VisitorHit?user=sqjin&repo=CellChat&countColor=%237B1E7A)
 
