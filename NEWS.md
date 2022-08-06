@@ -1,3 +1,7 @@
+# CellChat 1.5.0 (2022-08-06)
+We have now presented our comparison framework for systematically detecting dysregulated cell-cell communication across biological conditions, and
+then utilized it to study the aging-induced signaling changes during skin wound healing. Our results not only present general communication rules and signaling mechanisms in wound healing associated with aging, but also provide a paradigm for other researchers to study cell-cell communication in other contexts. Please check out [our paper (Vu#, Jin#, Sun# et al., Cell Reports, 2022)](https://doi.org/10.1016/j.celrep.2022.111155) for the detailed methods and applications.
+
 # CellChat 1.4.0 (2022-05-07)
 ## Updated functions with minor changes
 A number of functions have been updated with enhanced functionalities, such as `rankNet`, `netVisual_aggregate`, `netVisual_circle`, 'plotGeneExpression', `netVisual_embedding`.  
