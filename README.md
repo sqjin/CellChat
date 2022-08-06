@@ -89,19 +89,20 @@ We use GitHub's [Pull Request](https://github.com/sqjin/CellChat/pulls) mechanis
 Suoqin Jin et al., Inference and analysis of cell-cell communication using CellChat. Nature Communications, 12:1088 (2021). https://www.nature.com/articles/s41467-021-21246-9 
 
 
+```{toggle}
 <p align="center">
   <a href="#">
      <img src="https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fsqjin%2FCellChat&labelColor=%233499cc&countColor=%2370c168" />
    </a>
 </p>
 
-
-
 <p align="center">
   <a href="#">
      <img src="https://clustrmaps.com/site/1bpq2" title="Visit tracker"><img src="//clustrmaps.com/map_v2.png?cl=ffffff&w=a&t=n&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY" />
    </a>
 </p>
+```
+
 
 <a href="https://clustrmaps.com/site/1bpq2" title="Visit tracker"><img src="//clustrmaps.com/map_v2.png?cl=ffffff&w=a&t=n&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY" /></a>
 
