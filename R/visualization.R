@@ -1389,6 +1389,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     df.net$target <- factor(df.net$target, levels = cells.level)
     df.net$value[is.na(df.net$value)] <- 0
     net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
+    net[is.na(net)] <- 0
   }
 
   if (remove.isolate) {
