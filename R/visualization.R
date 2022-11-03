@@ -3237,7 +3237,7 @@ netVisual_embeddingPairwise <- function(object, slot.name = "netP", type = c("fu
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
-    pathway.remove <- sub("--.*", "", pathway.remove)
+    # pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
@@ -3353,13 +3353,14 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
-    pathway.remove <- sub("--.*", "", pathway.remove)
+    # pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
     for (i in 1:length(prob)) {
       probi <- prob[[i]]
-      pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
+      pathway.remove.idx <- which(paste0(dimnames(probi)[[3]],"--",object.names[i]) %in% pathway.remove)
+      #  pathway.remove.idx <- which(dimnames(probi)[[3]] %in% pathway.remove)
       if (length(pathway.remove.idx) > 0) {
         probi <- probi[ , , -pathway.remove.idx]
       }
