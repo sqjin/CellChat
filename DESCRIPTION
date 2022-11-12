@@ -50,3 +50,4 @@ Suggests:
     rmarkdown, knitr, roxygen2, Seurat (>= 4.0.0), SingleCellExperiment, SummarizedExperiment, purrr,uwot,gg.gap,wordcloud
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
+
