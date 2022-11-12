@@ -1,3 +1,18 @@
+
+# CellChat 1.6.0 (2022-11-12)
+
+CellChat is now applicable to spatial imaging data. We showcase its application to 10X Visium data. When spatial locations of spots/cells are available, CellChat infers spatial-informed cell-cell communication between interacting cell groups. CellChat restricts cell-cell communication within the maximum interaction/diffusion length of molecules. 
+
+A brief [tutorial](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/CellChat_analysis_of_spatial_imaging_data.html) for spatial imaging data analysis is available in the tutorial directory. CellChat's various functionality can be used for further data exploration, analysis, and visualization. 
+
+We have redesigned the structure of CellChat object. When loading previous CellChat object (version < 1.6.0), please update the object via `updateCellChat`. 
+
+## Updated functions with minor changes
+Functions that have been updated for analyzing spatial imaging data, such as `CellChat-class`, `createCellChat`, `updateCellChat`, `computeCommunProb`, `netVisual`, `netVisual_aggregate`, `netVisual_individual`
+
+## New added functions
+`netVisual_spatial`, `computeRegionDistance`
+
 # CellChat 1.5.0 (2022-08-06)
 We have now presented our comparison framework for systematically detecting dysregulated cell-cell communication across biological conditions, and
 then utilized it to study the aging-induced signaling changes during skin wound healing. Our results not only present general communication rules and signaling mechanisms in wound healing associated with aging, but also provide a paradigm for other researchers to study cell-cell communication in other contexts. Please check out [our paper (Vu#, Jin#, Sun# et al., Cell Reports, 2022)](https://doi.org/10.1016/j.celrep.2022.111155) for the detailed methods and applications.
