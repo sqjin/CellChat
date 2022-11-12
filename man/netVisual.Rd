@@ -21,7 +21,7 @@ netVisual(
   edge.weight.max.individual = NULL,
   edge.weight.max.aggregate = NULL,
   edge.width.max = 8,
-  layout = c("circle", "hierarchy", "chord"),
+  layout = c("circle", "hierarchy", "chord", "spatial"),
   height = 5,
   thresh = 0.05,
   pt.title = 12,
@@ -32,6 +32,8 @@ netVisual(
   bidirection = NULL,
   vertex.size = NULL,
   out.format = c("svg", "png"),
+  alpha.image = 0.15,
+  point.size = 1.5,
   group = NULL,
   cell.order = NULL,
   small.gap = 1,
@@ -100,7 +102,13 @@ Set `vertex.weight` as a vector to plot vertex in different size; setting `verte
 
 Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.}
 
-\item{out.format}{the format of output figures: svg, png and pdf}
+\item{out.format}{the format of output figures: svg, png and pdf
+
+Parameters below are set for "spatial" diagram. Please also check the function `netVisual_spatial` for more parameters.}
+
+\item{alpha.image}{the transparency of individual spots}
+
+\item{point.size}{the size of spots}
 
 \item{group}{A named group labels for making multiple-group Chord diagrams. The sector names should be used as the names in the vector.
 The order of group controls the sector orders and if group is set as a factor, the order of levels controls the order of groups.}

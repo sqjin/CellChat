@@ -6,12 +6,15 @@
 \usage{
 computeCommunProb(
   object,
-  type = c("triMean", "truncatedMean", "median"),
-  trim = NULL,
+  type = c("triMean", "truncatedMean", "thresholdedMean", "median"),
+  trim = 0.1,
   LR.use = NULL,
   raw.use = TRUE,
   population.size = FALSE,
-  do.fast = TRUE,
+  distance.use = TRUE,
+  interaction.length = 200,
+  scale.distance = 0.01,
+  k.min = 10,
   nboot = 100,
   seed.use = 1L,
   Kh = 0.5,
@@ -33,13 +36,20 @@ Set raw.use = FALSE to use the projected data when analyzing single-cell data wi
 
 \item{population.size}{whether consider the proportion of cells in each group across all sequenced cells.
 Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the potential artifact of population size.
-Set population.size = TRUE if analyzing unsorted single-cell transcriptomes, with the reason that abundant cell populations tend to send collectively stronger signals than the rare cell populations.}
+Set population.size = TRUE if analyzing unsorted single-cell transcriptomes, with the reason that abundant cell populations tend to send collectively stronger signals than the rare cell populations.
 
-\item{do.fast}{whether run the code in a fast version. In the fast version, all the calculation is based on average expression per cell group; in the previous version, calculation of ligand and receptor expression is also dependent on the number of cells.
+Parameters for spatial data analysis}
 
-To further speed up on large-scale datasets, 1) USER can downsample the data using the function 'subset' from Seurat package (e.g., pbmc.small <- subset(pbmc, downsample = 500)), or using the function `sketchData` from CellChat, in particular for the large cell clusters;
+\item{distance.use}{whether use distance constraints to compute communication probability.
+distance.use = FALSE will only filter out interactions between spatially distant regions, but not add distance constraints.}
 
-2) we are still looking for methods on faster calculation of average expression per group}
+\item{interaction.length}{The maximum interaction/diffusion length of ligands (Unit: microns). This hard threshold is used to filter out the connections between spatially distant regions}
+
+\item{scale.distance}{A scale or normalization factor for the spatial distances. This values can be 1, 0.1, 0.01, 0.001. We choose this values such that the minimum value of the scaled distances is in [1,2].
+
+When comparing communication across different CellChat objects, the same scale factor should be used. For a single CellChat analysis, different scale factors will not affect the ranking of the signaling based on their interaction strength.}
+
+\item{k.min}{the minimum number of interacting cell pairs required for defining adjacent cell groups}
 
 \item{nboot}{threshold of p-values}
 
@@ -59,5 +69,5 @@ USER can access all the inferred cell-cell communications using the function 'su
 object@net$pval is the corresponding p-values of each interaction
 }
 \description{
-Compute the communication probability/strength between any interacting cell groups
+To further speed up on large-scale datasets, USER can downsample the data using the function 'subset' from Seurat package (e.g., pbmc.small <- subset(pbmc, downsample = 500)), or using the function `sketchData` from CellChat, in particular for the large cell clusters;
 }

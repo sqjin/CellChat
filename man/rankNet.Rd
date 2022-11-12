@@ -16,6 +16,7 @@ rankNet(
   targets.use = NULL,
   signaling = NULL,
   pairLR = NULL,
+  signaling.type = NULL,
   do.stat = FALSE,
   cutoff.pvalue = 0.05,
   tol = 0.05,
@@ -60,6 +61,8 @@ rankNet(
 \item{signaling}{a vector giving the signaling pathway to show}
 
 \item{pairLR}{a vector giving the names of L-R pairs to show (e.g, pairLR = c("IL1A_IL1R1_IL1RAP","IL1B_IL1R1_IL1RAP"))}
+
+\item{signaling.type}{a char giving the types of signaling from the three categories c("Secreted Signaling", "ECM-Receptor", "Cell-Cell Contact")}
 
 \item{do.stat}{whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets. Default = FALSE}
 

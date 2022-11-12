@@ -8,6 +8,9 @@ createCellChat(
   object,
   meta = NULL,
   group.by = NULL,
+  datatype = c("RNA", "spatial"),
+  coordinates = NULL,
+  scale.factors = NULL,
   assay = NULL,
   do.sparse = T
 )
@@ -22,6 +25,16 @@ If input is a Seurat or SingleCellExperiment object, the meta data in the object
 If input is a data matrix and group.by is NULL, the input `meta` should contain a column named 'labels',
 If input is a Seurat or SingleCellExperiment object, USER must provide `group.by` to define the cell groups. e.g, group.by = "ident" for Seurat object}
 
+\item{datatype}{By default datatype = "RNA"; when running CellChat on spatial imaging data, set datatype = "spatial" and input `scale.factors`}
+
+\item{coordinates}{a data matrix in which each row gives the spatial locations/coordinates of each cell/spot}
+
+\item{scale.factors}{a list containing the scale factors and spot diameter for the full/high/low resolution images.
+
+USER must input this list when datatype = "spatial". scale.factors must contain an element named `spot.diameter`, which is the theoretical spot size; e.g., 10x Visium (spot.size = 65 microns), and another element named `spot`, which is the number of pixels that span the diameter of a theoretical spot size in the original, full-resolution image.
+
+For 10X visium, scale.factors are in the `scalefactors_json.json`. scale.factors$spot is the `spot.size.fullres `}
+
 \item{assay}{Assay to use when the input is a Seurat object. NB: The data in the `integrated` assay is not suitable for CellChat analysis because it contains negative values.}
 
 \item{do.sparse}{whether use sparse format}
@@ -34,18 +47,29 @@ Create a new CellChat object from a data matrix, Seurat or SingleCellExperiment 
 }
 \examples{
 \dontrun{
+Create a CellChat object from single-cell transcriptomics data
 # Input is a data matrix
 ## create a dataframe consisting of the cell labels
 meta = data.frame(labels = cell.labels, row.names = names(cell.labels))
-cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+cellChat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
 
 # input is a Seurat object
 ## use the default cell identities of Seurat object
-# cellchat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "RNA")
+cellChat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "RNA")
 ## use other meta information as cell groups
-# cellchat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
+cellChat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
 
 # input is a SingleCellExperiment object
-# cellchat <- createCellChat(object = sce.obj, group.by = "sce.clusters")
+cellChat <- createCellChat(object = sce.obj, group.by = "sce.clusters")
+
+Create a CellChat object from spatial imaging data
+# Input is a data matrix
+cellChat <- createCellChat(object = data.input, meta = meta, group.by = "labels",
+                           datatype = "spatial", coordinates = coordinates, scale.factors = scale.factors)
+
+# input is a Seurat object
+cellChat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "SCT",
+                           datatype = "spatial", scale.factors = scale.factors)
+
 }
 }

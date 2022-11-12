@@ -9,6 +9,7 @@ netVisual_aggregate(
   signaling,
   signaling.name = NULL,
   color.use = NULL,
+  thresh = 0.05,
   vertex.receiver = NULL,
   sources.use = NULL,
   targets.use = NULL,
@@ -21,15 +22,12 @@ netVisual_aggregate(
   weight.scale = TRUE,
   edge.weight.max = NULL,
   edge.width.max = 8,
-  layout = c("circle", "hierarchy", "chord"),
-  thresh = 0.05,
-  from = NULL,
-  to = NULL,
-  bidirection = NULL,
-  vertex.size = NULL,
+  layout = c("circle", "hierarchy", "chord", "spatial"),
   pt.title = 12,
   title.space = 6,
   vertex.label.cex = 0.8,
+  alpha.image = 0.15,
+  point.size = 1.5,
   group = NULL,
   cell.order = NULL,
   small.gap = 1,
@@ -50,6 +48,8 @@ netVisual_aggregate(
 \item{signaling.name}{alternative signaling pathway name to show on the plot}
 
 \item{color.use}{the character vector defining the color of each cell group}
+
+\item{thresh}{threshold of the p-value for determining significant interaction}
 
 \item{vertex.receiver}{a numeric vector giving the index of the cell groups as targets in the first hierarchy plot}
 
@@ -79,21 +79,21 @@ Set `vertex.weight` as a vector to plot vertex in different size; setting `verte
 
 \item{edge.width.max}{The maximum edge width for visualization}
 
-\item{layout}{"hierarchy", "circle" or "chord"}
-
-\item{thresh}{threshold of the p-value for determining significant interaction}
-
-\item{from, to, bidirection}{Deprecated. Use `sources.use`,`targets.use`}
-
-\item{vertex.size}{Deprecated. Use `vertex.weight`
-
-Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.}
+\item{layout}{"hierarchy", "circle", "chord" or "spatial"}
 
 \item{pt.title}{font size of the text}
 
 \item{title.space}{the space between the title and plot}
 
-\item{vertex.label.cex}{The label size of vertex in the network}
+\item{vertex.label.cex}{The label size of vertex in the network
+
+Parameters below are set for "spatial" diagram. Please also check the function `netVisual_spatial` for more parameters.}
+
+\item{alpha.image}{the transparency of individual spots}
+
+\item{point.size}{the size of spots
+
+Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.}
 
 \item{group}{A named group labels for making multiple-group Chord diagrams. The sector names should be used as the names in the vector.
 The order of group controls the sector orders and if group is set as a factor, the order of levels controls the order of groups.}
@@ -113,10 +113,10 @@ The order of group controls the sector orders and if group is set as a factor, t
 \item{legend.pos.x, legend.pos.y}{adjust the legend position}
 
 \item{...}{other parameters (e.g.,vertex.label.cex, vertex.label.color, alpha.edge, label.edge, edge.label.color, edge.label.cex, edge.curved)
-passing to `netVisual_hierarchy1`,`netVisual_hierarchy2`,`netVisual_circle`. NB: some parameters might be not supported}
+passing to `netVisual_hierarchy1`,`netVisual_hierarchy2`,`netVisual_circle`,`netVisual_spatial`. NB: some parameters might be not supported}
 }
 \value{
-an object of class "recordedplot"
+an object of class "recordedplot" or ggplot
 }
 \description{
 Visualize the inferred signaling network of signaling pathways by aggregating all L-R pairs

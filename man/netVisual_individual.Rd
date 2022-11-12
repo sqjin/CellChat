@@ -23,9 +23,11 @@ netVisual_individual(
   edge.weight.max = NULL,
   edge.width.max = 8,
   graphics.init = TRUE,
-  layout = c("circle", "hierarchy", "chord"),
+  layout = c("circle", "hierarchy", "chord", "spatial"),
   height = 5,
   thresh = 0.05,
+  alpha.image = 0.15,
+  point.size = 1.5,
   group = NULL,
   cell.order = NULL,
   small.gap = 1,
@@ -85,6 +87,11 @@ Set `vertex.weight` as a vector to plot vertex in different size; setting `verte
 \item{height}{height of plot}
 
 \item{thresh}{threshold of the p-value for determining significant interaction
+Parameters below are set for "spatial" diagram. Please also check the function `netVisual_spatial` for more parameters.}
+
+\item{alpha.image}{the transparency of individual spots}
+
+\item{point.size}{the size of spots
 
 Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.}
 
