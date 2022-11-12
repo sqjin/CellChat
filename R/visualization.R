@@ -82,6 +82,11 @@ scPalette <- function(n) {
 #' @param title.space the space between the title and plot
 #' @param vertex.label.cex The label size of vertex in the network
 #' @param out.format the format of output figures: svg, png and pdf
+#'
+#' Parameters below are set for "spatial" diagram. Please also check the function `netVisual_spatial` for more parameters.
+#' @param alpha.image the transparency of individual spots
+#' @param point.size the size of spots
+#'
 #' @param from,to,bidirection Deprecated. Use `sources.use`,`targets.use`
 #' @param vertex.size Deprecated. Use `vertex.weight`
 #'
@@ -110,8 +115,9 @@ scPalette <- function(n) {
 netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, top = 1, remove.isolate = FALSE,
                       vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL,
                       weight.scale = TRUE, edge.weight.max.individual = NULL, edge.weight.max.aggregate = NULL, edge.width.max=8,
-                      layout = c("circle","hierarchy","chord"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8,from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
+                      layout = c("circle","hierarchy","chord","spatial"), height = 5, thresh = 0.05, pt.title = 12, title.space = 6, vertex.label.cex = 0.8,from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
                       out.format = c("svg","png"),
+                      alpha.image = 0.15, point.size = 1.5,
                       group = NULL,cell.order = NULL,small.gap = 1, big.gap = 10, scale = FALSE, reduce = -1, show.legend = FALSE, legend.pos.x = 20,legend.pos.y = 20, nCol = NULL,
                       ...) {
   layout <- match.arg(layout)
@@ -167,7 +173,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
     prob <- replicate(1, prob, simplify="array")
     pval <- replicate(1, pval, simplify="array")
   }
-#  prob <-(prob-min(prob))/(max(prob)-min(prob))
+  #  prob <-(prob-min(prob))/(max(prob)-min(prob))
   if (is.null(edge.weight.max.individual)) {
     edge.weight.max.individual = max(prob)
   }
@@ -202,7 +208,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
       dev.off()
     }
     if (is.element("pdf", out.format)) {
-     # grDevices::pdf(paste0(signaling.name, "_hierarchy_individual.pdf"), width = 8, height = nRow*height)
+      # grDevices::pdf(paste0(signaling.name, "_hierarchy_individual.pdf"), width = 8, height = nRow*height)
       grDevices::cairo_pdf(paste0(signaling.name, "_hierarchy_individual.pdf"), width = 8, height = nRow*height)
       par(mfrow=c(nRow,2), mar = c(5, 4, 4, 2) +0.1)
       for (i in 1:length(pairLR.name.use)) {
@@ -244,7 +250,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
   } else if (layout == "circle") {
     if (is.element("svg", out.format)) {
       svglite::svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
-     # par(mfrow=c(nRow,1))
+      # par(mfrow=c(nRow,1))
       par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
       for (i in 1:length(pairLR.name.use)) {
         #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
@@ -256,7 +262,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
     }
     if (is.element("png", out.format)) {
       grDevices::png(paste0(signaling.name,"_", layout, "_individual.png"), width = height, height = nRow*height, units = "in",res = 300)
-     # par(mfrow=c(nRow,1))
+      # par(mfrow=c(nRow,1))
       par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
       for (i in 1:length(pairLR.name.use)) {
         #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
@@ -269,7 +275,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
     if (is.element("pdf", out.format)) {
       # grDevices::pdf(paste0(signaling.name,"_", layout, "_individual.pdf"), width = height, height = nRow*height)
       grDevices::cairo_pdf(paste0(signaling.name,"_", layout, "_individual.pdf"), width = height, height = nRow*height)
-     # par(mfrow=c(nRow,1))
+      # par(mfrow=c(nRow,1))
       par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
       for (i in 1:length(pairLR.name.use)) {
         #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
@@ -280,8 +286,8 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
       dev.off()
     }
 
-  #  prob.sum <- apply(prob, c(1,2), sum)
-  #  prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
+    #  prob.sum <- apply(prob, c(1,2), sum)
+    #  prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     if (is.element("svg", out.format)) {
       svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = height, height = 1*height)
       netVisual_circle(prob.sum, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max.aggregate, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
@@ -293,9 +299,71 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
       dev.off()
     }
     if (is.element("pdf", out.format)) {
-     # grDevices::pdf(paste0(signaling.name,"_", layout,  "_aggregate.pdf"), width = height, height = 1*height)
+      # grDevices::pdf(paste0(signaling.name,"_", layout,  "_aggregate.pdf"), width = height, height = 1*height)
       grDevices::cairo_pdf(paste0(signaling.name,"_", layout,  "_aggregate.pdf"), width = height, height = 1*height)
       netVisual_circle(prob.sum, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max.aggregate, edge.width.max=edge.width.max, title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
+      dev.off()
+    }
+  } else if (layout == "spatial") {
+    coordinates <- object@images$coordinates
+    if (is.element("svg", out.format)) {
+      svglite::svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
+      # par(mfrow=c(nRow,1))
+      par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+
+        netVisual_spatial(prob.i, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = signalName_i, vertex.label.cex = vertex.label.cex,...)
+
+      }
+      dev.off()
+    }
+    if (is.element("png", out.format)) {
+      grDevices::png(paste0(signaling.name,"_", layout, "_individual.png"), width = height, height = nRow*height, units = "in",res = 300)
+      # par(mfrow=c(nRow,1))
+      par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_spatial(prob.i, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = signalName_i, vertex.label.cex = vertex.label.cex,...)
+
+      }
+      dev.off()
+    }
+    if (is.element("pdf", out.format)) {
+      # grDevices::pdf(paste0(signaling.name,"_", layout, "_individual.pdf"), width = height, height = nRow*height)
+      grDevices::cairo_pdf(paste0(signaling.name,"_", layout, "_individual.pdf"), width = height, height = nRow*height)
+      # par(mfrow=c(nRow,1))
+      par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+      for (i in 1:length(pairLR.name.use)) {
+        #signalName_i <- paste0(pairLR$ligand[i], "-",pairLR$receptor[i], sep = "")
+        signalName_i <- pairLR$interaction_name_2[i]
+        prob.i <- prob[,,i]
+        netVisual_spatial(prob.i, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = signalName_i, vertex.label.cex = vertex.label.cex,...)
+
+      }
+      dev.off()
+    }
+
+    #  prob.sum <- apply(prob, c(1,2), sum)
+    #  prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
+    if (is.element("svg", out.format)) {
+      svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = height, height = 1*height)
+      netVisual_spatial(prob.sum, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
+      dev.off()
+    }
+    if (is.element("png", out.format)) {
+      grDevices::png(paste0(signaling.name,"_", layout,  "_aggregate.png"), width = height, height = 1*height, units = "in",res = 300)
+      netVisual_spatial(prob.sum, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
+      dev.off()
+    }
+    if (is.element("pdf", out.format)) {
+      # grDevices::pdf(paste0(signaling.name,"_", layout,  "_aggregate.pdf"), width = height, height = 1*height)
+      grDevices::cairo_pdf(paste0(signaling.name,"_", layout,  "_aggregate.pdf"), width = height, height = 1*height)
+      netVisual_spatial(prob.sum, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
       dev.off()
     }
   } else if (layout == "chord") {
@@ -303,15 +371,15 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 
       svglite::svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
       par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
-    #  gg <- vector("list", length(pairLR.name.use))
+      #  gg <- vector("list", length(pairLR.name.use))
       for (i in 1:length(pairLR.name.use)) {
         title.name <- pairLR$interaction_name_2[i]
         net <- prob[,,i]
         netVisual_chord_cell_internal(net, color.use = color.use, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate,
-                                                 group = group, cell.order = cell.order,
-                                                 lab.cex = vertex.label.cex,small.gap = small.gap, big.gap = big.gap,
-                                                 scale = scale, reduce = reduce,
-                                                 title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x,legend.pos.y=legend.pos.y)
+                                      group = group, cell.order = cell.order,
+                                      lab.cex = vertex.label.cex,small.gap = small.gap, big.gap = big.gap,
+                                      scale = scale, reduce = reduce,
+                                      title.name = title.name, show.legend = show.legend, legend.pos.x = legend.pos.x,legend.pos.y=legend.pos.y)
       }
       dev.off()
     }
@@ -347,7 +415,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
       dev.off()
     }
 
-  #  prob.sum <- apply(prob, c(1,2), sum)
+    #  prob.sum <- apply(prob, c(1,2), sum)
     if (is.element("svg", out.format)) {
       svglite(file = paste0(signaling.name,"_", layout,  "_aggregate.svg"), width = height, height = 1*height)
       netVisual_chord_cell_internal(prob.sum, color.use = color.use, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate,
@@ -404,13 +472,15 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 #' @param vertex.size.max the maximum vertex size for visualization
 #' @param edge.weight.max the maximum weight of edge; defualt = max(net)
 #' @param edge.width.max The maximum edge width for visualization
-#' @param layout "hierarchy", "circle" or "chord"
+#' @param layout "hierarchy", "circle", "chord" or "spatial"
 #' @param thresh threshold of the p-value for determining significant interaction
 #' @param pt.title font size of the text
 #' @param title.space the space between the title and plot
 #' @param vertex.label.cex The label size of vertex in the network
-#' @param from,to,bidirection Deprecated. Use `sources.use`,`targets.use`
-#' @param vertex.size Deprecated. Use `vertex.weight`
+#'
+#' Parameters below are set for "spatial" diagram. Please also check the function `netVisual_spatial` for more parameters.
+#' @param alpha.image the transparency of individual spots
+#' @param point.size the size of spots
 #'
 #' Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.
 #' @param group A named group labels for making multiple-group Chord diagrams. The sector names should be used as the names in the vector.
@@ -424,24 +494,22 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
 #' @param legend.pos.x,legend.pos.y adjust the legend position
 #'
 #' @param ... other parameters (e.g.,vertex.label.cex, vertex.label.color, alpha.edge, label.edge, edge.label.color, edge.label.cex, edge.curved)
-#'  passing to `netVisual_hierarchy1`,`netVisual_hierarchy2`,`netVisual_circle`. NB: some parameters might be not supported
+#'  passing to `netVisual_hierarchy1`,`netVisual_hierarchy2`,`netVisual_circle`,`netVisual_spatial`. NB: some parameters might be not supported
 #' @importFrom grDevices recordPlot
 #'
-#' @return  an object of class "recordedplot"
+#' @return  an object of class "recordedplot" or ggplot
 #' @export
 #'
 #'
-netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, idents.use = NULL, top = 1, remove.isolate = FALSE,
+netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.use = NULL, thresh = 0.05, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, idents.use = NULL, top = 1, remove.isolate = FALSE,
                                 vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL,
                                 weight.scale = TRUE, edge.weight.max = NULL, edge.width.max=8,
-                                layout = c("circle","hierarchy","chord"), thresh = 0.05, from = NULL, to = NULL, bidirection = NULL, vertex.size = NULL,
+                                layout = c("circle","hierarchy","chord","spatial"),
                                 pt.title = 12, title.space = 6, vertex.label.cex = 0.8,
+                                alpha.image = 0.15, point.size = 1.5,
                                 group = NULL,cell.order = NULL,small.gap = 1, big.gap = 10, scale = FALSE, reduce = -1, show.legend = FALSE, legend.pos.x = 20,legend.pos.y = 20,
                                 ...) {
   layout <- match.arg(layout)
-  if (!is.null(vertex.size)) {
-    warning("'vertex.size' is deprecated. Use `vertex.weight`")
-  }
   if (is.null(vertex.weight)) {
     vertex.weight <- as.numeric(table(object@idents))
   }
@@ -507,6 +575,24 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
     prob.sum <- apply(prob, c(1,2), sum)
     # prob.sum <-(prob.sum-min(prob.sum))/(max(prob.sum)-min(prob.sum))
     gg <- netVisual_circle(prob.sum, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
+  }  else if (layout == "spatial") {
+    prob.sum <- apply(prob, c(1,2), sum)
+    if (vertex.weight == "incoming"){
+      if (length(slot(object, "netP")$centr) == 0) {
+        stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
+      }
+      vertex.weight = object@netP$centr[[signaling]]$indeg
+    }
+    if (vertex.weight == "outgoing"){
+      if (length(slot(object, "netP")$centr) == 0) {
+        stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
+      }
+      vertex.weight = object@netP$centr[[signaling]]$outdeg
+    }
+    coordinates <- object@images$coordinates
+    labels <- object@idents
+    gg <- netVisual_spatial(prob.sum, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = paste0(signaling.name, " signaling pathway network"), vertex.label.cex = vertex.label.cex,...)
+
   } else if (layout == "chord") {
     prob.sum <- apply(prob, c(1,2), sum)
     gg <- netVisual_chord_cell_internal(prob.sum, color.use = color.use, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate,
@@ -552,6 +638,10 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
 #' @param thresh threshold of the p-value for determining significant interaction
 # #' @param from,to,bidirection Deprecated. Use `sources.use`,`targets.use`
 # #' @param vertex.size Deprecated. Use `vertex.weight`
+
+#' Parameters below are set for "spatial" diagram. Please also check the function `netVisual_spatial` for more parameters.
+#' @param alpha.image the transparency of individual spots
+#' @param point.size the size of spots
 #'
 #' Parameters below are set for "chord" diagram. Please also check the function `netVisual_chord_cell` for more parameters.
 #' @param group A named group labels for making multiple-group Chord diagrams. The sector names should be used as the names in the vector.
@@ -576,7 +666,8 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
 netVisual_individual <- function(object, signaling, signaling.name = NULL, pairLR.use = NULL, color.use = NULL, vertex.receiver = NULL, sources.use = NULL, targets.use = NULL, top = 1, remove.isolate = FALSE,
                                  vertex.weight = 1, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex = 0.8,
                                  weight.scale = TRUE, edge.weight.max = NULL, edge.width.max=8, graphics.init = TRUE,
-                                 layout = c("circle","hierarchy","chord"), height = 5, thresh = 0.05, #from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
+                                 layout = c("circle","hierarchy","chord","spatial"), height = 5, thresh = 0.05, #from = NULL, to = NULL, bidirection = NULL,vertex.size = NULL,
+                                 alpha.image = 0.15, point.size = 1.5,
                                  group = NULL,cell.order = NULL,small.gap = 1, big.gap = 10, scale = FALSE, reduce = -1, show.legend = FALSE, legend.pos.x = 20, legend.pos.y = 20, nCol = NULL,
                                  ...) {
   layout <- match.arg(layout)
@@ -646,7 +737,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
     pval <- replicate(1, pval, simplify="array")
   }
 
- # prob <-(prob-min(prob))/(max(prob)-min(prob))
+  # prob <-(prob-min(prob))/(max(prob)-min(prob))
   if (is.null(edge.weight.max)) {
     edge.weight.max = max(prob)
   }
@@ -667,16 +758,27 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
     gg <- recordPlot()
 
   } else if (layout == "circle") {
-   # par(mfrow=c(nRow,1))
+    # par(mfrow=c(nRow,1))
     if (graphics.init) {
       par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
     }
-
     gg <- vector("list", length(pairLR.name.use))
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- pairLR$interaction_name_2[i]
       prob.i <- prob[,,i]
       gg[[i]] <- netVisual_circle(prob.i, sources.use = sources.use, targets.use = targets.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max, title.name = signalName_i, vertex.label.cex = vertex.label.cex,...)
+    }
+  } else if (layout == "spatial") {
+    # par(mfrow=c(nRow,1))
+    if (graphics.init) {
+      par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
+    }
+    coordinates <- object@images$coordinates
+    gg <- vector("list", length(pairLR.name.use))
+    for (i in 1:length(pairLR.name.use)) {
+      signalName_i <- pairLR$interaction_name_2[i]
+      prob.i <- prob[,,i]
+      gg[[i]] <- netVisual_spatial(prob.i, coordinates = coordinates, labels = labels, alpha.image = alpha.image, point.size = point.size, sources.use = sources.use, targets.use = targets.use, idents.use = idents.use, remove.isolate = remove.isolate, top = top, color.use = color.use, vertex.weight = vertex.weight, vertex.weight.max = vertex.weight.max, vertex.size.max = vertex.size.max, weight.scale = weight.scale, edge.weight.max = edge.weight.max, edge.width.max=edge.width.max,title.name = signalName_i, vertex.label.cex = vertex.label.cex,...)
     }
   } else if (layout == "chord") {
     if (graphics.init) {
@@ -1291,6 +1393,186 @@ mycircle <- function(coords, v=NULL, params) {
                    circles=size, add=TRUE, inches=FALSE)
          })
 }
+
+
+#' Spatial plot of cell-cell communication network
+#'
+#' Autocrine interactions are omitted on this plot. Group centroids may be not accurate for some data due to complex geometry.
+#' The width of edges represent the strength of the communication.
+#'
+#' @param net A weighted matrix representing the connections
+#' @param coordinates a data matrix in which each row gives the spatial locations/coordinates of each cell/spot
+#' @param labels a vector giving the group label of each cell/spot. The length should be the same as the number of rows in `coordinates`
+#' @param color.use Colors represent different cell groups
+#' @param title.name the name of the title
+#' @param sources.use a vector giving the index or the name of source cell groups
+#' @param targets.use a vector giving the index or the name of target cell groups.
+#' @param idents.use a vector giving the index or the name of cell groups of interest.
+#' @param remove.isolate whether remove the isolate nodes in the communication network
+#' @param remove.loop whether remove the self-loop in the communication network. Default: TRUE
+#' @param top the fraction of interactions to show
+#' @param weight.scale whether scale the weight
+#' @param vertex.weight The weight of vertex: either a scale value or a vector
+#' @param vertex.weight.max the maximum weight of vertex; defualt = max(vertex.weight)
+#' @param vertex.size.max the maximum vertex size for visualization
+#' @param vertex.label.cex The label size of vertex
+#' @param vertex.label.color The color of label for vertex
+#' @param edge.weight.max the maximum weight of edge; defualt = max(net)
+#' @param edge.width.max The maximum edge width for visualization
+#' @param alpha.edge the transprency of edge
+#' @param edge.curved Specifies whether to draw curved edges, or not.
+#' This can be a logical or a numeric vector or scalar.
+#' First the vector is replicated to have the same length as the number of
+#' edges in the graph. Then it is interpreted for each edge separately.
+#' A numeric value specifies the curvature of the edge; zero curvature means
+#' straight edges, negative values means the edge bends clockwise, positive
+#' values the opposite. TRUE means curvature 0.5, FALSE means curvature zero
+#' @param arrow.angle The width of arrows
+#' @param alpha.image the transparency of individual spots
+# #' @param arrow.width The width of arrows
+#' @param arrow.size the size of arrow
+#' @param point.size the size of spots
+#' @param legend.size the size of legend
+#' @importFrom igraph graph_from_adjacency_matrix get.edgelist ends E V
+#' @import ggplot2
+#' @importFrom ggnetwork geom_nodetext_repel
+#' @return  an object of ggplot
+#' @export
+netVisual_spatial <-function(net, coordinates, labels, color.use = NULL,title.name = NULL, sources.use = NULL, targets.use = NULL, idents.use = NULL, remove.isolate = FALSE, remove.loop = TRUE, top = 1,
+                             weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex = 5,vertex.label.color= "black",
+                             edge.weight.max = NULL, edge.width.max=8, edge.curved=0.2, alpha.edge = 0.6, arrow.angle = 5, arrow.size = 0.2, alpha.image = 0.15, point.size = 1.5, legend.size = 5){
+  cells.level <- rownames(net)
+  if (ncol(coordinates) == 2) {
+    colnames(coordinates) <- c("x_cent","y_cent")
+    temp_coordinates = coordinates
+    coordinates[,1] = temp_coordinates[,2]
+    coordinates[,2] = temp_coordinates[,1]
+  } else {
+    stop("Please check the input 'coordinates' and make sure it is a two column matrix.")
+  }
+  num_cluster <- length(cells.level)
+  node_coords <- matrix(0, nrow = num_cluster, ncol = 2)
+  for (i in c(1:num_cluster)) {
+    node_coords[i,1] <- median(coordinates[as.character(labels) == cells.level[i], 1])
+    node_coords[i,2] <- median(coordinates[as.character(labels) == cells.level[i], 2])
+  }
+  rownames(node_coords) <- cells.level
+
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
+  }
+  options(warn = -1)
+  thresh <- stats::quantile(net, probs = 1-top)
+  net[net < thresh] <- 0
+
+  if ((!is.null(sources.use)) | (!is.null(targets.use)) | (!is.null(idents.use)) ) {
+    if (is.null(rownames(net))) {
+      stop("The input weighted matrix should have rownames!")
+    }
+    df.net <- reshape2::melt(net, value.name = "value")
+    colnames(df.net)[1:2] <- c("source","target")
+    # keep the interactions associated with sources and targets of interest
+    if (!is.null(sources.use)){
+      if (is.numeric(sources.use)) {
+        sources.use <- cells.level[sources.use]
+      }
+      df.net <- subset(df.net, source %in% sources.use)
+    }
+    if (!is.null(targets.use)){
+      if (is.numeric(targets.use)) {
+        targets.use <- cells.level[targets.use]
+      }
+      df.net <- subset(df.net, target %in% targets.use)
+    }
+    if (!is.null(idents.use)) {
+      if (is.numeric(idents.use)) {
+        idents.use <- cells.level[idents.use]
+      }
+      df.net <- filter(df.net, (source %in% idents.use) | (target %in% idents.use))
+    }
+    df.net$source <- factor(df.net$source, levels = cells.level)
+    df.net$target <- factor(df.net$target, levels = cells.level)
+    df.net$value[is.na(df.net$value)] <- 0
+    net <- tapply(df.net[["value"]], list(df.net[["source"]], df.net[["target"]]), sum)
+  }
+  net[is.na(net)] <- 0
+
+
+  if (remove.loop) {
+    diag(net) <- 0
+  }
+  if (remove.isolate) {
+    idx1 <- which(Matrix::rowSums(net) == 0)
+    idx2 <- which(Matrix::colSums(net) == 0)
+    idx <- intersect(idx1, idx2)
+    net <- net[-idx, ]
+    net <- net[, -idx]
+    node_coords <- node_coords[-idx, ]
+    cells.level <- cells.level[-idx]
+  }
+
+  g <- graph_from_adjacency_matrix(net, mode = "directed", weighted = T)
+  edgelist <- get.edgelist(g)
+  # loop_curve = c()
+  # for (i in c(1:nrow(edgelist))) {
+  #   if (edgelist[i,1] == edgelist[i,2]){
+  #     loop_curve  = c(loop_curve ,i)
+  #   }
+  # }
+  # edgelist <- edgelist[-loop_curve,]
+
+  edges <- data.frame(node_coords[edgelist[,1],], node_coords[edgelist[,2],])
+  colnames(edges) <- c("X1","Y1","X2","Y2")
+  node_coords = data.frame(node_coords)
+  node_idents = factor(cells.level, levels = cells.level)
+  node_family = data.frame(node_coords,node_idents)
+  if (is.null(color.use)) {
+    color.use = scPalette(length(igraph::V(g)))
+    names(color.use) <- cells.level
+  }
+  if (is.null(vertex.weight.max)) {
+    vertex.weight.max <- max(vertex.weight)
+  }
+  vertex.weight <- vertex.weight/vertex.weight.max*vertex.size.max+5
+  if (is.null(edge.weight.max)) {
+    edge.weight.max <- max(igraph::E(g)$weight)
+  }
+  # width of edge
+  if (weight.scale == TRUE) {
+    igraph::E(g)$width<- 0.3+igraph::E(g)$weight/edge.weight.max*edge.width.max
+  }else{
+    igraph::E(g)$width<-0.3+edge.width.max*igraph::E(g)$weight
+  }
+
+  gg <- ggplot(data=node_family,aes(X1, X2)) +
+    geom_curve(aes(x=X1, y=Y1, xend = X2, yend = Y2), data=edges, size = igraph::E(g)$width, curvature = edge.curved, alpha = alpha.edge, arrow = arrow(angle = arrow.angle, type = "closed",length = unit(arrow.size, "inches")),colour=color.use[edgelist[,1]]) +
+    geom_point(aes(X1, X2,colour = node_idents), data=node_family, size = vertex.weight,show.legend = TRUE) +scale_color_manual(values = color.use) +
+    guides(color = guide_legend(override.aes = list(size=legend.size))) +
+    xlab(NULL) + ylab(NULL)  +
+    coord_fixed() + theme(aspect.ratio = 1) +
+    theme(panel.background = element_blank(),panel.border = element_blank(),axis.text=element_blank(),legend.title = element_blank())
+  gg <- gg + geom_point(aes(x_cent, y_cent), data = coordinates,colour = color.use[labels],alpha = alpha.image, size = point.size, show.legend = FALSE)
+  gg <- gg + scale_y_reverse()
+  if (vertex.label.cex > 0){
+    gg <- gg + ggnetwork::geom_nodetext_repel(aes(label = node_idents), color="black", size = vertex.label.cex)
+  }
+  if (!is.null(title.name)){
+    gg <- gg + ggtitle(title.name) + theme(plot.title = element_text(hjust = 0.5, vjust = 0))
+  }
+
+  gg
+  return(gg)
+
+}
+
+
+
+
+
 
 
 #' Circle plot showing differential cell-cell communication network between two datasets
@@ -3353,7 +3635,7 @@ netVisual_embeddingPairwiseZoomIn <- function(object, slot.name = "netP", type =
   if (is.null(pathway.remove)) {
     similarity <- methods::slot(object, slot.name)$similarity[[type]]$matrix[[comparison.name]]
     pathway.remove <- rownames(similarity)[which(colSums(similarity) == 1)]
-    # pathway.remove <- sub("--.*", "", pathway.remove)
+   # pathway.remove <- sub("--.*", "", pathway.remove)
   }
 
   if (length(pathway.remove) > 0) {
@@ -3856,9 +4138,9 @@ barPlot <- function(object, features, group.by = NULL, split.by = NULL, color.us
 #' @return ggplot2 object
 #' @export
 barplot_internal <- function(df, x = "cellType", y = "value", fill = "condition", legend.title = NULL, width=0.6, title.name = NULL,
-                            xlabel = NULL, ylabel = NULL, color.use = NULL,remove.xtick = FALSE,
-                            stat.add = FALSE, stat.method = "wilcox.test", percent.y = FALSE, label.x = 1.5,
-                            show.legend = TRUE, x.lab.rot = FALSE, size.text = 10) {
+                             xlabel = NULL, ylabel = NULL, color.use = NULL,remove.xtick = FALSE,
+                             stat.add = FALSE, stat.method = "wilcox.test", percent.y = FALSE, label.x = 1.5,
+                             show.legend = TRUE, x.lab.rot = FALSE, size.text = 10) {
 
   gg <- ggplot(df, aes_string(x=x, y=y, fill = fill, color = fill)) + geom_bar(stat="identity", width=width, position=position_dodge()) +
     theme_classic() + scale_x_discrete(limits = (levels(df$x))) + theme(axis.text.x = element_text(angle = 45, hjust = 1,size=10))
@@ -3897,5 +4179,4 @@ barplot_internal <- function(df, x = "cellType", y = "value", fill = "condition"
   gg
   return(gg)
 }
-
 

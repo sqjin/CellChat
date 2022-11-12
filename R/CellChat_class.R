@@ -19,6 +19,7 @@ setClassUnion(name = 'AnyFactor', members = c("factor", "list"))
 #' @slot data.signaling a subset of normalized matrix only containing signaling genes
 #' @slot data.scale scaled data matrix
 #' @slot data.project projected data
+#' @slot images a list of spatial image objects
 #' @slot net a three-dimensional array P (K×K×N), where K is the number of cell groups and N is the number of ligand-receptor pairs. Each row of P indicates the communication probability originating from the sender cell group to other cell groups.
 #' @slot netP a three-dimensional array representing cel-cell communication networks on a signaling pathway level
 #' @slot DB ligand-receptor interaction database used in the analysis (a subset of CellChatDB)
@@ -34,20 +35,21 @@ setClassUnion(name = 'AnyFactor', members = c("factor", "list"))
 #' @importFrom methods setClass
 # #' @useDynLib CellChat
 CellChat <- methods::setClass("CellChat",
-                              slots = c(data.raw = 'AnyMatrix',
-                                        data = 'AnyMatrix',
-                                        data.signaling = "AnyMatrix",
-                                        data.scale = "matrix",
-                                        data.project = "AnyMatrix",
-                                        net = "list",
-                                        netP = "list",
-                                        meta = "data.frame",
-                                        idents = "AnyFactor",
-                                        DB = "list",
-                                        LR = "list",
-                                        var.features = "list",
-                                        dr = "list",
-                                        options = "list")
+                                 slots = c(data.raw = 'AnyMatrix',
+                                           data = 'AnyMatrix',
+                                           data.signaling = "AnyMatrix",
+                                           data.scale = "matrix",
+                                           data.project = "AnyMatrix",
+                                           images = "list",
+                                           net = "list",
+                                           netP = "list",
+                                           meta = "data.frame",
+                                           idents = "AnyFactor",
+                                           DB = "list",
+                                           LR = "list",
+                                           var.features = "list",
+                                           dr = "list",
+                                           options = "list")
 )
 #' show method for CellChat
 #'
@@ -58,10 +60,17 @@ CellChat <- methods::setClass("CellChat",
 #'
 setMethod(f = "show", signature = "CellChat", definition = function(object) {
   if (object@options$mode == "single") {
-    cat("An object of class", class(object), "created from a single dataset", "\n", nrow(object@data), "genes.\n",  ncol(object@data), "cells.")
+    cat("An object of class", class(object), "created from a single dataset", "\n", nrow(object@data), "genes.\n",  ncol(object@data), "cells. \n")
   } else if (object@options$mode == "merged") {
-    cat("An object of class", class(object), "created from a merged object with multiple datasets", "\n", nrow(object@data.signaling), "signaling genes.\n",  ncol(object@data.signaling), "cells.")
+    cat("An object of class", class(object), "created from a merged object with multiple datasets", "\n", nrow(object@data.signaling), "signaling genes.\n",  ncol(object@data.signaling), "cells. \n")
   }
+  if (object@options$datatype == "RNA") {
+    cat("CellChat analysis of single cell RNA-seq data! \n")
+  } else {
+    cat("CellChat analysis of", object@options$datatype, "data! The input spatial locations are \n")
+    print(head(object@images$coordinates))
+  }
+
 
   invisible(x = NULL)
 })
@@ -76,33 +85,55 @@ setMethod(f = "show", signature = "CellChat", definition = function(object) {
 #' @param group.by a char name of the variable in meta data, defining cell groups.
 #' If input is a data matrix and group.by is NULL, the input `meta` should contain a column named 'labels',
 #' If input is a Seurat or SingleCellExperiment object, USER must provide `group.by` to define the cell groups. e.g, group.by = "ident" for Seurat object
+#' @param datatype By default datatype = "RNA"; when running CellChat on spatial imaging data, set datatype = "spatial" and input `scale.factors`
+#'
+#' @param coordinates a data matrix in which each row gives the spatial locations/coordinates of each cell/spot
+#' @param scale.factors a list containing the scale factors and spot diameter for the full/high/low resolution images.
+#'
+#' USER must input this list when datatype = "spatial". scale.factors must contain an element named `spot.diameter`, which is the theoretical spot size; e.g., 10x Visium (spot.size = 65 microns), and another element named `spot`, which is the number of pixels that span the diameter of a theoretical spot size in the original, full-resolution image.
+#'
+#' For 10X visium, scale.factors are in the `scalefactors_json.json`. scale.factors$spot is the `spot.size.fullres `
+#'
 #' @param assay Assay to use when the input is a Seurat object. NB: The data in the `integrated` assay is not suitable for CellChat analysis because it contains negative values.
 #' @param do.sparse whether use sparse format
-# #' @param data is deprecated. Use `object`
 #'
 #' @return
 #' @export
 #' @importFrom methods as new
 #' @examples
 #' \dontrun{
+#' Create a CellChat object from single-cell transcriptomics data
 #' # Input is a data matrix
 #' ## create a dataframe consisting of the cell labels
 #' meta = data.frame(labels = cell.labels, row.names = names(cell.labels))
-#' cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+#' cellChat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
 #'
 #' # input is a Seurat object
 #' ## use the default cell identities of Seurat object
-#' # cellchat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "RNA")
+#' cellChat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "RNA")
 #' ## use other meta information as cell groups
-#' # cellchat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
+#' cellChat <- createCellChat(object = seurat.obj, group.by = "seurat.clusters")
 #'
 #' # input is a SingleCellExperiment object
-#' # cellchat <- createCellChat(object = sce.obj, group.by = "sce.clusters")
+#' cellChat <- createCellChat(object = sce.obj, group.by = "sce.clusters")
+#'
+#' Create a CellChat object from spatial imaging data
+#' # Input is a data matrix
+#' cellChat <- createCellChat(object = data.input, meta = meta, group.by = "labels",
+#'                            datatype = "spatial", coordinates = coordinates, scale.factors = scale.factors)
+#'
+#' # input is a Seurat object
+#' cellChat <- createCellChat(object = seurat.obj, group.by = "ident", assay = "SCT",
+#'                            datatype = "spatial", scale.factors = scale.factors)
+#'
 #' }
-createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, do.sparse = T) {
+createCellChat <- function(object, meta = NULL, group.by = NULL,
+                           datatype = c("RNA", "spatial"), coordinates = NULL, scale.factors = NULL,
+                           assay = NULL, do.sparse = T) {
+  datatype <- match.arg(datatype)
   # data matrix as input
   if (inherits(x = object, what = c("matrix", "Matrix", "dgCMatrix"))) {
-    message("Create a CellChat object from a data matrix")
+    print("Create a CellChat object from a data matrix")
     data <- object
     if (is.null(group.by)) {
       group.by <- "labels"
@@ -111,7 +142,7 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
   # Seurat object as input
   if (is(object,"Seurat")) {
     .error_if_no_Seurat()
-    message("Create a CellChat object from a Seurat object")
+    print("Create a CellChat object from a Seurat object")
     if (is.null(assay)) {
       assay = DefaultAssay(object)
       if (assay == "integrated") {
@@ -132,10 +163,15 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
     if (is.null(group.by)) {
       group.by <- "ident"
     }
+    if (is.null(coordinates)) {
+      coordinates <- GetTissueCoordinates(object, scale = NULL, cols = c("imagerow", "imagecol"))
+      # scale.factors <- object@images[["slice1"]]@scale.factors
+    }
+
   }
   # SingleCellExperiment object as input
   if (is(object,"SingleCellExperiment")) {
-    message("Create a CellChat object from a SingleCellExperiment object")
+    print("Create a CellChat object from a SingleCellExperiment object")
     if ("logcounts" %in% SummarizedExperiment::assayNames(object)) {
       cat("The `logcounts` assay is used",'\n')
       data <- SingleCellExperiment::logcounts(object)
@@ -151,7 +187,7 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
     }
   }
 
-  if (do.sparse) {
+  if (!inherits(x = data, what = c("dgCMatrix")) & do.sparse) {
     data <- as(data, "dgCMatrix")
   }
 
@@ -171,12 +207,25 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
   } else {
     meta <- data.frame()
   }
+  if (datatype %in% c("spatial")) {
+    if (is.null(scale.factors) | !("spot.diameter" %in% names(scale.factors)) | !("spot" %in% names(scale.factors))) {
+      stop("scale.factors with elements named `spot.diameter` and `spot` should be provided!")
+    } else {
+      images = list("coordinates" = coordinates,
+                    "scale.factors" = scale.factors)
+    }
+    cat("Create a CellChat object from spatial imaging data...",'\n')
+  } else {
+    images <- list()
+  }
 
   object <- methods::new(Class = "CellChat",
                          data = data,
+                         images = images,
                          meta = meta)
+
   if (!is.null(meta) & nrow(meta) > 0) {
-    message("Set cell identities for the new CellChat object")
+    cat("Set cell identities for the new CellChat object", '\n')
     if (!(group.by %in% colnames(meta))) {
       stop("The 'group.by' is not a column name in the `meta`, which will be used for cell grouping.")
     }
@@ -184,6 +233,7 @@ createCellChat <- function(object, meta = NULL, group.by = NULL, assay = NULL, d
     cat("The cell groups used for CellChat analysis are ", levels(object@idents), '\n')
   }
   object@options$mode <- "single"
+  object@options$datatype <- datatype
   return(object)
 }
 
@@ -307,7 +357,11 @@ mergeCellChat <- function(object.list, add.names = NULL, merge.data = FALSE, cel
 
 #' Update a single CellChat object
 #'
-#' Update: object@var.features is now object@var.features$features; object@net$sum is now object@net$weight if `aggregateNet` has been run.
+#' Update a single previously calculated CellChat object (version < 1.6.0)
+#'
+#' version < 0.5.0: `object@var.features` is now `object@var.features$features`; `object@net$sum` is now `object@net$weight` if `aggregateNet` has been run.
+#'
+#' version 1.6.0: a `object@images` slot is added and `datatype` is added in `object@options$datatype`
 #'
 #' @param object CellChat object
 #'
@@ -328,6 +382,16 @@ updateCellChat <- function(object) {
   } else {
     net <- object@net
   }
+  if (!("mode" %in% names(object@options))) {
+    object@options$mode <- "single"
+  }
+  # if (!("images" %in% slotNames(object))) {
+  #   images = list()
+  # }
+  if (!("datatype" %in% names(object@options))) {
+    object@options$datatype <- "RNA"
+    images = list()
+  }
   object.new <- methods::new(
     Class = "CellChat",
     data.raw = object@data.raw,
@@ -335,6 +399,7 @@ updateCellChat <- function(object) {
     data.signaling = object@data.signaling,
     data.scale = object@data.scale,
     data.project = object@data.project,
+    images = images,
     net = net,
     netP = object@netP,
     meta = object@meta,
@@ -345,7 +410,6 @@ updateCellChat <- function(object) {
     dr = object@dr,
     options = object@options
   )
-  object.new@options$mode <- "single"
   return(object.new)
 }
 
@@ -385,7 +449,7 @@ liftCellChat <- function(object, group.new = NULL) {
       # cat("Update slot object@net...", '\n')
       net <- object@net[[i]]
       group.i <- levels(idents[[i]])
-     # group.existing <- group.max[group.max %in% group.i]
+      # group.existing <- group.max[group.max %in% group.i]
       group.existing <- group.i[group.i %in% group.max]
       group.existing.index <- which(group.max %in% group.existing)
       for (net.j in names(net)) {
@@ -479,7 +543,7 @@ liftCellChat <- function(object, group.new = NULL) {
     net <- object@net
     idents <- object@idents
     group.i <- levels(idents)
-   # group.existing <- group.max[group.max %in% group.i]
+    # group.existing <- group.max[group.max %in% group.i]
     group.existing <- group.i[group.i %in% group.max]
     group.existing.index <- which(group.max %in% group.existing)
     for (net.j in names(net)) {
@@ -557,7 +621,7 @@ liftCellChat <- function(object, group.new = NULL) {
     }
     object@netP <- netP
 
-   # cat("Update slot object@idents...", '\n')
+    # cat("Update slot object@idents...", '\n')
     idents <- factor(idents, levels = group.max)
     object@idents <- idents
   }

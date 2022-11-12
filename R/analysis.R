@@ -969,6 +969,7 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @param targets.use a vector giving the index or the name of target cell groups.
 #' @param signaling a vector giving the signaling pathway to show
 #' @param pairLR a vector giving the names of L-R pairs to show (e.g, pairLR = c("IL1A_IL1R1_IL1RAP","IL1B_IL1R1_IL1RAP"))
+#' @param signaling.type a char giving the types of signaling from the three categories c("Secreted Signaling", "ECM-Receptor", "Cell-Cell Contact")
 #' @param do.stat whether do a paired Wilcoxon test to determine whether there is significant difference between two datasets. Default = FALSE
 #' @param cutoff.pvalue the cutoff of pvalue when doing Wilcoxon test; Default = 0.05
 #' @param tol a tolerance when considering the relative contribution being equal between two datasets. contribution.relative between 1-tol and 1+tol will be considered as equal contribution
@@ -993,7 +994,7 @@ rankSimilarity <- function(object, slot.name = "netP", type = c("functional","st
 #' @export
 #'
 #' @examples
-rankNet <- function(object, slot.name = "netP", measure = c("weight","count"), mode = c("comparison", "single"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL,  signaling = NULL, pairLR = NULL, do.stat = FALSE, cutoff.pvalue = 0.05, tol = 0.05, thresh = 0.05, show.raw = FALSE, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
+rankNet <- function(object, slot.name = "netP", measure = c("weight","count"), mode = c("comparison", "single"), comparison = c(1,2), color.use = NULL, stacked = FALSE, sources.use = NULL, targets.use = NULL,  signaling = NULL, pairLR = NULL, signaling.type = NULL, do.stat = FALSE, cutoff.pvalue = 0.05, tol = 0.05, thresh = 0.05, show.raw = FALSE, return.data = FALSE, x.rotation = 90, title = NULL, bar.w = 0.75, font.size = 8,
                     do.flip = TRUE, x.angle = NULL, y.angle = 0, x.hjust = 1,y.hjust = 1,
                     axis.gap = FALSE, ylim = NULL, segments = NULL, tick_width = NULL, rel_heights = c(0.9,0,0.1)) {
   measure <- match.arg(measure)
@@ -1061,6 +1062,15 @@ rankNet <- function(object, slot.name = "netP", measure = c("weight","count"), m
       df.t <- df[df$name == pair.name[i], "contribution"]
       if (sum(df.t) == 0) {
         df <- df[-which(df$name == pair.name[i]), ]
+      }
+    }
+
+    if (!is.null(signaling.type)) {
+      LR <- subset(object@DB$interaction, annotation %in% signaling.type)
+      if (slot.name == "netP") {
+        signaling <- unique(LR$pathway_name)
+      } else if (slot.name == "net") {
+        pairLR <- LR$interaction_name
       }
     }
 

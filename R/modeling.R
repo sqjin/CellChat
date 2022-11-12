@@ -1,6 +1,9 @@
 
 #' Compute the communication probability/strength between any interacting cell groups
 #'
+#' To further speed up on large-scale datasets, USER can downsample the data using the function 'subset' from Seurat package (e.g., pbmc.small <- subset(pbmc, downsample = 500)), or using the function `sketchData` from CellChat, in particular for the large cell clusters;
+#'
+#'
 #' @param object CellChat object
 #' @param type methods for computing the average gene expression per cell group. By default = "triMean", producing fewer but stronger interactions;
 #' When setting `type = "truncatedMean"`, a value should be assigned to 'trim',  producing more interactions.
@@ -11,16 +14,22 @@
 #' @param population.size whether consider the proportion of cells in each group across all sequenced cells.
 #' Set population.size = FALSE if analyzing sorting-enriched single cells, to remove the potential artifact of population size.
 #' Set population.size = TRUE if analyzing unsorted single-cell transcriptomes, with the reason that abundant cell populations tend to send collectively stronger signals than the rare cell populations.
-#' @param do.fast whether run the code in a fast version. In the fast version, all the calculation is based on average expression per cell group; in the previous version, calculation of ligand and receptor expression is also dependent on the number of cells.
 #'
-#' To further speed up on large-scale datasets, 1) USER can downsample the data using the function 'subset' from Seurat package (e.g., pbmc.small <- subset(pbmc, downsample = 500)), or using the function `sketchData` from CellChat, in particular for the large cell clusters;
+#' Parameters for spatial data analysis
+#' @param distance.use whether use distance constraints to compute communication probability.
+#' distance.use = FALSE will only filter out interactions between spatially distant regions, but not add distance constraints.
+#' @param interaction.length The maximum interaction/diffusion length of ligands (Unit: microns). This hard threshold is used to filter out the connections between spatially distant regions
+#' @param scale.distance A scale or normalization factor for the spatial distances. This values can be 1, 0.1, 0.01, 0.001. We choose this values such that the minimum value of the scaled distances is in [1,2].
 #'
-#' 2) we are still looking for methods on faster calculation of average expression per group
+#' When comparing communication across different CellChat objects, the same scale factor should be used. For a single CellChat analysis, different scale factors will not affect the ranking of the signaling based on their interaction strength.
+#' @param k.min the minimum number of interacting cell pairs required for defining adjacent cell groups
 #'
 #' @param nboot threshold of p-values
 #' @param seed.use set a random seed. By default, set the seed to 1.
 #' @param Kh parameter in Hill function
 #' @param n parameter in Hill function
+#'
+#'
 #' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
 #' @importFrom pbapply pbsapply
@@ -38,12 +47,16 @@
 #'
 #' @export
 #'
-computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "median"), trim = NULL, LR.use = NULL, raw.use = TRUE, population.size = FALSE, do.fast = TRUE, nboot = 100, seed.use = 1L, Kh = 0.5, n = 1) {
+computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thresholdedMean", "median"), trim = 0.1, LR.use = NULL, raw.use = TRUE, population.size = FALSE,
+                              distance.use = TRUE, interaction.length = 200, scale.distance = 0.01, k.min = 10,
+                              nboot = 100, seed.use = 1L, Kh = 0.5, n = 1) {
   type <- match.arg(type)
+  cat(type, "is used for calculating the average gene expression per cell group.", "\n")
   FunMean <- switch(type,
                     triMean = triMean,
                     truncatedMean = function(x) mean(x, trim = trim, na.rm = TRUE),
                     median = function(x) median(x, na.rm = TRUE))
+
   if (raw.use) {
     data <- as.matrix(object@data.signaling)
   } else {
@@ -83,254 +96,175 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean", "medi
   data.use <- data/max(data)
   nC <- ncol(data.use)
 
-  if (do.fast) {
-    # compute the average expression per group
-    data.use.avg <- aggregate(t(data.use), list(group), FUN = FunMean)
-    data.use.avg <- t(data.use.avg[,-1])
-    colnames(data.use.avg) <- levels(group)
-    # compute the expression of ligand or receptor
-    dataLavg <- computeExpr_LR(geneL, data.use.avg, complex_input)
-    dataRavg <- computeExpr_LR(geneR, data.use.avg, complex_input)
-    # take account into the effect of co-activation and co-inhibition receptors
-    dataRavg.co.A.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avg, pairLRsig, type = "A")
-    dataRavg.co.I.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avg, pairLRsig, type = "I")
-    dataRavg <- dataRavg * dataRavg.co.A.receptor/dataRavg.co.I.receptor
+  # compute the average expression per group
+  data.use.avg <- aggregate(t(data.use), list(group), FUN = FunMean)
+  data.use.avg <- t(data.use.avg[,-1])
+  colnames(data.use.avg) <- levels(group)
+  # compute the expression of ligand or receptor
+  dataLavg <- computeExpr_LR(geneL, data.use.avg, complex_input)
+  dataRavg <- computeExpr_LR(geneR, data.use.avg, complex_input)
+  # take account into the effect of co-activation and co-inhibition receptors
+  dataRavg.co.A.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avg, pairLRsig, type = "A")
+  dataRavg.co.I.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avg, pairLRsig, type = "I")
+  dataRavg <- dataRavg * dataRavg.co.A.receptor/dataRavg.co.I.receptor
 
-    dataLavg2 <- t(replicate(nrow(dataLavg), as.numeric(table(group))/nC))
-    dataRavg2 <- dataLavg2
+  dataLavg2 <- t(replicate(nrow(dataLavg), as.numeric(table(group))/nC))
+  dataRavg2 <- dataLavg2
 
-    # compute the expression of agonist and antagonist
-    index.agonist <- which(!is.na(pairLRsig$agonist) & pairLRsig$agonist != "")
-    index.antagonist <- which(!is.na(pairLRsig$antagonist) & pairLRsig$antagonist != "")
-    # quantify the communication probability
-    Prob <- array(0, dim = c(numCluster,numCluster,nLR))
-    Pval <- array(0, dim = c(numCluster,numCluster,nLR))
+  # compute the expression of agonist and antagonist
+  index.agonist <- which(!is.na(pairLRsig$agonist) & pairLRsig$agonist != "")
+  index.antagonist <- which(!is.na(pairLRsig$antagonist) & pairLRsig$antagonist != "")
+  # quantify the communication probability
 
-    set.seed(seed.use)
-    permutation <- replicate(nboot, sample.int(nC, size = nC))
-    data.use.avg.boot <- my.sapply(
-      X = 1:nboot,
-      FUN = function(nE) {
-        groupboot <- group[permutation[, nE]]
-        data.use.avgB <- aggregate(t(data.use), list(groupboot), FUN = FunMean)
-        data.use.avgB <- t(data.use.avgB[,-1])
-        return(data.use.avgB)
-      },
-      simplify = FALSE
-    )
-    pb <- txtProgressBar(min = 0, max = nLR, style = 3, file = stderr())
+  # compute the spatial constraint
+  if (object@options$datatype != "RNA") {
+    data.spatial <- object@images$coordinates
+    spot.size.fullres <- object@images$scale.factors$spot
+    spot.size <- object@images$scale.factors$spot.diameter
+    d.spatial <- computeRegionDistance(coordinates = data.spatial, group = group, trim = trim, interaction.length = interaction.length, spot.size = spot.size, spot.size.fullres = spot.size.fullres, k.min = k.min)
 
-    for (i in 1:nLR) {
-      # ligand/receptor
-      dataLR <- Matrix::crossprod(matrix(dataLavg[i,], nrow = 1), matrix(dataRavg[i,], nrow = 1))
-      P1 <- dataLR^n/(Kh^n + dataLR^n)
-      if (sum(P1) == 0) {
-        Pnull = P1
-        Prob[ , , i] <- Pnull
-        p = 1
-        Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
-      } else {
-        # agonist and antagonist
-        if (is.element(i, index.agonist)) {
-          data.agonist <- computeExpr_agonist(data.use = data.use.avg, pairLRsig, cofactor_input, index.agonist = i, Kh = Kh,  n = n)
-          P2 <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
-        } else {
-          P2 <- matrix(1, nrow = numCluster, ncol = numCluster)
-        }
-        if (is.element(i, index.antagonist)) {
-          data.antagonist <- computeExpr_antagonist(data.use = data.use.avg, pairLRsig, cofactor_input,  index.antagonist = i, Kh = Kh,  n = n)
-          P3 <- Matrix::crossprod(matrix(data.antagonist, nrow = 1))
-        } else {
-          P3 <- matrix(1, nrow = numCluster, ncol = numCluster)
-        }
-        # number of cells
-        if (population.size) {
-          P4 <- Matrix::crossprod(matrix(dataLavg2[i,], nrow = 1), matrix(dataRavg2[i,], nrow = 1))
-        } else {
-          P4 <- matrix(1, nrow = numCluster, ncol = numCluster)
-        }
-
-        Pnull = P1*P2*P3*P4
-        Prob[ , , i] <- Pnull
-
-        Pnull <- as.vector(Pnull)
-
-        #Pboot <- foreach(nE = 1:nboot) %dopar% {
-        Pboot <- sapply(
-          X = 1:nboot,
-          FUN = function(nE) {
-            data.use.avgB <- data.use.avg.boot[[nE]]
-            dataLavgB <- computeExpr_LR(geneL[i], data.use.avgB, complex_input)
-            dataRavgB <- computeExpr_LR(geneR[i], data.use.avgB, complex_input)
-            # take account into the effect of co-activation and co-inhibition receptors
-            dataRavgB.co.A.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avgB, pairLRsig[i, , drop = FALSE], type = "A")
-            dataRavgB.co.I.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avgB, pairLRsig[i, , drop = FALSE], type = "I")
-            dataRavgB <- dataRavgB * dataRavgB.co.A.receptor/dataRavgB.co.I.receptor
-            dataLRB = Matrix::crossprod(dataLavgB, dataRavgB)
-            P1.boot <- dataLRB^n/(Kh^n + dataLRB^n)
-            # agonist and antagonist
-            if (is.element(i, index.agonist)) {
-              data.agonist <- computeExpr_agonist(data.use = data.use.avgB, pairLRsig, cofactor_input, index.agonist = i, Kh = Kh,  n = n)
-              P2.boot <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
-            } else {
-              P2.boot <- matrix(1, nrow = numCluster, ncol = numCluster)
-            }
-            if (is.element(i, index.antagonist)) {
-              data.antagonist <- computeExpr_antagonist(data.use = data.use.avgB, pairLRsig, cofactor_input, index.antagonist = i, Kh = Kh,  n= n)
-              P3.boot <- Matrix::crossprod(matrix(data.antagonist, nrow = 1))
-            } else {
-              P3.boot <- matrix(1, nrow = numCluster, ncol = numCluster)
-            }
-
-            if (population.size) {
-              groupboot <- group[permutation[, nE]]
-              dataLavg2B <- as.numeric(table(groupboot))/nC
-              dataLavg2B <- matrix(dataLavg2B, nrow = 1)
-              dataRavg2B <- dataLavg2B
-              P4.boot = Matrix::crossprod(dataLavg2B, dataRavg2B)
-            } else {
-              P4.boot = matrix(1, nrow = numCluster, ncol = numCluster)
-            }
-
-            Pboot = P1.boot*P2.boot*P3.boot*P4.boot
-            return(as.vector(Pboot))
-          }
-        )
-        Pboot <- matrix(unlist(Pboot), nrow=length(Pnull), ncol = nboot, byrow = FALSE)
-        nReject <- rowSums(Pboot - Pnull >= 0)
-        p = nReject/nboot
-        Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
+    if (distance.use) {
+      print(paste0('>>> Run CellChat on spatial imaging data using distances as constraints <<< [', Sys.time(),']'))
+      d.spatial <- d.spatial * scale.distance
+      diag(d.spatial) <- NaN
+      cat("The suggested minimum value of scaled distances is in [1,2], and the calculated value here is ", min(d.spatial, na.rm = TRUE),"\n")
+      if (min(d.spatial, na.rm = TRUE) < 1) {
+        stop("Please decrease the value of `scale.distance` and check the suggested values in the parameter description")
       }
-     setTxtProgressBar(pb = pb, value = i)
+      P.spatial <- 1/d.spatial
+      # P.spatial[is.inf(d.spatial)] <- 1
+      P.spatial[is.na(d.spatial)] <- 0
+      diag(P.spatial) <- max(P.spatial) # if this value is 1, the self-connections will have more larger weight.
+      d.spatial <- d.spatial/scale.distance # This is only for saving the data
+    } else {
+      print(paste0('>>> Run CellChat on spatial imaging data without distances as constraints <<< [', Sys.time(),']'))
+      P.spatial <- matrix(1, nrow = numCluster, ncol = numCluster)
+      P.spatial[is.na(d.spatial)] <- 0
     }
-    close(con = pb)
+
   } else {
-    # compute the expression of ligand and receptor
-    dataL <- computeExpr_LR(geneL, data.use, complex_input)
-    dataR <- computeExpr_LR(geneR, data.use, complex_input)
-    # take account into the effect of co-activation and co-inhibition receptors
-    dataR.co.A.receptor <- computeExpr_coreceptor(cofactor_input, data.use, pairLRsig, type = "A")
-    dataR.co.I.receptor <- computeExpr_coreceptor(cofactor_input, data.use, pairLRsig, type = "I")
-    dataR <- dataR * dataR.co.A.receptor/dataR.co.I.receptor
-    # compute the average expression in each cell group
-    dataLavg <- aggregate(t(dataL), list(group), FUN = FunMean)
-    dataLavg <- t(dataLavg[,-1])
-    rownames(dataLavg) <- geneL
-    dataRavg <- aggregate(t(dataR), list(group), FUN = FunMean)
-    dataRavg <- t(dataRavg[,-1])
-    rownames(dataRavg) <- geneR
-
-    dataL.binary = (dataL > 0)*1 ;dataR.binary = (dataR > 0)*1
-    dataLavg2 <- aggregate(t(dataL.binary), list(group), FUN = sum)
-    dataLavg2 <- t(dataLavg2[,-1])/nC
-    dataRavg2 <- aggregate(t(dataR.binary), list(group), FUN = sum)
-    dataRavg2 <- t(dataRavg2[,-1])/nC
-
-    # compute the expression of agonist and antagonist
-    index.agonist <- which(!is.na(pairLRsig$agonist) & pairLRsig$agonist != "")
-    index.antagonist <- which(!is.na(pairLRsig$antagonist) & pairLRsig$antagonist != "")
-    # quantify the communication probability
-    set.seed(seed.use)
-    permutation <- replicate(nboot, sample.int(nC, size = nC))
-    Prob <- array(0, dim = c(numCluster,numCluster,nLR))
-    Pval <- array(0, dim = c(numCluster,numCluster,nLR))
-    pb <- txtProgressBar(min = 0, max = nLR, style = 3, file = stderr())
-    for (i in 1:nLR) {
-      # ligand/receptor
-      dataLR <- Matrix::crossprod(matrix(dataLavg[i,], nrow = 1), matrix(dataRavg[i,], nrow = 1))
-      P1 <- dataLR^n/(Kh^n + dataLR^n)
-      if (sum(P1) == 0) {
-        Pnull = P1
-        Prob[ , , i] <- Pnull
-        p = 1
-        Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
-      } else {
-        # agonist and antagonist
-        if (is.element(i, index.agonist)) {
-          data.agonist <- computeExprGroup_agonist(data.use = data.use, pairLRsig, cofactor_input, group = group,index.agonist = i, Kh = Kh, FunMean = FunMean, n = n)
-          P2 <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
-        } else {
-          P2 <- matrix(1, nrow = numCluster, ncol = numCluster)
-        }
-        if (is.element(i, index.antagonist)) {
-          data.antagonist <- computeExprGroup_antagonist(data.use = data.use, pairLRsig, cofactor_input, group = group, index.antagonist = i, Kh = Kh, FunMean = FunMean, n = n)
-          P3 <- Matrix::crossprod(matrix(data.antagonist, nrow = 1))
-        } else {
-          P3 <- matrix(1, nrow = numCluster, ncol = numCluster)
-        }
-        # number of cells
-        if (population.size) {
-          P4 <- Matrix::crossprod(matrix(dataLavg2[i,], nrow = 1), matrix(dataRavg2[i,], nrow = 1))
-        } else {
-          P4 <- matrix(1, nrow = numCluster, ncol = numCluster)
-        }
-
-        Pnull = P1*P2*P3*P4
-        Prob[ , , i] <- Pnull
-
-        Pnull <- as.vector(Pnull)
-        dataL.i <- dataL[i,]; dataR.i <- dataR[i,];
-        dataL2.i <- dataL.binary[i,]; dataR2.i <- dataR.binary[i,];
-        #Pboot <- foreach(nE = 1:nboot) %dopar% {
-        Pboot <- my.sapply(
-          X = 1:nboot,
-          FUN = function(nE) {
-            groupboot <- group[permutation[, nE]]
-            dataLavgB <- aggregate(matrix(dataL.i, ncol = 1), list(groupboot), FUN = FunMean)
-            dataLavgB <- t(dataLavgB[,-1])
-            dataLavgB <- matrix(dataLavgB, nrow = 1)
-
-            dataRavgB <- aggregate(matrix(dataR.i, ncol = 1), list(groupboot), FUN = FunMean)
-            dataRavgB <- t(dataRavgB[,-1])
-            dataRavgB <- matrix(dataRavgB, nrow = 1)
-            dataLRB = Matrix::crossprod(dataLavgB, dataRavgB)
-            P1.boot <- dataLRB^n/(Kh^n + dataLRB^n)
-            # agonist and antagonist
-            if (is.element(i, index.agonist)) {
-              data.agonist <- computeExprGroup_agonist(data.use = data.use, pairLRsig, cofactor_input, group = groupboot, index.agonist = i, Kh = Kh, FunMean = FunMean, n = n)
-              P2.boot <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
-            } else {
-              P2.boot <- matrix(1, nrow = numCluster, ncol = numCluster)
-            }
-            if (is.element(i, index.antagonist)) {
-              data.antagonist <- computeExprGroup_antagonist(data.use = data.use, pairLRsig, cofactor_input, group = groupboot,index.antagonist = i, Kh = Kh, FunMean = FunMean, n= n)
-              P3.boot <- Matrix::crossprod(matrix(data.antagonist, nrow = 1))
-            } else {
-              P3.boot <- matrix(1, nrow = numCluster, ncol = numCluster)
-            }
-            dataLavg2B <- by(matrix(dataL2.i, ncol = 1), groupboot, sum)/nC
-            dataLavg2B <- matrix(dataLavg2B, nrow = 1)
-
-            dataRavg2B <- by(matrix(dataR2.i, ncol = 1), groupboot, sum)/nC
-            dataRavg2B <- matrix(dataRavg2B, nrow = 1)
-            if (population.size) {
-              P4.boot = Matrix::crossprod(dataLavg2B, dataRavg2B)
-            } else {
-              P4.boot = matrix(1, nrow = numCluster, ncol = numCluster)
-            }
-
-            Pboot = P1.boot*P2.boot*P3.boot*P4.boot
-            return(as.vector(Pboot))
-          }
-        )
-        Pboot <- matrix(unlist(Pboot), nrow=length(Pnull), ncol = nboot, byrow = FALSE)
-        nReject <- rowSums(Pboot - Pnull >= 0)
-        p = nReject/nboot
-        Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
-      }
-      setTxtProgressBar(pb = pb, value = i)
-    }
-    close(con = pb)
+    print(paste0('>>> Run CellChat on sc/snRNA-seq data <<< [', Sys.time(),']'))
+    d.spatial <- matrix(NaN, nrow = numCluster, ncol = numCluster)
+    P.spatial <- matrix(1, nrow = numCluster, ncol = numCluster)
   }
 
+  Prob <- array(0, dim = c(numCluster,numCluster,nLR))
+  Pval <- array(0, dim = c(numCluster,numCluster,nLR))
+
+  set.seed(seed.use)
+  permutation <- replicate(nboot, sample.int(nC, size = nC))
+  data.use.avg.boot <- my.sapply(
+    X = 1:nboot,
+    FUN = function(nE) {
+      groupboot <- group[permutation[, nE]]
+      data.use.avgB <- aggregate(t(data.use), list(groupboot), FUN = FunMean)
+      data.use.avgB <- t(data.use.avgB[,-1])
+      return(data.use.avgB)
+    },
+    simplify = FALSE
+  )
+  pb <- txtProgressBar(min = 0, max = nLR, style = 3, file = stderr())
+
+  for (i in 1:nLR) {
+    # ligand/receptor
+    dataLR <- Matrix::crossprod(matrix(dataLavg[i,], nrow = 1), matrix(dataRavg[i,], nrow = 1))
+    P1 <- dataLR^n/(Kh^n + dataLR^n)
+    P1_Pspatial <- P1*P.spatial
+    if (sum(P1_Pspatial) == 0) {
+      Pnull = P1_Pspatial
+      Prob[ , , i] <- Pnull
+      p = 1
+      Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
+    } else {
+      # agonist and antagonist
+      if (is.element(i, index.agonist)) {
+        data.agonist <- computeExpr_agonist(data.use = data.use.avg, pairLRsig, cofactor_input, index.agonist = i, Kh = Kh,  n = n)
+        P2 <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
+      } else {
+        P2 <- matrix(1, nrow = numCluster, ncol = numCluster)
+      }
+      if (is.element(i, index.antagonist)) {
+        data.antagonist <- computeExpr_antagonist(data.use = data.use.avg, pairLRsig, cofactor_input,  index.antagonist = i, Kh = Kh,  n = n)
+        P3 <- Matrix::crossprod(matrix(data.antagonist, nrow = 1))
+      } else {
+        P3 <- matrix(1, nrow = numCluster, ncol = numCluster)
+      }
+      # number of cells
+      if (population.size) {
+        P4 <- Matrix::crossprod(matrix(dataLavg2[i,], nrow = 1), matrix(dataRavg2[i,], nrow = 1))
+      } else {
+        P4 <- matrix(1, nrow = numCluster, ncol = numCluster)
+      }
+
+      # Pnull = P1*P2*P3*P4
+      Pnull = P1*P2*P3*P4*P.spatial
+      Prob[ , , i] <- Pnull
+
+      Pnull <- as.vector(Pnull)
+
+      #Pboot <- foreach(nE = 1:nboot) %dopar% {
+      Pboot <- sapply(
+        X = 1:nboot,
+        FUN = function(nE) {
+          data.use.avgB <- data.use.avg.boot[[nE]]
+          dataLavgB <- computeExpr_LR(geneL[i], data.use.avgB, complex_input)
+          dataRavgB <- computeExpr_LR(geneR[i], data.use.avgB, complex_input)
+          # take account into the effect of co-activation and co-inhibition receptors
+          dataRavgB.co.A.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avgB, pairLRsig[i, , drop = FALSE], type = "A")
+          dataRavgB.co.I.receptor <- computeExpr_coreceptor(cofactor_input, data.use.avgB, pairLRsig[i, , drop = FALSE], type = "I")
+          dataRavgB <- dataRavgB * dataRavgB.co.A.receptor/dataRavgB.co.I.receptor
+          dataLRB = Matrix::crossprod(dataLavgB, dataRavgB)
+          P1.boot <- dataLRB^n/(Kh^n + dataLRB^n)
+          # agonist and antagonist
+          if (is.element(i, index.agonist)) {
+            data.agonist <- computeExpr_agonist(data.use = data.use.avgB, pairLRsig, cofactor_input, index.agonist = i, Kh = Kh,  n = n)
+            P2.boot <- Matrix::crossprod(matrix(data.agonist, nrow = 1))
+          } else {
+            P2.boot <- matrix(1, nrow = numCluster, ncol = numCluster)
+          }
+          if (is.element(i, index.antagonist)) {
+            data.antagonist <- computeExpr_antagonist(data.use = data.use.avgB, pairLRsig, cofactor_input, index.antagonist = i, Kh = Kh,  n= n)
+            P3.boot <- Matrix::crossprod(matrix(data.antagonist, nrow = 1))
+          } else {
+            P3.boot <- matrix(1, nrow = numCluster, ncol = numCluster)
+          }
+
+          if (population.size) {
+            groupboot <- group[permutation[, nE]]
+            dataLavg2B <- as.numeric(table(groupboot))/nC
+            dataLavg2B <- matrix(dataLavg2B, nrow = 1)
+            dataRavg2B <- dataLavg2B
+            P4.boot = Matrix::crossprod(dataLavg2B, dataRavg2B)
+          } else {
+            P4.boot = matrix(1, nrow = numCluster, ncol = numCluster)
+          }
+
+          #  Pboot = P1.boot*P2.boot*P3.boot*P4.boot
+          Pboot = P1.boot*P2.boot*P3.boot*P4.boot*P.spatial
+          return(as.vector(Pboot))
+        }
+      )
+      Pboot <- matrix(unlist(Pboot), nrow=length(Pnull), ncol = nboot, byrow = FALSE)
+      nReject <- rowSums(Pboot - Pnull > 0)
+      p = nReject/nboot
+      Pval[, , i] <- matrix(p, nrow = numCluster, ncol = numCluster, byrow = FALSE)
+    }
+    setTxtProgressBar(pb = pb, value = i)
+  }
+  close(con = pb)
   Pval[Prob == 0] <- 1
   dimnames(Prob) <- list(levels(group), levels(group), rownames(pairLRsig))
   dimnames(Pval) <- dimnames(Prob)
   net <- list("prob" = Prob, "pval" = Pval)
   execution.time = Sys.time() - ptm
   object@options$run.time <- as.numeric(execution.time, units = "secs")
-  object@options$parameter <- list(type.mean = type, trim = trim, raw.use = raw.use, population.size = population.size,  nboot = nboot, seed.use = seed.use, Kh = Kh, n = n)
+
+  object@options$parameter <- list(type.mean = type, trim = trim, raw.use = raw.use, population.size = population.size,  nboot = nboot, seed.use = seed.use, Kh = Kh, n = n,
+                                   distance.use = distance.use, interaction.length = interaction.length, spot.size = spot.size, spot.size.fullres = spot.size.fullres, k.min = k.min
+                                   )
+  object@images$distance <- d.spatial
   object@net <- net
+  print(paste0('>>> CellChat inference is done. Parameter values are stored in `object@options$parameter` <<< [', Sys.time(),']'))
   return(object)
 }
 
@@ -981,5 +915,68 @@ identifyEnrichedInteractions <- function(object, from, to, bidirection = FALSE, 
     pairLR.use0 <- dplyr::select(pairLR.use0, ligand, receptor)
   }
   return(pairLR.use0)
+}
+
+
+#' Compute the region distance based on the spatial locations of each splot/cell of the spatial transcriptomics
+#'
+#' @param coordinates a data matrix in which each row gives the spatial locations/coordinates of each cell/spot
+#' @param group a factor vector defining the regions/labels of each cell/spot
+#' @param trim the fraction (0 to 0.25) of observations to be trimmed from each end of x before computing the average distance per cell group.
+#' @param interaction.length The maximum interaction/diffusion length of ligands. This hard threshold is used to filter out the connections between spatially distant regions
+#' @param spot.size theoretical spot size; e.g., 10x Visium (spot.size = 65 microns)
+#' @param spot.size.fullres The number of pixels that span the diameter of a theoretical spot size in the original,full-resolution image.
+#' @param k.min the minimum number of interacting cell pairs required for defining adjacent cell groups
+# #' @param k.spatial Number of neighbors in a knn graph, which is used to filter out the connections between spatially distant regions that do not share many neighbor spots/cells
+#' @importFrom BiocNeighbors queryKNN KmknnParam
+#' @return A square matrix giving the pairwise region distance
+#'
+#' @export
+computeRegionDistance <- function(coordinates, group, trim = 0.1,
+                                  interaction.length = NULL, spot.size = NULL, spot.size.fullres = NULL, k.min = 10
+                                  ) {
+  if (ncol(coordinates) != 2) {
+    stop("Please check the input 'coordinates' and make sure it is a two column matrix.")
+  }
+  if (!is.factor(group)) {
+    stop("Please input the `group` as a factor!")
+  }
+  # type <- match.arg(type)
+  type <- "truncatedMean"
+  FunMean <- switch(type,
+                    triMean = triMean,
+                    truncatedMean = function(x) mean(x, trim = trim, na.rm = TRUE),
+                    thresholdedMean = function(x) thresholdedMean(x, trim = trim, na.rm = TRUE),
+                    median = function(x) median(x, na.rm = TRUE))
+
+  numCluster <- nlevels(group)
+  level.use <- levels(group)
+  level.use <- level.use[level.use %in% unique(group)]
+  d.spatial <- matrix(NaN, nrow = numCluster, ncol = numCluster)
+  adj.spatial <- matrix(0, nrow = numCluster, ncol = numCluster)
+  for (i in 1:numCluster) {
+    for (j in 1:numCluster) {
+      data.spatial.i <- coordinates[group %in% level.use[i], , drop = FALSE]
+      data.spatial.j <- coordinates[group %in% level.use[j], , drop = FALSE]
+      qout <- suppressWarnings(BiocNeighbors::queryKNN(data.spatial.j, data.spatial.i, k = 1, BNPARAM = BiocNeighbors::KmknnParam(), get.index = TRUE))
+      if (!is.null(spot.size) & !is.null(spot.size.fullres)) {
+        qout$distance <- qout$distance*spot.size/spot.size.fullres
+        idx <- qout$distance - interaction.length < spot.size/2
+        adj.spatial[i,j] <- (length(unique(qout$index[idx])) >= k.min) * 1
+      }
+      d.spatial[i,j] <- FunMean(qout$distance) # since distances are positive values, different ways for computing the mean have little effects.
+
+    }
+  }
+  d.spatial <- (d.spatial + t(d.spatial))/2
+  if (!is.null(spot.size) & !is.null(spot.size.fullres)) {
+    adj.spatial <- adj.spatial * t(adj.spatial) # if one is zero, then both are zeros.
+    adj.spatial[adj.spatial == 0] <- NaN
+    d.spatial <- d.spatial * adj.spatial
+  }
+
+  rownames(d.spatial) <- levels(group); colnames(d.spatial) <- levels(group)
+  return(d.spatial)
+
 }
 
