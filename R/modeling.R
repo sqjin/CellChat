@@ -129,7 +129,7 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thres
       diag(d.spatial) <- NaN
       cat("The suggested minimum value of scaled distances is in [1,2], and the calculated value here is ", min(d.spatial, na.rm = TRUE),"\n")
       if (min(d.spatial, na.rm = TRUE) < 1) {
-        stop("Please decrease the value of `scale.distance` and check the suggested values in the parameter description")
+        stop("Please increase the value of `scale.distance` and check the suggested values in the parameter description (e.g., 1, 0.1, 0.01, 0.001, 0.11, 0.011)")
       }
       P.spatial <- 1/d.spatial
       # P.spatial[is.inf(d.spatial)] <- 1
