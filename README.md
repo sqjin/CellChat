@@ -6,14 +6,17 @@
 </p>
 
 ## Update
-Aug 06, 2022 (Version 1.5.0)
+Nov 12, 2022 (Version 1.6.0)
 
-We have now presented our comparison framework for systematically detecting dysregulated cell-cell communication across biological conditions, and
-then utilized it to study the aging-induced signaling changes during skin wound healing. Our results not only present general communication rules and signaling mechanisms in wound healing associated with aging, but also provide a paradigm for other researchers to study cell-cell communication in other contexts. Please check out [our paper (Vu#, Jin#, Sun# et al., Cell Reports, 2022)](https://doi.org/10.1016/j.celrep.2022.111155) for the detailed methods and applications.
+CellChat is now applicable to spatial imaging data. We showcase its application to 10X Visium data. When spatial locations of spots/cells are available, CellChat infers spatial-informed cell-cell communication between interacting cell groups. CellChat restricts cell-cell communication within the maximum interaction/diffusion length of molecules. 
+
+A brief [tutorial](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/CellChat_analysis_of_spatial_imaging_data.html) for spatial imaging data analysis is available in the tutorial directory. CellChat's various functionality can be used for further data exploration, analysis, and visualization. 
+
+We have redesigned the structure of CellChat object. When loading previous CellChat object (version < 1.6.0), please update the object via `updateCellChat`. 
 
 For the version history and detailed important changes, please see the [NEWS file](https://github.com/sqjin/CellChat/blob/master/NEWS.md).
 
-We will release the tutorial of applying CellChat to spatial transcriptomics data soon. Keep tuned!
+
 
 ## Capabilities
 In addition to infer the intercellular communication from any given scRNA-seq data, CellChat provides functionality for further data exploration, analysis, and visualization. 
@@ -51,6 +54,7 @@ Some users might have issues when installing CellChat pacakge due to different o
 Please check the tutorial directory of the repo.
 
 - [Full tutorial for CellChat analysis of a single dataset with detailed explanation of each function](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/CellChat-vignette.html)
+- [Brief tutorial for CellChat analysis of a single spatial imaging dataset](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/CellChat_analysis_of_spatial_imaging_data.html)
 - [Full tutorial for comparison analysis of multiple datasets](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Comparison_analysis_of_multiple_datasets.html)
 - [Comparison analysis of multiple datasets with different cellular compositions](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Comparison_analysis_of_multiple_datasets_with_different_cellular_compositions.html)
 - [Interface with other single-cell analysis toolkits (e.g., Seurat, SingleCellExperiment, Scanpy)](https://htmlpreview.github.io/?https://github.com/sqjin/CellChat/blob/master/tutorial/Interface_with_other_single-cell_analysis_toolkits.html)
