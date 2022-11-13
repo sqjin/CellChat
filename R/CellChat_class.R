@@ -391,6 +391,8 @@ updateCellChat <- function(object) {
   if (!("datatype" %in% names(object@options))) {
     object@options$datatype <- "RNA"
     images = list()
+  } else {
+    images = object@images
   }
   object.new <- methods::new(
     Class = "CellChat",
