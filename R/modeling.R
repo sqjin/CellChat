@@ -146,6 +146,7 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thres
     print(paste0('>>> Run CellChat on sc/snRNA-seq data <<< [', Sys.time(),']'))
     d.spatial <- matrix(NaN, nrow = numCluster, ncol = numCluster)
     P.spatial <- matrix(1, nrow = numCluster, ncol = numCluster)
+    distance.use = NULL; interaction.length = NULL; spot.size = NULL; spot.size.fullres = NULL; k.min = NULL;
   }
 
   Prob <- array(0, dim = c(numCluster,numCluster,nLR))
