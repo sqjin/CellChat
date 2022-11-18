@@ -163,9 +163,11 @@ createCellChat <- function(object, meta = NULL, group.by = NULL,
     if (is.null(group.by)) {
       group.by <- "ident"
     }
-    if (is.null(coordinates)) {
-      coordinates <- GetTissueCoordinates(object, scale = NULL, cols = c("imagerow", "imagecol"))
-      # scale.factors <- object@images[["slice1"]]@scale.factors
+    if (datatype %in% c("spatial")) {
+      if (is.null(coordinates)) {
+        coordinates <- GetTissueCoordinates(object, scale = NULL, cols = c("imagerow", "imagecol"))
+        # scale.factors <- object@images[["slice1"]]@scale.factors
+      }
     }
 
   }
