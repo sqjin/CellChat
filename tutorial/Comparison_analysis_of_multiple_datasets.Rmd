@@ -43,12 +43,14 @@ setwd(data.dir)
 
 # Load CellChat object of each dataset and then merge together
 USERS need to run CellChat on each dataset seperately and then merge different CellChat objects together.
-Please do `updateCellChat` if you have CellChat objects that are obtained using the earlier version (< 0.5.0). 
+Please do `updateCellChat` if you have CellChat objects that are obtained using the earlier version (< 1.6.0). 
 ```{r}
 # cellchat.NL <- readRDS(url("https://ndownloader.figshare.com/files/25954199"))
 # cellchat.LS <- readRDS(url("https://ndownloader.figshare.com/files/25956518"))
 cellchat.NL <- readRDS("/Users/jinsuoqin/Documents/CellChat/tutorial/cellchat_humanSkin_NL.rds")
 cellchat.LS <- readRDS("/Users/jinsuoqin/Documents/CellChat/tutorial/cellchat_humanSkin_LS.rds")
+cellchat.NL <- updateCellChat(cellchat.NL)
+cellchat.LS <- updateCellChat(cellchat.LS)
 object.list <- list(NL = cellchat.NL, LS = cellchat.LS)
 cellchat <- mergeCellChat(object.list, add.names = names(object.list))
 cellchat
