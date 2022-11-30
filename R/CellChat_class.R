@@ -170,6 +170,7 @@ createCellChat <- function(object, meta = NULL, group.by = NULL,
       }
     }
 
+
   }
   # SingleCellExperiment object as input
   if (is(object,"SingleCellExperiment")) {
@@ -210,6 +211,11 @@ createCellChat <- function(object, meta = NULL, group.by = NULL,
     meta <- data.frame()
   }
   if (datatype %in% c("spatial")) {
+    if (ncol(coordinates) == 2) {
+      colnames(coordinates) <- c("x_cent","y_cent")
+    } else {
+      stop("Please check the input 'coordinates' and make sure it is a two column matrix.")
+    }
     if (is.null(scale.factors) | !("spot.diameter" %in% names(scale.factors)) | !("spot" %in% names(scale.factors))) {
       stop("scale.factors with elements named `spot.diameter` and `spot` should be provided!")
     } else {
@@ -256,7 +262,7 @@ mergeCellChat <- function(object.list, add.names = NULL, merge.data = FALSE, cel
   if (is.null(add.names)) {
     add.names <- paste("Dataset",1:length(object.list),sep = "_")
   }
-  slot.name <- c("net", "netP", "idents" ,"LR", "var.features")
+  slot.name <- c("net", "netP", "idents" ,"LR", "var.features", "images")
   slot.combined <- vector("list", length(slot.name))
   names(slot.combined) <- slot.name
   for (i in 1:length(slot.name)) {
@@ -326,11 +332,12 @@ mergeCellChat <- function(object.list, add.names = NULL, merge.data = FALSE, cel
   slot.combined$idents$joint <- idents.joint
 
   if (merge.data) {
-    message("Merge the following slots: 'data','data.signaling','net', 'netP','meta', 'idents', 'var.features', 'DB', and 'LR'.")
+    message("Merge the following slots: 'data','data.signaling','images','net', 'netP','meta', 'idents', 'var.features', 'DB', and 'LR'.")
     merged.object <- methods::new(
       Class = "CellChat",
       data = data.joint,
       data.signaling = data.signaling.joint,
+      images = slot.combined$images,
       net = slot.combined$net,
       netP = slot.combined$netP,
       meta = meta.joint,
@@ -339,10 +346,11 @@ mergeCellChat <- function(object.list, add.names = NULL, merge.data = FALSE, cel
       LR = slot.combined$LR,
       DB = object.list[[1]]@DB)
   } else {
-    message("Merge the following slots: 'data.signaling','net', 'netP','meta', 'idents', 'var.features' , 'DB', and 'LR'.")
+    message("Merge the following slots: 'data.signaling','images','net', 'netP','meta', 'idents', 'var.features' , 'DB', and 'LR'.")
     merged.object <- methods::new(
       Class = "CellChat",
       data.signaling = data.signaling.joint,
+      images = slot.combined$images,
       net = slot.combined$net,
       netP = slot.combined$netP,
       meta = meta.joint,
@@ -352,6 +360,17 @@ mergeCellChat <- function(object.list, add.names = NULL, merge.data = FALSE, cel
       DB = object.list[[1]]@DB)
   }
   merged.object@options$mode <- "merged"
+
+  datatype.joint <- c()
+  for (j in 1:length(object.list)) {
+    datatype.joint <- union(datatype.joint, slot(object.list[[j]], "options")$datatype)
+  }
+  if (length(datatype.joint) == 1){
+    merged.object@options$datatype <- datatype.joint
+  } else {
+    message("The data types in these objects are  ", datatype.joint,'\n')
+    stop("Comparison analysis is not suggested for different types of data.")
+  }
   return(merged.object)
 }
 
@@ -387,9 +406,6 @@ updateCellChat <- function(object) {
   if (!("mode" %in% names(object@options))) {
     object@options$mode <- "single"
   }
-  # if (!("images" %in% slotNames(object))) {
-  #   images = list()
-  # }
   if (!("datatype" %in% names(object@options))) {
     object@options$datatype <- "RNA"
     images = list()
@@ -525,8 +541,9 @@ liftCellChat <- function(object, group.new = NULL) {
             })
             names(values.new) <- names(values)
           }
+          netP[[netP.j]] <- values.new
         }
-        netP[[netP.j]] <- values.new
+
       }
       object@netP[[i]] <- netP
       # cat("Update slot object@idents...", '\n')
@@ -710,8 +727,25 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
     names(net.subset) <- names(object@net)
     names(netP.subset) <- names(object@netP)
     names(idents.subset) <- names(object@idents[1:(length(object@idents)-1)])
+    images.subset <- vector("list", length = length(idents))
+    names(images.subset) <- names(object@idents[1:(length(object@idents)-1)])
+
     for (i in 1:length(idents)) {
-      cat("Update slots object@net, object@netP, object@idents in dataset ", names(object@idents)[i],'\n')
+      cat("Update slots object@images, object@net, object@netP, object@idents in dataset ", names(object@idents)[i],'\n')
+      images <- object@images[[i]]
+      for (images.j in names(images)) {
+        values <- images[[images.j]]
+        if (images.j %in% c("coordinates")) {
+          values.new <- values[cells.use.index, ]
+          images[[images.j]] <- values.new
+        }
+        if (images.j %in% c("distance")) {
+          values.new <- values[group.existing.index, group.existing.index, drop = FALSE]
+          images[[images.j]] <- values.new
+        }
+      }
+      images.subset[[i]] <- images
+
       # cat("Update slot object@net...", '\n')
       net <- object@net[[i]]
       for (net.j in names(net)) {
@@ -724,7 +758,7 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
           values.new <- values[group.existing.index, group.existing.index]
           net[[net.j]] <- values.new
         }
-        net[[net.j]] <- values.new
+       # net[[net.j]] <- values.new
       }
       net.subset[[i]] <- net
 
@@ -765,19 +799,36 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
     idents.subset$joint <- factor(object@idents$joint[cells.use.index], levels = level.use)
 
   } else {
-    cat("Update slots object@net, object@netP in a single dataset...", '\n')
-    # cat("Update slot object@net...", '\n')
-    net <- object@net
+    cat("Update slots object@images, object@net, object@netP in a single dataset...", '\n')
+
     group.existing <- level.use0[level.use0 %in% level.use]
     group.existing.index <- which(level.use0 %in% level.use)
+
+    images <- object@images
+    for (images.j in names(images)) {
+      values <- images[[images.j]]
+      if (images.j %in% c("coordinates")) {
+        values.new <- values[cells.use.index, ]
+        images[[images.j]] <- values.new
+      }
+      if (images.j %in% c("distance")) {
+        values.new <- values[group.existing.index, group.existing.index, drop = FALSE]
+        images[[images.j]] <- values.new
+      }
+    }
+    images.subset <- images
+
+
+    # cat("Update slot object@net...", '\n')
+    net <- object@net
     for (net.j in names(net)) {
       values <- net[[net.j]]
       if (net.j %in% c("prob","pval")) {
-        values.new <- values[group.existing.index, group.existing.index, ]
+        values.new <- values[group.existing.index, group.existing.index, drop = FALSE]
         net[[net.j]] <- values.new
       }
       if (net.j %in% c("count","sum","weight")) {
-        values.new <- values[group.existing.index, group.existing.index]
+        values.new <- values[group.existing.index, group.existing.index, drop = FALSE]
         net[[net.j]] <- values.new
       }
     }
@@ -824,6 +875,7 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
     data = data.subset,
     data.signaling = data.signaling.subset,
     data.project = data.project.subset,
+    images = images.subset,
     net = net.subset,
     netP = netP.subset,
     meta = meta.subset,

@@ -263,7 +263,9 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thres
   object@options$parameter <- list(type.mean = type, trim = trim, raw.use = raw.use, population.size = population.size,  nboot = nboot, seed.use = seed.use, Kh = Kh, n = n,
                                    distance.use = distance.use, interaction.length = interaction.length, spot.size = spot.size, spot.size.fullres = spot.size.fullres, k.min = k.min
                                    )
-  object@images$distance <- d.spatial
+  if (object@options$datatype != "RNA") {
+    object@images$distance <- d.spatial
+  }
   object@net <- net
   print(paste0('>>> CellChat inference is done. Parameter values are stored in `object@options$parameter` <<< [', Sys.time(),']'))
   return(object)
@@ -302,7 +304,7 @@ computeCommunProbPathway <- function(object = NULL, net = NULL, pairLR.use = NUL
   group <- factor(pairLR.use$pathway_name, levels = pathways)
   prob.pathways <- aperm(apply(prob, c(1, 2), by, group, sum), c(2, 3, 1))
   pathways.sig <- pathways[apply(prob.pathways, 3, sum) != 0]
-  prob.pathways.sig <- prob.pathways[,,pathways.sig]
+  prob.pathways.sig <- prob.pathways[,,pathways.sig, drop = FALSE]
   idx <- sort(apply(prob.pathways.sig, 3, sum), decreasing=TRUE, index.return = TRUE)$ix
   pathways.sig <- pathways.sig[idx]
   prob.pathways.sig <- prob.pathways.sig[, , idx]
