@@ -10,6 +10,9 @@ netVisual_bubble(
   targets.use = NULL,
   signaling = NULL,
   pairLR.use = NULL,
+  sort.by.source = FALSE,
+  sort.by.target = FALSE,
+  sort.by.source.priority = TRUE,
   color.heatmap = c("Spectral", "viridis"),
   n.colors = 10,
   direction = -1,
@@ -46,7 +49,9 @@ netVisual_bubble(
 
 \item{signaling}{a character vector giving the name of signaling pathways of interest}
 
-\item{pairLR.use}{a data frame consisting of one column named either "interaction_name" or "pathway_name", defining the interactions of interest}
+\item{pairLR.use}{a data frame consisting of one column named either "interaction_name" or "pathway_name", defining the interactions of interest and the order of L-R on y-axis}
+
+\item{sort.by.source, sort.by.target, sort.by.source.priority}{set the order of interacting cell pairs on x-axis; please check examples for details}
 
 \item{color.heatmap}{A character string or vector indicating the colormap option to use. It can be the avaibale color palette in viridis_pal() or brewer.pal()}
 
@@ -102,9 +107,20 @@ netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:11), remove.isolat
 # show all the significant interactions (L-R pairs) associated with certain signaling pathways
 netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:11), signaling = c("CCL","CXCL"))
 
-# show all the significant interactions (L-R pairs) based on user's input (defined by `pairLR.use`)
+# show all the significant interactions (L-R pairs) based on user's input (defined by `pairLR.use`; the order of L-R is also based on user's input)
 pairLR.use <- extractEnrichedLR(cellchat, signaling = c("CCL","CXCL","FGF"))
 netVisual_bubble(cellchat, sources.use = c(3,4), targets.use = c(5:8), pairLR.use = pairLR.use, remove.isolate = TRUE)
+
+# set the order of interacting cell pairs on x-axis
+# (1) Default: first sort cell pairs based on the appearance of sources in levels(object@idents), and then based on the appearance of targets in levels(object@idents)
+# (2) sort cell pairs based on the targets.use defined by users
+netVisual_bubble(cellchat, targets.use = c("LC","Inflam. DC","cDC2","CD40LG+ TC"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.target = T)
+# (3) sort cell pairs based on the sources.use defined by users
+netVisual_bubble(cellchat, sources.use = c("FBN1+ FIB","APOE+ FIB","Inflam. FIB"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.source = T)
+# (4) sort cell pairs based on the sources.use and then targets.use defined by users
+netVisual_bubble(cellchat, sources.use = c("FBN1+ FIB","APOE+ FIB","Inflam. FIB"), targets.use = c("LC","Inflam. DC","cDC2","CD40LG+ TC"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.source = T, sort.by.target = T)
+# (5) sort cell pairs based on the targets.use and then sources.use defined by users
+netVisual_bubble(cellchat, sources.use = c("FBN1+ FIB","APOE+ FIB","Inflam. FIB"), targets.use = c("LC","Inflam. DC","cDC2","CD40LG+ TC"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.source = T, sort.by.target = T, sort.by.source.priority = FALSE)
 
 # show all the increased interactions in the second dataset compared to the first dataset
 netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:8), remove.isolate = TRUE, max.dataset = 2)
