@@ -2049,7 +2049,8 @@ netVisual_barplot <- function(object, comparison = c(1,2), measure = c("count", 
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
 #' @param signaling a character vector giving the name of signaling pathways of interest
-#' @param pairLR.use a data frame consisting of one column named either "interaction_name" or "pathway_name", defining the interactions of interest
+#' @param pairLR.use a data frame consisting of one column named either "interaction_name" or "pathway_name", defining the interactions of interest and the order of L-R on y-axis
+#' @param sort.by.source,sort.by.target,sort.by.source.priority set the order of interacting cell pairs on x-axis; please check examples for details
 #' @param color.heatmap A character string or vector indicating the colormap option to use. It can be the avaibale color palette in viridis_pal() or brewer.pal()
 #' @param direction Sets the order of colors in the scale. If 1, the default colors are used. If -1, the order of colors is reversed.
 #' @param n.colors number of basic colors to generate from color palette
@@ -2082,9 +2083,20 @@ netVisual_barplot <- function(object, comparison = c(1,2), measure = c("count", 
 #' # show all the significant interactions (L-R pairs) associated with certain signaling pathways
 #' netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:11), signaling = c("CCL","CXCL"))
 #'
-#' # show all the significant interactions (L-R pairs) based on user's input (defined by `pairLR.use`)
+#' # show all the significant interactions (L-R pairs) based on user's input (defined by `pairLR.use`; the order of L-R is also based on user's input)
 #' pairLR.use <- extractEnrichedLR(cellchat, signaling = c("CCL","CXCL","FGF"))
 #' netVisual_bubble(cellchat, sources.use = c(3,4), targets.use = c(5:8), pairLR.use = pairLR.use, remove.isolate = TRUE)
+#'
+#' # set the order of interacting cell pairs on x-axis
+#' # (1) Default: first sort cell pairs based on the appearance of sources in levels(object@idents), and then based on the appearance of targets in levels(object@idents)
+#' # (2) sort cell pairs based on the targets.use defined by users
+#' netVisual_bubble(cellchat, targets.use = c("LC","Inflam. DC","cDC2","CD40LG+ TC"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.target = T)
+#' # (3) sort cell pairs based on the sources.use defined by users
+#' netVisual_bubble(cellchat, sources.use = c("FBN1+ FIB","APOE+ FIB","Inflam. FIB"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.source = T)
+#' # (4) sort cell pairs based on the sources.use and then targets.use defined by users
+#' netVisual_bubble(cellchat, sources.use = c("FBN1+ FIB","APOE+ FIB","Inflam. FIB"), targets.use = c("LC","Inflam. DC","cDC2","CD40LG+ TC"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.source = T, sort.by.target = T)
+#' # (5) sort cell pairs based on the targets.use and then sources.use defined by users
+#' netVisual_bubble(cellchat, sources.use = c("FBN1+ FIB","APOE+ FIB","Inflam. FIB"), targets.use = c("LC","Inflam. DC","cDC2","CD40LG+ TC"), pairLR.use = pairLR.use, remove.isolate = TRUE, sort.by.source = T, sort.by.target = T, sort.by.source.priority = FALSE)
 #'
 #'# show all the increased interactions in the second dataset compared to the first dataset
 #' netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:8), remove.isolate = TRUE, max.dataset = 2)
@@ -2092,7 +2104,7 @@ netVisual_barplot <- function(object, comparison = c(1,2), measure = c("count", 
 #'# show all the decreased interactions in the second dataset compared to the first dataset
 #' netVisual_bubble(cellchat, sources.use = 4, targets.use = c(5:8), remove.isolate = TRUE, max.dataset = 1)
 #'}
-netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, signaling = NULL, pairLR.use = NULL, color.heatmap = c("Spectral","viridis"), n.colors = 10, direction = -1, thresh = 0.05,
+netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, signaling = NULL, pairLR.use = NULL, sort.by.source = FALSE, sort.by.target = FALSE, sort.by.source.priority = TRUE, color.heatmap = c("Spectral","viridis"), n.colors = 10, direction = -1, thresh = 0.05,
                              comparison = NULL, group = NULL, remove.isolate = FALSE, max.dataset = NULL, min.dataset = NULL,
                              min.quantile = 0, max.quantile = 1, line.on = TRUE, line.size = 0.2, color.text.use = TRUE, color.text = NULL,
                              title.name = NULL, font.size = 10, font.size.title = 10, show.legend = TRUE,
@@ -2311,8 +2323,44 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
   if (nrow(df) == 0) {
     stop("No interactions are detected. Please consider changing the cell groups for analysis. ")
   }
-  df$interaction_name_2 <- factor(df$interaction_name_2, levels = unique(df$interaction_name_2))
+  # Re-order y-axis
+  interaction_name_2.order <- intersect(object@DB$interaction[pairLR.use$interaction_name, ]$interaction_name_2, unique(df$interaction_name_2))
+  df$interaction_name_2 <- factor(df$interaction_name_2, levels = interaction_name_2.order)
+
+  # Re-order x-axis
   df$source.target = droplevels(df$source.target, exclude = setdiff(levels(df$source.target),unique(df$source.target)))
+  if (sort.by.target & !sort.by.source) {
+    if (!is.null(targets.use)) {
+      df$target <- factor(df$target, levels = intersect(targets.use, df$target))
+      df <- with(df, df[order(target, source),])
+      source.target.order <- unique(as.character(df$source.target))
+      df$source.target <- factor(df$source.target, levels = source.target.order)
+    }
+  }
+  if (sort.by.source & !sort.by.target) {
+    if (!is.null(sources.use)) {
+      df$source <- factor(df$source, levels = intersect(sources.use, df$source))
+      df <- with(df, df[order(source, target),])
+      source.target.order <- unique(as.character(df$source.target))
+      df$source.target <- factor(df$source.target, levels = source.target.order)
+    }
+  }
+  if (sort.by.source & sort.by.target) {
+    if (!is.null(sources.use)) {
+      df$source <- factor(df$source, levels = intersect(sources.use, df$source))
+      if (!is.null(targets.use)) {
+        df$target <- factor(df$target, levels = intersect(targets.use, df$target))
+      }
+      if (sort.by.source.priority) {
+        df <- with(df, df[order(source, target),])
+      } else {
+        df <- with(df, df[order(target, source),])
+      }
+
+      source.target.order <- unique(as.character(df$source.target))
+      df$source.target <- factor(df$source.target, levels = source.target.order)
+    }
+  }
 
   g <- ggplot(df, aes(x = source.target, y = interaction_name_2, color = prob, size = pval)) +
     geom_point(pch = 16) +
@@ -2384,6 +2432,7 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
   }
 
 }
+
 
 
 
