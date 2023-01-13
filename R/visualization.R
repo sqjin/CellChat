@@ -2324,8 +2324,10 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
     stop("No interactions are detected. Please consider changing the cell groups for analysis. ")
   }
   # Re-order y-axis
-  interaction_name_2.order <- intersect(object@DB$interaction[pairLR.use$interaction_name, ]$interaction_name_2, unique(df$interaction_name_2))
-  df$interaction_name_2 <- factor(df$interaction_name_2, levels = interaction_name_2.order)
+  if (!is.null(pairLR.use)) {
+    interaction_name_2.order <- intersect(object@DB$interaction[pairLR.use$interaction_name, ]$interaction_name_2, unique(df$interaction_name_2))
+    df$interaction_name_2 <- factor(df$interaction_name_2, levels = interaction_name_2.order)
+  }
 
   # Re-order x-axis
   df$source.target = droplevels(df$source.target, exclude = setdiff(levels(df$source.target),unique(df$source.target)))
