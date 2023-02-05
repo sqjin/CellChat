@@ -2135,6 +2135,16 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
   if (direction == -1) {
     color.use <- rev(color.use)
   }
+  
+  if (!is.null(pairLR.use)) {
+    if (!is.data.frame(pairLR.use)) {
+      stop("pairLR.use should be a data frame with a signle column named either 'interaction_name' or 'pathway_name' ")
+    } else if ("pathway_name" %in% colnames(pairLR.use)) {
+      pairLR.use$pathway_name <- as.character(pairLR.use$pathway_name)
+    } else if ("interaction_name" %in% colnames(pairLR.use)) {
+      pairLR.use$interaction_name <- as.character(pairLR.use$interaction_name)
+    }
+  }  
 
   if (is.null(comparison)) {
     cells.level <- levels(object@idents)
