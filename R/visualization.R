@@ -1682,7 +1682,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     net <- net[, -idx]
   }
 
-  net[abs(net) < stats::quantile(abs(net), probs = 1-top)] <- 0
+  net[abs(net) < stats::quantile(abs(net), probs = 1-top, na.rm= T)] <- 0
 
   g <- graph_from_adjacency_matrix(net, mode = "directed", weighted = T)
   edge.start <- igraph::ends(g, es=igraph::E(g), names=FALSE)
