@@ -1337,7 +1337,7 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
   igraph::E(g)$label.color<-edge.label.color
   igraph::E(g)$label.cex<-edge.label.cex
   igraph::E(g)$color<- grDevices::adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
-
+  igraph::E(g)$loop.angle <- rep(0, length(igraph::E(g)))
   if(sum(edge.start[,2]==edge.start[,1])!=0){
     igraph::E(g)$loop.angle[which(edge.start[,2]==edge.start[,1])]<-loop.angle[edge.start[which(edge.start[,2]==edge.start[,1]),1]]
   }
