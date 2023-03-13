@@ -706,7 +706,7 @@ netClustering <- function(object, slot.name = "netP", type = c("functional","str
       N <- nrow(data.use)
       kRange <- seq(2,min(N-1, 10),by = 1)
       if (do.parallel) {
-        future::plan("multiprocess", workers = nCores)
+        future::plan("multisession", workers = nCores)
         options(future.globals.maxSize = 1000 * 1024^2)
       }
       my.sapply <- ifelse(
