@@ -1868,8 +1868,6 @@ netVisual_heatmap <- function(object, comparison = c(1,2), measure = c("count", 
     idx1 <- which(Matrix::rowSums(net) == 0)
     idx2 <- which(Matrix::colSums(net) == 0)
     idx <- intersect(idx1, idx2)
-    net <- net[-idx, ]
-    net <- net[, -idx]
     if (length(idx) > 0) {
       net <- net[-idx, ]
       net <- net[, -idx]
