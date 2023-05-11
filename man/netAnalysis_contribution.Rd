@@ -8,6 +8,8 @@ netAnalysis_contribution(
   object,
   signaling,
   signaling.name = NULL,
+  sources.use = NULL,
+  targets.use = NULL,
   width = 0.1,
   vertex.receiver = NULL,
   thresh = 0.05,
@@ -24,6 +26,10 @@ netAnalysis_contribution(
 \item{signaling}{a signaling pathway name}
 
 \item{signaling.name}{alternative signaling pathway name to show on the plot}
+
+\item{sources.use}{a vector giving the index or the name of source cell groups}
+
+\item{targets.use}{a vector giving the index or the name of target cell groups.}
 
 \item{width}{the width of individual bar}
 
