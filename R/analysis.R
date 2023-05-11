@@ -4,6 +4,8 @@
 #' @param object CellChat object
 #' @param signaling a signaling pathway name
 #' @param signaling.name alternative signaling pathway name to show on the plot
+#' @param sources.use a vector giving the index or the name of source cell groups
+#' @param targets.use a vector giving the index or the name of target cell groups.
 #' @param width the width of individual bar
 #' @param vertex.receiver a numeric vector giving the index of the cell groups as targets in the first hierarchy plot
 #' @param thresh threshold of the p-value for determining significant interaction
@@ -20,7 +22,8 @@
 #' @export
 #'
 #' @examples
-netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, width = 0.1, vertex.receiver = NULL, thresh = 0.05, return.data = FALSE,
+netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, sources.use = NULL, targets.use = NULL,
+                                     width = 0.1, vertex.receiver = NULL, thresh = 0.05, return.data = FALSE,
                                      x.rotation = 0, title = "Contribution of each L-R pair",
                                      font.size = 10, font.size.title = 10) {
   pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
@@ -36,6 +39,31 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
   pval <- net$pval
 
   prob[pval > thresh] <- 0
+
+  if (!is.null(sources.use)) {
+    if (is.character(sources.use)) {
+      if (all(sources.use %in% dimnames(prob)[[1]])) {
+        sources.use <- match(sources.use, dimnames(prob)[[1]])
+      } else {
+        stop("The input `sources.use` should be cell group names or a numerical vector!")
+      }
+    }
+    idx.t <- setdiff(1:nrow(prob), sources.use)
+    prob[idx.t, , ] <- 0
+  }
+
+  if (!is.null(targets.use)) {
+    if (is.character(targets.use)) {
+      if (all(targets.use %in% dimnames(prob)[[1]])) {
+        targets.use <- match(targets.use, dimnames(prob)[[2]])
+      } else {
+        stop("The input `targets.use` should be cell group names or a numerical vector!")
+      }
+    }
+    idx.t <- setdiff(1:nrow(prob), targets.use)
+    prob[ ,idx.t, ] <- 0
+  }
+
   if (length(pairLR.name) > 1) {
     pairLR.name.use <- pairLR.name[apply(prob[,,pairLR.name], 3, sum) != 0]
   } else {
@@ -79,7 +107,7 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, w
       df <- df1
     }
     df <- df[order(df$contribution, decreasing = TRUE), ]
-   # df$name <- factor(df$name, levels = unique(df$name))
+    # df$name <- factor(df$name, levels = unique(df$name))
     df$name <- factor(df$name,levels=df$name[order(df$contribution, decreasing = TRUE)])
     df1$name <- factor(df1$name,levels=df1$name[order(df1$contribution, decreasing = TRUE)])
     gg <- ggplot(df, aes(x=name, y=contribution)) + geom_bar(stat="identity", width = 0.7) +
