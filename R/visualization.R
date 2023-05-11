@@ -1338,6 +1338,7 @@ netVisual_circle <-function(net, color.use = NULL,title.name = NULL, sources.use
   igraph::E(g)$label.cex<-edge.label.cex
   igraph::E(g)$color<- grDevices::adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
   igraph::E(g)$loop.angle <- rep(0, length(igraph::E(g)))
+
   if(sum(edge.start[,2]==edge.start[,1])!=0){
     igraph::E(g)$loop.angle[which(edge.start[,2]==edge.start[,1])]<-loop.angle[edge.start[which(edge.start[,2]==edge.start[,1]),1]]
   }
@@ -2133,7 +2134,7 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
   if (direction == -1) {
     color.use <- rev(color.use)
   }
-  
+
   if (!is.null(pairLR.use)) {
     if (!is.data.frame(pairLR.use)) {
       stop("pairLR.use should be a data frame with a signle column named either 'interaction_name' or 'pathway_name' ")
@@ -2142,7 +2143,7 @@ netVisual_bubble <- function(object, sources.use = NULL, targets.use = NULL, sig
     } else if ("interaction_name" %in% colnames(pairLR.use)) {
       pairLR.use$interaction_name <- as.character(pairLR.use$interaction_name)
     }
-  }  
+  }
 
   if (is.null(comparison)) {
     cells.level <- levels(object@idents)
@@ -4238,4 +4239,382 @@ barplot_internal <- function(df, x = "cellType", y = "value", fill = "condition"
   gg
   return(gg)
 }
+
+
+########################################
+#             spatial plot             #
+########################################
+#' Visualize spatial cell groups
+#'
+#' This function takes a CellChat object as input, and then plot cell groups of interest.
+#'
+#' @param object cellchat object
+#' @param color.use defining the color for each cell group
+#' @param group.by Name of one metadata columns to group (color) cells. Default is the defined cell groups in CellChat object
+#' @param sources.use a vector giving the index or the name of source cell groups
+#' @param targets.use a vector giving the index or the name of target cell groups
+#' @param idents.use a vector giving the index or the name of cell groups of interest
+#' @param alpha the transparency of individual spot
+#' @param shape.by the shape of individual spot
+#' @param title.name title name
+#' @param point.size the size of spots
+#' @param legend.size the size of legend
+#' @param legend.text.size the text size on the legend
+#' @param legend.position legend position
+#' @param ncol number of columns of the legend text
+#' @param byrow arrange the legend text byrow or not
+#' @return
+#' @export
+#'
+#' @examples
+spatialDimPlot <- function(object, color.use = NULL, group.by = NULL, sources.use = NULL, targets.use = NULL, idents.use = NULL,
+                           alpha = 1, shape.by = 16, title.name = NULL, point.size = 2.4,
+                           legend.size = 5, legend.text.size = 8, legend.position = "right", ncol = 1, byrow = FALSE){
+  coordinates <- object@images$coordinates
+  if (ncol(coordinates) == 2) {
+    colnames(coordinates) <- c("x_cent","y_cent")
+    temp_coordinates = coordinates
+    coordinates[,1] = temp_coordinates[,2]
+    coordinates[,2] = temp_coordinates[,1]
+  } else {
+    stop("Please check the input 'coordinates' and make sure it is a two column matrix.")
+  }
+
+  if (is.null(group.by)) {
+    labels <- object@idents
+  } else {
+    labels = object@meta[,group.by]
+    labels <- factor(labels)
+  }
+  cells.level <- levels(labels)
+
+  if (!is.null(idents.use)) {
+    if (is.numeric(idents.use)) {
+      idents.use <- cells.level[idents.use]
+    }
+    cell.use <- !(labels %in% idents.use)
+    labels[cell.use] <- NA
+    cells.level <- cells.level[cells.level %in% idents.use]
+    labels <- factor(labels, levels = cells.level)
+  }
+
+  if (is.null(sources.use) & is.null(targets.use)){
+    if (is.null(color.use)) {
+      color.use <- scPalette(nlevels(labels))
+    }
+  } else {
+    if (is.numeric(sources.use)) {
+      sources.use <- cells.level[sources.use]
+    }
+    if (is.numeric(targets.use)) {
+      targets.use <- cells.level[targets.use]
+    }
+
+    group <- rep("Others", length(labels))
+    group[(labels %in% sources.use)] <- sources.use
+    group[(labels %in% targets.use)] <- targets.use
+    group = factor(group, levels = c(sources.use, targets.use, "Others"))
+
+    if (is.null(color.use)) {
+      color.use.all <- scPalette(nlevels(labels))
+      color.use <- color.use.all[match(c(sources.use, targets.use), levels(labels))]
+      color.use[nlevels(group)] <- "grey90"
+    }
+    labels <- group
+  }
+
+  gg <- ggplot(data = coordinates,aes(x=x_cent,y=y_cent,colour = labels))+
+    geom_point(alpha = alpha, size = point.size, shape=shape.by) +
+    scale_color_manual(values = color.use, na.value = "grey90") + theme(legend.position = legend.position) +
+    theme(legend.title = element_blank(), legend.text = element_text(size = legend.text.size))  + # , legend.key.size = unit(0.4, "inches")
+    guides(color = guide_legend(override.aes = list(size=legend.size), ncol = ncol, byrow = byrow)) +
+    theme(panel.background = element_blank(),axis.ticks = element_blank(), axis.text = element_blank()) + xlab(NULL) + ylab(NULL) +
+    coord_fixed() + theme(aspect.ratio = 1)+ theme(legend.key = element_blank())
+  gg <- gg + scale_y_reverse()
+
+  if (!is.null(title.name)){
+    gg <- gg + ggtitle(title.name) + theme(plot.title = element_text(hjust = 0.5, vjust = 0, size = 10))
+  }
+  return(gg)
+
+}
+
+
+#' A spatial feature plots
+#'
+#' This function takes a CellChat object as input, and then plot gene expression distribution over spots/cells on the image.
+#'
+#' @param object cellchat object
+#' @param features a char vector containing features to visualize. `features` can be genes or column names of `object@meta`.
+#' @param signaling signalling names to visualize
+#' @param pairLR.use a data frame consisting of one column named "interaction_name", defining the L-R pairs of interest
+#' @param enriched.only  whether only return the identified enriched signaling genes in the database. Default = TRUE, returning the significantly enriched signaling interactions
+#' @param do.group set `do.group = TRUE` when only showing enriched signaling based on cell group-level communication; set `do.group = FALSE` when only showing enriched signaling based on individual cell-level communication
+#' @param thresh threshold of the p-value for determining significant interaction when visualizing links at the level of ligands/receptors;
+#' @param color.heatmap A character string or vector indicating the colormap option to use. It can be the avaibale color palette in brewer.pal() or viridis_pal() (e.g., "Spectral","viridis")
+#' @param n.colors,direction n.colors: number of basic colors to generate from color palette; direction: Sets the order of colors in the scale. If 1, the default colors are used. If -1, the order of colors is reversed.
+#' @param do.binary,cutoff whether binarizing the expression using a given cutoff
+#' @param color.use defining the color for cells/spots expressing ligand only, expressing receptor only, expressing both ligand & receptor and cells/spots without expression of given ligands and receptors
+#' @param alpha the transparency of individual spot
+#' @param point.size the size of cell slot
+#' @param shape.by the shape of individual spot
+#' @param legend.size the size of legend
+#' @param legend.text.size the text size on the legend
+#' @param ncol number of columns if plotting multiple plots
+#' @param show.legend whether show each figure legend
+#' @param show.legend.combined whether show the figure legend for the last plot
+#' @return
+#' @export
+#'
+#' @examples
+
+spatialFeaturePlot <- function(object, features = NULL, signaling = NULL, pairLR.use = NULL, enriched.only = TRUE,thresh = 0.05, do.group = TRUE,
+                               color.heatmap = "Spectral", n.colors = 8, direction = -1,
+                               do.binary = FALSE, cutoff = NULL, color.use = NULL, alpha = 1,
+                               point.size = 0.8, legend.size = 3, legend.text.size = 8, shape.by = 16, ncol = NULL,
+                               show.legend = TRUE, show.legend.combined = FALSE){
+  coords <- object@images$coordinates
+  if (ncol(coords) == 2) {
+    colnames(coords) <- c("x_cent","y_cent")
+    temp_coord = coords
+    coords[,1] = temp_coord[,2]
+    coords[,2] = temp_coord[,1]
+  } else {
+    stop("Please check the input 'coordinates' and make sure it is a two column matrix.")
+  }
+  data <- as.matrix(object@data)
+  meta <- object@meta
+  if (length(color.heatmap) == 1) {
+    colormap <- tryCatch({
+      RColorBrewer::brewer.pal(n = n.colors, name = color.heatmap)
+    }, error = function(e) {
+      scales::viridis_pal(option = color.heatmap, direction = -1)(n.colors)
+    })
+    if (direction == -1) {
+      colormap <- rev(colormap)
+    }
+    colormap <- colorRampPalette(colormap)(99)
+    colormap[1] <- "#E5E5E5"
+  } else {
+    colormap <- color.heatmap
+  }
+
+  if (is.null(features) & is.null(signaling) & is.null(pairLR.use)){
+    stop("Please input either features, signaling or pairLR.use.")
+  }
+  if (!is.null(features) & !is.null(signaling)){
+    stop("Please don't input features or signaling simultaneously.")
+  }
+  if (!is.null(features) & !is.null(pairLR.use)){
+    stop("Please don't input features or pairLR.use simultaneously.")
+  }
+  if (!is.null(signaling) & !is.null(pairLR.use)){
+    stop("Please don't input signaling or pairLR.use simultaneously.")
+  }
+
+  df <- data.frame(x = coords[, 1], y = coords[, 2])
+  if (!do.binary) {
+    if (!is.null(signaling)) {
+      res <- extractEnrichedLR(object, signaling = signaling, geneLR.return = TRUE, enriched.only = enriched.only, thresh = thresh)
+      feature.use <- res$geneLR
+    } else if (!is.null(pairLR.use)) {
+      if (is.character(pairLR.use)) {
+        pairLR.use <- data.frame(interaction_name = pairLR.use)
+      }
+      if (enriched.only) {
+        if (do.group) {
+          object@net$prob[object@net$pval > thresh] <- 0
+          pairLR.use.name <- pairLR.use$interaction_name[pairLR.use$interaction_name %in% dimnames(object@net$prob)[[3]]]
+          prob <- object@net$prob[,,pairLR.use.name, drop = FALSE]
+          prob.sum <- apply(prob > 0, 3, sum)
+          names(prob.sum) <- pairLR.use.name
+          signaling.includes <- names(prob.sum)[prob.sum > 0]
+          pairLR.use <- pairLR.use[pairLR.use$interaction_name %in% signaling.includes, , drop = FALSE]
+        } else {
+          pairLR.use.name <- pairLR.use$interaction_name[pairLR.use$interaction_name %in% dimnames(object@net$prob.cell)[[3]]]
+          prob.cell <- object@net$prob.cell[,,pairLR.use.name, drop = FALSE]
+          prob.sum <- apply(prob.cell > 0, 3, sum)
+          names(prob.sum) <- pairLR.use.name
+          signaling.includes <- names(prob.sum)[prob.sum > 0]
+          pairLR.use <- pairLR.use[pairLR.use$interaction_name %in% signaling.includes, , drop = FALSE]
+        }
+        if (length(pairLR.use$interaction_name) == 0) {
+          stop(paste0('There is no significant communication related with the input `pairLR.use`. Set `enriched.only = FALSE` to show non-significant signaling.'))
+        }
+      }
+      LR.pair <- object@LR$LRsig[pairLR.use$interaction_name, c("ligand","receptor")]
+      geneL <- unique(LR.pair$ligand)
+      geneR <- unique(LR.pair$receptor)
+      geneL <- extractGeneSubset(geneL, object@DB$complex, object@DB$geneInfo)
+      geneR <- extractGeneSubset(geneR, object@DB$complex, object@DB$geneInfo)
+      feature.use <- c(geneL, geneR)
+    } else {
+      feature.use <- features
+    }
+    if (length(intersect(feature.use, rownames(data))) > 0) {
+      feature.use <- feature.use[feature.use %in% rownames(data)]
+      data.use <- data[feature.use, , drop = FALSE]
+    } else if (length(intersect(feature.use, colnames(meta))) > 0) {
+      feature.use <- feature.use[feature.use %in% colnames(meta)]
+      data.use <- t(meta[ ,feature.use, drop = FALSE])
+    } else {
+      stop("Please check your input! ")
+    }
+    if (!is.null(cutoff)) {
+      cat("Applying a cutoff of ",cutoff,"to the values...", '\n')
+      data.use[data.use <= cutoff] <- 0
+    }
+
+
+    if (is.null(ncol)) {
+      if (length(feature.use) > 9) {
+        ncol <- 4
+      } else {
+        ncol <- min(length(feature.use), 4)
+      }
+    }
+    numFeature = length(feature.use)
+    gg <- vector("list", numFeature)
+    for (i in seq_len(numFeature)) {
+      feature.name <- feature.use[i]
+      df$feature.data <- data.use[i, ]
+      g <- ggplot(data = df, aes(x, y)) +
+        geom_point(aes(colour = feature.data), alpha = alpha, size=point.size, shape=shape.by) +
+        scale_colour_gradientn(colours = colormap, guide = guide_colorbar(title = NULL, ticks = T, label = T, barwidth = 0.5), na.value = "grey90") +
+        theme(legend.position = "right") +
+        theme(legend.title = element_blank(), legend.text = element_text(size = legend.text.size), legend.key.size = unit(0.15, "inches"))  + # , legend.key.size = unit(0.4, "inches")
+        ggtitle(feature.name) + theme(plot.title = element_text(hjust = 0.5, vjust = 0, size = 10))+
+        theme(panel.background = element_blank(),axis.ticks = element_blank(), axis.text = element_blank()) + xlab(NULL) + ylab(NULL) +
+        theme(legend.key = element_blank())
+      g <- g + coord_fixed() + theme(aspect.ratio = 1) + scale_y_reverse()
+      if (!show.legend) {
+        g <- g + theme(legend.position = "none")
+      }
+      if (show.legend.combined & i == numFeature) {
+        g <- g + theme(legend.position = "right", legend.key.height = grid::unit(0.15, "in"), legend.key.width = grid::unit(0.5, "in"), legend.title = element_blank(),legend.key = element_blank())
+      }
+      gg[[i]] <- g
+    }
+    if (ncol > 1) {
+      gg <- patchwork::wrap_plots(gg, ncol = ncol)
+    } else {
+      gg <- gg[[1]]
+    }
+
+  } else {
+
+    if (is.null(color.use)) {
+      color.use <- ggPalette(4)
+      color.use[4] <- "grey90"
+    }
+    color.use1 = color.use
+    if (!is.null(signaling)) {
+      res <- extractEnrichedLR(object, signaling = signaling, enriched.only = enriched.only, thresh = thresh)
+      # gene.pair = searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
+      # LR.pair <- gene.pair[res$interaction_name, c("ligand","receptor")]
+      LR.pair <- object@LR$LRsig[res$interaction_name, c("ligand","receptor")]
+    } else if (!is.null(pairLR.use)) {
+      if (is.character(pairLR.use)) {
+        pairLR.use <- data.frame(interaction_name = pairLR.use)
+      }
+      if (enriched.only) {
+        if (do.group) {
+          object@net$prob[object@net$pval > thresh] <- 0
+          pairLR.use.name <- pairLR.use$interaction_name[pairLR.use$interaction_name %in% dimnames(object@net$prob)[[3]]]
+          prob <- object@net$prob[,,pairLR.use.name, drop = FALSE]
+          prob.sum <- apply(prob > 0, 3, sum)
+          names(prob.sum) <- pairLR.use.name
+          signaling.includes <- names(prob.sum)[prob.sum > 0]
+          pairLR.use <- pairLR.use[pairLR.use$interaction_name %in% signaling.includes, , drop = FALSE]
+        } else {
+          pairLR.use.name <- pairLR.use$interaction_name[pairLR.use$interaction_name %in% dimnames(object@net$prob.cell)[[3]]]
+          prob.cell <- object@net$prob.cell[,,pairLR.use.name, drop = FALSE]
+          prob.sum <- apply(prob.cell > 0, 3, sum)
+          names(prob.sum) <- pairLR.use.name
+          signaling.includes <- names(prob.sum)[prob.sum > 0]
+          pairLR.use <- pairLR.use[pairLR.use$interaction_name %in% signaling.includes, , drop = FALSE]
+        }
+        if (length(pairLR.use$interaction_name) == 0) {
+          stop(paste0('There is no significant communication related with the input `pairLR.use`. Set `enriched.only = FALSE` to show non-significant signaling.'))
+        }
+      }
+      LR.pair <- object@LR$LRsig[pairLR.use$interaction_name, c("ligand","receptor")]
+    } else {
+      stop("Please input either `pairLR.use` or `signaling` for `binary` mode!")
+    }
+    geneL <- as.character(LR.pair$ligand)
+    geneR <- as.character(LR.pair$receptor)
+    # compute the expression of ligand or receptor
+    complex_input <- object@DB$complex
+    dataL <- computeExpr_LR(geneL, data, complex_input)
+    dataR <- computeExpr_LR(geneR, data, complex_input)
+    rownames(dataL) <- geneL; rownames(dataR) <- geneR;
+    # data.use <- matrix(0, nrow = nrow(dataL)*2, ncol = ncol(dataL))
+    # data.use[seq_len(nrow(data.use)) %% 2 == 1, ] <- dataL
+    # data.use[seq_len(nrow(data.use)) %% 2 == 0, ] <- dataR
+    # rownames(data.use)[seq_len(nrow(data.use)) %% 2 == 1] <- geneL
+    # rownames(data.use)[seq_len(nrow(data.use)) %% 2 == 0] <- geneR
+
+    feature.use <- rownames(LR.pair)
+    numFeature = nrow(LR.pair)
+    if (is.null(ncol)) {
+      if (length(feature.use) > 9) {
+        ncol <- 4
+      } else {
+        ncol <- min(length(feature.use), 4)
+      }
+    }
+    if (is.null(cutoff)) {
+      stop("A `cutoff` must be provided when plotting expression in binary mode! " )
+    }
+    gg <- vector("list", numFeature)
+    for (i in seq_len(numFeature)) {
+      feature.name <- feature.use[i]
+      idx1 = dataL[i, ] > cutoff
+      idx2 = dataR[i, ] > cutoff
+      idx3 = idx1 & idx2
+      group = rep("None",ncol(dataL))
+      group[idx1] = geneL[i]
+      group[idx2] = geneR[i]
+      group[idx3] = "Both"
+      group = factor(group, levels = c(geneL[i],geneR[i],"Both","None"))
+      color.use <- color.use1
+      names(color.use) <- c(geneL[i],geneR[i],"Both","None")
+
+      if (length(setdiff(levels(group), unique(group))) > 0) {
+        color.use <- color.use[names(color.use) %in% unique(group)]
+        group = droplevels(group, exclude = setdiff(levels(group), unique(group)))
+      }
+
+      df$feature.data <- group
+      g <- ggplot(data = df, aes(x, y)) +
+        geom_point(aes(colour = feature.data), alpha = alpha, size=point.size, shape=shape.by) +
+        scale_color_manual(values = color.use, na.value = "grey90") +
+        theme(legend.position = "right") +
+        theme(legend.title = element_blank(), legend.text = element_text(size = legend.text.size), legend.key.size = unit(0.15, "inches"))  + # , legend.key.size = unit(0.4, "inches")
+        guides(color = guide_legend(override.aes = list(size=legend.size))) +
+        ggtitle(feature.name) + theme(plot.title = element_text(hjust = 0.5, vjust = 0, size = 10))+
+        theme(panel.background = element_blank(),axis.ticks = element_blank(), axis.text = element_blank()) + xlab(NULL) + ylab(NULL) +
+        theme(legend.key = element_blank())
+      g <- g + coord_fixed() + theme(aspect.ratio = 1) + scale_y_reverse()
+      if (!show.legend) {
+        g <- g + theme(legend.position = "none")
+      }
+      if (show.legend.combined & i == numFeature) {
+        g <- g + theme(legend.position = "right", legend.key.height = grid::unit(0.15, "in"), legend.key.width = grid::unit(0.5, "in"), legend.title = element_blank(),legend.key = element_blank())
+      }
+      gg[[i]] <- g
+    }
+    if (ncol > 1) {
+      gg <- patchwork::wrap_plots(gg, ncol = ncol)
+    } else {
+      gg <- gg[[1]]
+    }
+
+  }
+  return(gg)
+}
+
+
+
 
