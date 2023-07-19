@@ -582,8 +582,7 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
         stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
       }
       vertex.weight = object@netP$centr[[signaling]]$indeg
-    }
-    if (vertex.weight == "outgoing"){
+    } else if (vertex.weight == "outgoing"){
       if (length(slot(object, "netP")$centr) == 0) {
         stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
       }
