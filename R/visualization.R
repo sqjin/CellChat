@@ -306,6 +306,7 @@ netVisual <- function(object, signaling, signaling.name = NULL, color.use = NULL
     }
   } else if (layout == "spatial") {
     coordinates <- object@images$coordinates
+    labels <- object@idents
     if (is.element("svg", out.format)) {
       svglite::svglite(file = paste0(signaling.name,"_", layout, "_individual.svg"), width = height, height = nRow*height)
       # par(mfrow=c(nRow,1))
@@ -582,7 +583,8 @@ netVisual_aggregate <- function(object, signaling, signaling.name = NULL, color.
         stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
       }
       vertex.weight = object@netP$centr[[signaling]]$indeg
-    } else if (vertex.weight == "outgoing"){
+    }
+    if (vertex.weight == "outgoing"){
       if (length(slot(object, "netP")$centr) == 0) {
         stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
       }
@@ -773,6 +775,7 @@ netVisual_individual <- function(object, signaling, signaling.name = NULL, pairL
       par(mfrow = c(ceiling(length(pairLR.name.use)/nCol), nCol), xpd=TRUE)
     }
     coordinates <- object@images$coordinates
+    labels <- object@idents
     gg <- vector("list", length(pairLR.name.use))
     for (i in 1:length(pairLR.name.use)) {
       signalName_i <- pairLR$interaction_name_2[i]
