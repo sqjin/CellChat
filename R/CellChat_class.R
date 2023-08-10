@@ -740,7 +740,7 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
           images[[images.j]] <- values.new
         }
         if (images.j %in% c("distance")) {
-          values.new <- values[group.existing.index, group.existing.index, ,drop = FALSE]
+          values.new <- values[group.existing.index, group.existing.index, drop = FALSE] #line 743
           images[[images.j]] <- values.new
         }
       }
@@ -812,7 +812,7 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
         images[[images.j]] <- values.new
       }
       if (images.j %in% c("distance")) {
-        values.new <- values[group.existing.index, group.existing.index, ,drop = FALSE]
+        values.new <- values[group.existing.index, group.existing.index, drop = FALSE] #line 815
         images[[images.j]] <- values.new
       }
     }
@@ -824,11 +824,11 @@ subsetCellChat <- function(object, cells.use = NULL, idents.use = NULL, group.by
     for (net.j in names(net)) {
       values <- net[[net.j]]
       if (net.j %in% c("prob","pval")) {
-        values.new <- values[group.existing.index, group.existing.index, ,drop = FALSE]
+        values.new <- values[group.existing.index, group.existing.index, ,drop = FALSE] #line 827
         net[[net.j]] <- values.new
       }
       if (net.j %in% c("count","sum","weight")) {
-        values.new <- values[group.existing.index, group.existing.index, ,drop = FALSE]
+        values.new <- values[group.existing.index, group.existing.index, drop = FALSE] #line 831
         net[[net.j]] <- values.new
       }
     }
