@@ -846,7 +846,13 @@ runUMAP <- function(
     stop("Cannot find UMAP, please install through pip (e.g. pip install umap-learn or reticulate::py_install(packages = 'umap-learn')).")
   }
   set.seed(seed.use)
+
+  # Generate random seed for Python when NULL
+  if (is.null(seed.use)) {
+    seed.use <- sample.int(.Machine$integer.max, 1L)
+  }
   reticulate::py_set_seed(seed.use)
+
   umap_import <- reticulate::import(module = "umap", delay_load = TRUE)
   umap <- umap_import$UMAP(
     n_neighbors = as.integer(n_neighbors),
@@ -860,6 +866,7 @@ runUMAP <- function(
     local_connectivity = local_connectivity,
     repulsion_strength = repulsion_strength,
     negative_sample_rate = negative_sample_rate,
+    random_state = seed.use,
     a = a,
     b = b,
     metric_kwds = metric_kwds,

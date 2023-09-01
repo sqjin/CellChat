@@ -643,6 +643,7 @@ computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("f
 #' @param min_dist This controls how tightly the embedding is allowed compress points together.
 #' Larger values ensure embedded points are moreevenly distributed, while smaller values allow the
 #' algorithm to optimise more accurately with regard to local structure. Sensible values are in the range 0.001 to 0.5.
+#' @param seed An integer value indicating the random seed passed to \code{\link[base]{set.seed}}, use `NULL` to re-initializes seed. Defaults to 42.
 #' @param ... Parameters passing to umap
 #' @importFrom methods slot
 #' @return
@@ -650,7 +651,7 @@ computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("f
 #'
 #' @examples
 netEmbedding <- function(object, slot.name = "netP", type = c("functional","structural"), comparison = NULL, pathway.remove = NULL,
-                         umap.method = c("umap-learn", "uwot"), n_neighbors = NULL,min_dist = 0.3,...) {
+                         umap.method = c("umap-learn", "uwot"), n_neighbors = NULL, min_dist = 0.3, seed = 42,...) {
   umap.method <- match.arg(umap.method)
   if (object@options$mode == "single") {
     comparison <- "single"
@@ -674,10 +675,16 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
     n_neighbors <- ceiling(sqrt(dim(Similarity)[1])) + 1
   }
   options(warn = -1)
+
+  if (is.numeric(seed)) {
+    seed = as.integer(seed)
+  }
+
   # dimension reduction
   if (umap.method == "umap-learn") {
-    Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
+    Y <- runUMAP(Similarity, min_dist = min_dist, n_neighbors = n_neighbors, seed.use = seed,...)
   } else if (umap.method == "uwot") {
+    set.seed(seed)
     Y <- uwot::umap(Similarity, min_dist = min_dist, n_neighbors = n_neighbors,...)
     colnames(Y) <- paste0('UMAP', 1:ncol(Y))
     rownames(Y) <- colnames(Similarity)
