@@ -1931,6 +1931,7 @@ mergeInteractions <- function(object, group.merged) {
 #' ligand.pct.2: threshold for the percent of expressed genes in the cells except for the defined 'positive' cell group
 #'
 #' @param receptor.pvalues,receptor.logFC,receptor.pct.1,receptor.pct.2 set threshold for receptor genes
+#' @param non.significant.pathway Inherited feature from \code{\link{aggregateNet}}. Default set to NULL 
 #' @importFrom  dplyr select group_by summarize groups
 #' @importFrom stringr str_split
 #' @importFrom BiocGenerics as.data.frame
@@ -1962,9 +1963,9 @@ subsetCommunication <- function(object = NULL, net = NULL, slot.name = "net",
                                 sources.use = NULL, targets.use = NULL,
                                 signaling = NULL,
                                 pairLR.use = NULL,
-                                thresh = 0.05,
+                                thresh = NULL,
                                 datasets = NULL, ligand.pvalues = NULL, ligand.logFC = NULL, ligand.pct.1 = NULL, ligand.pct.2 = NULL,
-                                receptor.pvalues = NULL, receptor.logFC = NULL, receptor.pct.1 = NULL, receptor.pct.2 = NULL) {
+                                receptor.pvalues = NULL, receptor.logFC = NULL, receptor.pct.1 = NULL, receptor.pct.2 = NULL, non.significant.pathway = NULL) {
   if (!is.null(pairLR.use)) {
     if (!is.data.frame(pairLR.use)) {
       stop("pairLR.use should be a data frame with a signle column named either 'interaction_name' or 'pathway_name' ")
@@ -1990,7 +1991,7 @@ subsetCommunication <- function(object = NULL, net = NULL, slot.name = "net",
                                            pairLR.use = pairLR.use,
                                            thresh = thresh,
                                            datasets = datasets, ligand.pvalues = ligand.pvalues, ligand.logFC = ligand.logFC, ligand.pct.1 = ligand.pct.1, ligand.pct.2 = ligand.pct.2,
-                                           receptor.pvalues = receptor.pvalues, receptor.logFC = receptor.logFC, receptor.pct.1 = receptor.pct.1, receptor.pct.2 =receptor.pct.2)
+                                           receptor.pvalues = receptor.pvalues, receptor.logFC = receptor.logFC, receptor.pct.1 = receptor.pct.1, receptor.pct.2 =receptor.pct.2, non.significant.pathway = non.significant.pathway)
   } else if (object@options$mode == "merged") {
     if (is.null(net)) {
       net0 <- slot(object, "net")
@@ -2007,7 +2008,7 @@ subsetCommunication <- function(object = NULL, net = NULL, slot.name = "net",
                                                     pairLR.use = pairLR.use,
                                                     thresh = thresh,
                                                     datasets = datasets, ligand.pvalues = ligand.pvalues, ligand.logFC = ligand.logFC, ligand.pct.1 = ligand.pct.1, ligand.pct.2 = ligand.pct.2,
-                                                    receptor.pvalues = receptor.pvalues, receptor.logFC = receptor.logFC, receptor.pct.1 = receptor.pct.1, receptor.pct.2 =receptor.pct.2)
+                                                    receptor.pvalues = receptor.pvalues, receptor.logFC = receptor.logFC, receptor.pct.1 = receptor.pct.1, receptor.pct.2 =receptor.pct.2, non.significant.pathway = non.significant.pathway)
       }
     } else {
       LR <- data.frame()
@@ -2022,7 +2023,7 @@ subsetCommunication <- function(object = NULL, net = NULL, slot.name = "net",
                                              pairLR.use = pairLR.use,
                                              thresh = thresh,
                                              datasets = datasets, ligand.pvalues = ligand.pvalues, ligand.logFC = ligand.logFC, ligand.pct.1 = ligand.pct.1, ligand.pct.2 = ligand.pct.2,
-                                             receptor.pvalues = receptor.pvalues, receptor.logFC = receptor.logFC, receptor.pct.1 = receptor.pct.1, receptor.pct.2 =receptor.pct.2)
+                                             receptor.pvalues = receptor.pvalues, receptor.logFC = receptor.logFC, receptor.pct.1 = receptor.pct.1, receptor.pct.2 =receptor.pct.2, non.significant.pathway = non.significant.pathway)
     }
 
   }
@@ -2044,6 +2045,7 @@ subsetCommunication <- function(object = NULL, net = NULL, slot.name = "net",
 #' @param thresh threshold of the p-value for determining significant interaction
 #' @param datasets select the inferred cell-cell communications from a particular `datasets` when inputing a data frame `net`
 #' @param ligand.pvalues,ligand.logFC,ligand.pct.1,ligand.pct.2 set threshold for ligand genes
+#' @param non.significant.pathway Inherited feature from \code{\link{subsetCommunication}}. Default set to NULL 
 #'
 #' ligand.pvalues: threshold for pvalues in the differential expression gene analysis (DEG)
 #'
@@ -2066,10 +2068,14 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
                                          sources.use = NULL, targets.use = NULL,
                                          signaling = NULL,
                                          pairLR.use = NULL,
-                                         thresh = 0.05,
+                                         thresh = NULL,
                                          datasets = NULL, ligand.pvalues = NULL, ligand.logFC = NULL, ligand.pct.1 = NULL, ligand.pct.2 = NULL,
-                                         receptor.pvalues = NULL, receptor.logFC = NULL, receptor.pct.1 = NULL, receptor.pct.2 = NULL) {
+                                         receptor.pvalues = NULL, receptor.logFC = NULL, receptor.pct.1 = NULL, receptor.pct.2 = NULL, non.significant.pathway = NULL) {
   if (!is.data.frame(net)) {
+    if(is.null(thresh)){
+      message("Threshold is set to 0.05") 
+      thresh = 0.05 
+    }  
     prob <- net$prob
     pval <- net$pval
     prob[pval >= thresh] <- 0
@@ -2077,8 +2083,12 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
     colnames(net)[1:3] <- c("source","target","interaction_name")
     net.pval <- reshape2::melt(pval, value.name = "pval")
     net$pval <- net.pval$pval
-    # remove the interactions with zero values
-    net <- subset(net, prob > 0)
+    if(!is.null(non.significant.pathway)){
+      message("CellChat warning: non.sisgnificant pair included, none of the interactions for the pathway will be removed") 
+    } else {
+      # remove the interactions with zero values
+      net <- subset(net, prob > 0)
+    }
   }
   if (!("ligand" %in% colnames(net))) {
     pairLR <- dplyr::select(LR, c("interaction_name_2", "pathway_name", "ligand",  "receptor" ,"annotation","evidence"))
@@ -2178,7 +2188,9 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
     net$source_target <- paste(net$source, net$target, sep = "sourceTotarget")
     # net$source_target_pathway <- paste(paste(net$source, net$target, sep = "_"), net$pathway_name, sep = "_")
     net.pval <- net %>% group_by(source_target, pathway_name) %>% summarize(pval = mean(pval), .groups = 'drop')
-    net <- net %>% group_by(source_target, pathway_name) %>% summarize(prob = sum(prob), .groups = 'drop')
+    if(is.null(non.significant.pathway)){
+      net <- net %>% group_by(source_target, pathway_name) %>% summarize(prob = sum(prob), .groups = 'drop') 
+    }  
     a <- stringr::str_split(net$source_target, "sourceTotarget", simplify = T)
     net$source <- as.character(a[, 1])
     net$target <- as.character(a[, 2])
