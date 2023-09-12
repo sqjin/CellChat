@@ -875,7 +875,7 @@ runUMAP <- function(
 
 .error_if_no_Seurat <- function() {
   if (!requireNamespace("Seurat", quietly = TRUE)) {
-    stop("Seurat installation required for working with Seurat objects")
+    stop("Seurat installation required for working with Seurat objects and functions")
   }
 }
 

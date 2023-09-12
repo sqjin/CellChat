@@ -509,7 +509,7 @@ computeNetSimilarity <- function(object, slot.name = "netP", type = c("functiona
 
   # smooth the similarity matrix using SNN
   SNN <- buildSNN(S_signalings, k = k, prune.SNN = 1/15)
-  Similarity <- S_signalings*as.matrix(SNN)
+  Similarity <- as.matrix(S_signalings*SNN)
   rownames(Similarity) <- dimnames(prob)[[3]]
   colnames(Similarity) <- dimnames(prob)[[3]]
 
@@ -615,7 +615,7 @@ computeNetSimilarityPairwise <- function(object, slot.name = "netP", type = c("f
   }
   # smooth the similarity matrix using SNN
   SNN <- buildSNN(S_signalings, k = k, prune.SNN = 1/15)
-  Similarity <- S_signalings*as.matrix(SNN)
+  Similarity <- as.matrix(S_signalings*SNN)
   rownames(Similarity) <- signalingAll
   colnames(Similarity) <- rownames(Similarity)
 
@@ -748,7 +748,7 @@ netClustering <- function(object, slot.name = "netP", type = c("functional","str
           idents <- kmeans(data.use,kRange[x],nstart=10)$cluster
           clusIndex <- idents
           #adjMat0 <- as.numeric(outer(clusIndex, clusIndex, FUN = "==")) - outer(1:N, 1:N, "==")
-          adjMat0 <- matrix(as.numeric(outer(clusIndex, clusIndex, FUN = "==")), nrow = N, ncol = N)
+          adjMat0 <- Matrix::Matrix(as.numeric(outer(clusIndex, clusIndex, FUN = "==")), nrow = N, ncol = N)
           return(list(adjMat = adjMat0, ncluster = length(unique(idents))))
         },
         simplify = FALSE

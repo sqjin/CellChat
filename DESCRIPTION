@@ -5,7 +5,7 @@ Version: 1.6.1
 Author: Suoqin Jin
 Maintainer: Suoqin Jin <suoqin.jin@gmail.com>
 Description: an open source R tool that infers, visualizes and analyzes the cell-cell communication networks from scRNA-seq and spatial imaging data.
-Depends: R (>= 3.6.0),dplyr,igraph,ggplot2
+Depends: R (>= 4.1.0),dplyr,igraph,ggplot2
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -18,7 +18,7 @@ Imports:
     ggalluvial,
     stringr,
     svglite,
-    Matrix,
+    Matrix (>= 1.5.4),
     expm,
     Rtsne,
     ggrepel, 
@@ -47,6 +47,6 @@ Imports:
     BiocNeighbors
 LinkingTo: Rcpp, RcppEigen
 Suggests:
-    rmarkdown, knitr, roxygen2, Seurat (>= 4.0.0), SingleCellExperiment, SummarizedExperiment, purrr,uwot,gg.gap,wordcloud
+    rmarkdown, knitr, roxygen2, Seurat (>= 4.1.0), SingleCellExperiment, SummarizedExperiment, purrr,uwot,gg.gap,wordcloud
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
