@@ -181,9 +181,11 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, s
 }
 
 
+
 #' Compute and visualize the contribution of each ligand-receptor pair in the overall signaling pathways
 #'
 #' @param object CellChat object
+#' @param signaling a signaling pathway name
 #' @param sources.use a vector giving the index or the name of source cell groups
 #' @param targets.use a vector giving the index or the name of target cell groups.
 #' @param width the width of individual bar
@@ -203,11 +205,12 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, s
 #' 
 #' @note This function is different from `netAnalysis_contribution` in two ways: 1) no need to zoom into a specific pathway; 2) do not count the relative prob. Overall, this function makes the resulted contribution comparable across sources and targets. 
 #' @examples
-netAnalysis_contribution_allLR <- function(object, sources.use = NULL, targets.use = NULL,
+netAnalysis_contribution_allLR <- function(object, signaling = NULL, sources.use = NULL, targets.use = NULL,
                                            width = 0.1, vertex.receiver = NULL, thresh = 0.05, return.data = FALSE,
                                            x.rotation = 0, title = "Contribution of each L-R pair",
                                            font.size = 10, font.size.title = 10) {
-  pairLR <- searchPair(signaling = object@netP$pathways, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
+  if (is.null(signaling)) {signaling <- object@netP$pathways}
+  pairLR <- searchPair(signaling = signaling, pairLR.use = object@LR$LRsig, key = "pathway_name", matching.exact = T, pair.only = T)
   pair.name.use = select(object@DB$interaction[rownames(pairLR),],"interaction_name_2")
 
   net <- object@net
