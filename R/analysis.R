@@ -733,9 +733,16 @@ netClustering <- function(object, slot.name = "netP", type = c("functional","str
     } else {
       N <- nrow(data.use)
       kRange <- seq(2,min(N-1, 10),by = 1)
+      nCores <- as.integer(nCores)
       if (do.parallel) {
-        future::plan("multiprocess", workers = nCores)
+        if (.Platform$OS.type == "windows") {
+          future::plan("multisession", workers = nCores)
+	} else {
+          future::plan("multicore", workers = nCores)
+	}
         options(future.globals.maxSize = 1000 * 1024^2)
+      } else {
+        future::plan("sequential")
       }
       my.sapply <- ifelse(
         test = future::nbrOfWorkers() == 1,
