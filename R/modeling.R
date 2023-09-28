@@ -30,9 +30,8 @@
 #' @param n parameter in Hill function
 #'
 #'
-#' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #' @importFrom stats aggregate
 #' @importFrom Matrix crossprod
 #' @importFrom utils txtProgressBar setTxtProgressBar
@@ -69,11 +68,6 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thres
   }
   complex_input <- object@DB$complex
   cofactor_input <- object@DB$cofactor
-  my.sapply <- ifelse(
-    test = future::nbrOfWorkers() == 1,
-    yes = sapply,
-    no = future.apply::future_sapply
-  )
 
   ptm = Sys.time()
 
@@ -154,14 +148,17 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thres
 
   set.seed(seed.use)
   permutation <- replicate(nboot, sample.int(nC, size = nC))
-  data.use.avg.boot <- my.sapply(
+  p <- progressr::progressor(nboot)
+  data.use.avg.boot <- future.apply::future_sapply(
     X = 1:nboot,
     FUN = function(nE) {
+      p()
       groupboot <- group[permutation[, nE]]
       data.use.avgB <- aggregate(t(data.use), list(groupboot), FUN = FunMean)
       data.use.avgB <- t(data.use.avgB[,-1])
-      return(data.use.avgB)
+      data.use.avgB
     },
+    future.seed = TRUE,
     simplify = FALSE
   )
   pb <- txtProgressBar(min = 0, max = nLR, style = 3, file = stderr())
@@ -203,10 +200,11 @@ computeCommunProb <- function(object, type = c("triMean", "truncatedMean","thres
 
       Pnull <- as.vector(Pnull)
 
-      #Pboot <- foreach(nE = 1:nboot) %dopar% {
-      Pboot <- sapply(
+      p <- progressr::progressor(nboot)
+      Pboot <- future.apply::future_sapply(
         X = 1:nboot,
         FUN = function(nE) {
+          p()
           data.use.avgB <- data.use.avg.boot[[nE]]
           dataLavgB <- computeExpr_LR(geneL[i], data.use.avgB, complex_input)
           dataRavgB <- computeExpr_LR(geneR[i], data.use.avgB, complex_input)
@@ -458,23 +456,20 @@ computeAveExpr <- function(object, features = NULL, group.by = NULL, type = c("t
 #' @param complex the names of complex
 #' @return
 #' @importFrom dplyr select starts_with
-#' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #' @export
 computeExpr_complex <- function(complex_input, data.use, complex) {
   Rsubunits <- complex_input[complex,] %>% dplyr::select(starts_with("subunit"))
-  my.sapply <- ifelse(
-    test = future::nbrOfWorkers() == 1,
-    yes = sapply,
-    no = future.apply::future_sapply
-  )
-  data.complex = my.sapply(
-    X = 1:nrow(Rsubunits),
+  nrun <- nrow(Rsubunits)
+  p <- progressr::progressor(nrun)
+  data.complex <- future.apply::future_sapply(
+    X = 1:nrun,
     FUN = function(x) {
+      p()
       RsubunitsV <- unlist(Rsubunits[x,], use.names = F)
       RsubunitsV <- RsubunitsV[RsubunitsV != ""]
-      return(geometricMean(data.use[RsubunitsV,]))
+      geometricMean(data.use[RsubunitsV,])
     }
   )
   data.complex <- t(data.complex)
@@ -489,20 +484,17 @@ computeExpr_complex <- function(complex_input, data.use, complex) {
 # @param FunMean the function for computing mean expression per group
 # @return
 # @importFrom dplyr select starts_with
-# @importFrom future nbrOfWorkers
 # @importFrom future.apply future_sapply
-# @importFrom pbapply pbsapply
-# #' @export
+# @importFrom progressr progressor
+# @export
 .computeExprGroup_complex <- function(complex_input, data.use, complex, group, FunMean) {
   Rsubunits <- complex_input[complex,] %>% dplyr::select(starts_with("subunit"))
-  my.sapply <- ifelse(
-    test = future::nbrOfWorkers() == 1,
-    yes = pbapply::pbsapply,
-    no = future.apply::future_sapply
-  )
-  data.complex = my.sapply(
-    X = 1:nrow(Rsubunits),
+  nrun <- nrow(Rsubunits)
+  p <- progressr::progressor(nrun)
+  data.complex <- future.apply::future_sapply(
+    X = 1:nrun,
     FUN = function(x) {
+      p()
       RsubunitsV <- unlist(Rsubunits[x,], use.names = F)
       RsubunitsV <- RsubunitsV[RsubunitsV != ""]
       RsubunitsV <- intersect(RsubunitsV, rownames(data.use))
@@ -515,7 +507,7 @@ computeExpr_complex <- function(complex_input, data.use, complex) {
       } else {
         data.avg = matrix(0, nrow = 1, ncol = length(unique(group)))
       }
-      return(geometricMean(data.avg))
+      geometricMean(data.avg)
     }
   )
   data.complex <- t(data.complex)
@@ -554,9 +546,8 @@ computeExpr_LR <- function(geneLR, data.use, complex_input){
 #' @param pairLRsig a data frame giving ligand-receptor interactions
 #' @param type when type == "A", computing expression of co-activation receptor; when type == "I", computing expression of co-inhibition receptor.
 #' @return
-#' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #' @export
 computeExpr_coreceptor <- function(cofactor_input, data.use, pairLRsig, type = c("A", "I")) {
   type <- match.arg(type)
@@ -567,25 +558,23 @@ computeExpr_coreceptor <- function(cofactor_input, data.use, pairLRsig, type = c
   }
   index.coreceptor <- which(!is.na(coreceptor.all) & coreceptor.all != "")
   if (length(index.coreceptor) > 0) {
-    my.sapply <- ifelse(
-      test = future::nbrOfWorkers() == 1,
-      yes = sapply,
-      no = future.apply::future_sapply
-    )
     coreceptor <- coreceptor.all[index.coreceptor]
     coreceptor.ind <- cofactor_input[coreceptor, grepl("cofactor" , colnames(cofactor_input) )]
-    data.coreceptor.ind = my.sapply(
-      X = 1:nrow(coreceptor.ind),
+    nrun <- nrow(coreceptor.ind)
+    p <- progressr::progressor(nrun)
+    data.coreceptor.ind <- future.apply::future_sapply(
+      X = 1:nrun,
       FUN = function(x) {
+        p()
         coreceptor.indV <- unlist(coreceptor.ind[x,], use.names = F)
         coreceptor.indV <- coreceptor.indV[coreceptor.indV != ""]
         coreceptor.indV <- intersect(coreceptor.indV, rownames(data.use))
         if (length(coreceptor.indV) == 1) {
-          return(1 + data.use[coreceptor.indV, ])
+          1 + data.use[coreceptor.indV, ]
         } else if (length(coreceptor.indV) > 1) {
-          return(apply(1 + data.use[coreceptor.indV, ], 2, prod))
+          apply(1 + data.use[coreceptor.indV, ], 2, prod)
         } else {
-          return(matrix(1, nrow = 1, ncol = ncol(data.use)))
+          matrix(1, nrow = 1, ncol = ncol(data.use))
         }
       }
     )
@@ -607,9 +596,8 @@ computeExpr_coreceptor <- function(cofactor_input, data.use, pairLRsig, type = c
 # @param group a factor defining the cell groups
 # @param FunMean the function for computing mean expression per group
 # @return
-# @importFrom future nbrOfWorkers
 # @importFrom future.apply future_sapply
-# @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 # #' @export
 .computeExprGroup_coreceptor <- function(cofactor_input, data.use, pairLRsig, type = c("A", "I"), group, FunMean) {
   type <- match.arg(type)
@@ -620,30 +608,27 @@ computeExpr_coreceptor <- function(cofactor_input, data.use, pairLRsig, type = c
   }
   index.coreceptor <- which(!is.na(coreceptor.all) & coreceptor.all != "")
   if (length(index.coreceptor) > 0) {
-    my.sapply <- ifelse(
-      test = future::nbrOfWorkers() == 1,
-      yes = pbapply::pbsapply,
-      no = future.apply::future_sapply
-    )
     coreceptor <- coreceptor.all[index.coreceptor]
     coreceptor.ind <- cofactor_input[coreceptor, grepl("cofactor" , colnames(cofactor_input) )]
-    data.coreceptor.ind = my.sapply(
-      X = 1:nrow(coreceptor.ind),
+    nrun <- nrow(coreceptor.ind)
+    p <- progressr::progressor(nrun)
+    data.coreceptor.ind <- future.apply::future_sapply(
+      X = 1:nrun,
       FUN = function(x) {
+        p()
         coreceptor.indV <- unlist(coreceptor.ind[x,], use.names = F)
         coreceptor.indV <- coreceptor.indV[coreceptor.indV != ""]
         coreceptor.indV <- intersect(coreceptor.indV, rownames(data.use))
         if (length(coreceptor.indV) > 1) {
           data.avg <- aggregate(t(data.use[coreceptor.indV,]), list(group), FUN = FunMean)
           data.avg <- t(data.avg[,-1])
-          return(apply(1 + data.avg, 2, prod))
-          # return(1 + apply(data.avg, 2, mean))
+          apply(1 + data.avg, 2, prod)
         } else if (length(coreceptor.indV) == 1) {
           data.avg <- aggregate(matrix(data.use[coreceptor.indV,], ncol = 1), list(group), FUN = FunMean)
           data.avg <- t(data.avg[,-1])
-          return(1 + data.avg)
+          1 + data.avg
         } else {
-          return(matrix(1, nrow = 1, ncol = length(unique(group))))
+          matrix(1, nrow = 1, ncol = length(unique(group)))
         }
       }
     )

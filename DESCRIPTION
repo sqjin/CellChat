@@ -12,7 +12,7 @@ LazyData: true
 Imports:
     future,
     future.apply,
-    pbapply,
+    progressr,
     irlba,
     NMF (>= 0.23.0),
     ggalluvial,
