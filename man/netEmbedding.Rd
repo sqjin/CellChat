@@ -13,6 +13,7 @@ netEmbedding(
   umap.method = c("umap-learn", "uwot"),
   n_neighbors = NULL,
   min_dist = 0.3,
+  seed = 42,
   ...
 )
 }
@@ -36,6 +37,8 @@ Can be umap-learn: Run the python umap-learn package; uwot: Runs umap via the uw
 \item{min_dist}{This controls how tightly the embedding is allowed compress points together.
 Larger values ensure embedded points are moreevenly distributed, while smaller values allow the
 algorithm to optimise more accurately with regard to local structure. Sensible values are in the range 0.001 to 0.5.}
+
+\item{seed}{An integer value indicating the random seed passed to \code{\link{set.seed}}, use `NULL` to re-initializes seed. Defaults to 42.}
 
 \item{...}{Parameters passing to umap}
 }
