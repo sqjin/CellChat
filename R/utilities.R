@@ -274,9 +274,8 @@ subsetData <- function(object, features = NULL) {
 #' @param thresh.pc Threshold of the percent of cells expressed in one cluster
 #' @param thresh.fc Threshold of Log Fold Change
 #' @param thresh.p Threshold of p-values
-#' @importFrom future nbrOfWorkers
-#' @importFrom pbapply pbsapply
 #' @importFrom future.apply future_sapply
+#' @importFrom progressr progressor
 #' @importFrom stats sd wilcox.test
 #' @importFrom stats p.adjust
 #'
@@ -335,12 +334,6 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
     }
   }
 
-  my.sapply <- ifelse(
-    test = future::nbrOfWorkers() == 1,
-    yes = pbapply::pbsapply,
-    no = future.apply::future_sapply
-  )
-
   mean.fxn <- function(x) {
     return(log(x = mean(x = expm1(x = x)) + 1))
   }
@@ -397,13 +390,16 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
     data1 <- data.use[features, cell.use1, drop = FALSE]
     data2 <- data.use[features, cell.use2, drop = FALSE]
 
+    nrun <- nrow(x = data1)
+    p <- progressr::progressor(nrun)
     pvalues <- unlist(
-      x = my.sapply(
-        X = 1:nrow(x = data1),
+      x <- future.apply::future_sapply(
+        X = 1:nrun,
         FUN = function(x) {
-          # return(wilcox.test(data1[x, ], data2[x, ], alternative = "greater")$p.value)
-          return(wilcox.test(data1[x, ], data2[x, ])$p.value)
-        }
+          Sys.sleep(1/nrun)
+          p(sprintf("%g of %g in %s", x, nrun, level.use[i])) # Use with_progress() to see progress bar in client-side
+          wilcox.test(data1[x, ], data2[x, ])$p.value
+	}
       )
     )
 
@@ -458,9 +454,8 @@ identifyOverExpressedGenes <- function(object, data.use = NULL, group.by = NULL,
 #' @param features.name a char name used for storing the over-expressed ligands and receptors in `object@var.features[[paste0(features.name, ".LR")]]`
 #' @param features a vector of features to use. default use all over-expressed genes in `object@var.features[[features.name]]`
 #' @param return.object whether returning a CellChat object. If FALSE, it will return a data frame containing over-expressed ligands and (complex) receptors associated with each cell group
-#' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #' @importFrom dplyr select
 #'
 #' @return A CellChat object or a data frame. If returning a CellChat object, a new element named paste0(features.name, ".LR") will be added into the list `object@var.features`
@@ -488,29 +483,29 @@ identifyOverExpressedLigandReceptor <- function(object, features.name = "feature
     markers.all <- subset(markers.all, subset = features %in% features.use)
   }
 
-  my.sapply <- ifelse(
-    test = future::nbrOfWorkers() == 1,
-    yes = pbapply::pbsapply,
-    no = future.apply::future_sapply
-  )
   complexSubunits <- complex_input[, grepl("subunit" , colnames(complex_input))]
 
   markers.all.new <- data.frame()
   for (i in 1:nrow(markers.all)) {
-    if (markers.all$features[i] %in% LR.use) {
+    features <- markers.all$features[i]
+    if (features %in% LR.use) {
       markers.all.new <- rbind(markers.all.new, markers.all[i, , drop = FALSE])
     } else {
+      nrun <- nrow(complexSubunits)
+      p <- progressr::progressor(nrun) 
       index.sig <- unlist(
-        x = my.sapply(
-          X = 1:nrow(complexSubunits),
+        x <- future.apply::future_sapply(
+          X = 1:nrun,
           FUN = function(x) {
+            Sys.sleep(1/nrun)
+            p(sprintf("%g of %g in %s", x, nrun, features)) # Use with_progress() to see progress bar in client-side
             complexsubunitsV <- unlist(complexSubunits[x,], use.names = F)
             complexsubunitsV <- complexsubunitsV[complexsubunitsV != ""]
-            if (markers.all$features[i] %in% complexsubunitsV) {
+            if (features %in% complexsubunitsV) {
               return(x)
-            }
+	    }
           }
-        )
+	)
       )
       complexSubunits.sig <- rownames(complexSubunits[index.sig,])
       markers.all.complex <- data.frame()
@@ -539,9 +534,8 @@ identifyOverExpressedLigandReceptor <- function(object, features.name = "feature
 #' @param features.name a char name used for assess the results in `object@var.features[[features.name]]`
 #' @param features a vector of features to use. default use all over-expressed genes in `object@var.features[[features.name]]`
 #' @param return.object whether returning a CellChat object. If FALSE, it will return a data frame containing the over-expressed ligand-receptor pairs
-#' @importFrom future nbrOfWorkers
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #' @importFrom dplyr select
 #'
 #' @return A CellChat object or a data frame. If returning a CellChat object, a new element named 'LRsig' will be added into the list `object@LR`
@@ -563,21 +557,20 @@ identifyOverExpressedInteractions <- function(object, features.name = "features"
 
   interaction_input <- DB$interaction
   complex_input <- DB$complex
-  my.sapply <- ifelse(
-    test = future::nbrOfWorkers() == 1,
-    yes = pbapply::pbsapply,
-    no = future.apply::future_sapply
-  )
   complexSubunits <- complex_input[, grepl("subunit" , colnames(complex_input))]
+  nrun <- nrow(complexSubunits)
+  p <- progressr::progressor(nrun) 
   index.sig <- unlist(
-    x = my.sapply(
-      X = 1:nrow(complexSubunits),
+    x <- future.apply::future_sapply(
+      X = 1:nrun,
       FUN = function(x) {
+        Sys.sleep(1/nrun)
+        p(sprintf("(Step 1) %g of %g", x, nrun)) # Use with_progress() to see progress bar in client-side
         complexsubunitsV <- unlist(complexSubunits[x,], use.names = F)
         complexsubunitsV <- complexsubunitsV[complexsubunitsV != ""]
         if (length(intersect(complexsubunitsV, features.sig)) > 0 & all(complexsubunitsV %in% gene.use)) {
           return(x)
-        }
+	}
       }
     )
   )
@@ -585,10 +578,14 @@ identifyOverExpressedInteractions <- function(object, features.name = "features"
 
   pairLR <- select(interaction_input, ligand, receptor)
 
+  nrun <- nrow(pairLR)
+  p <- progressr::progressor(nrun)
   index.sig <- unlist(
-    x = my.sapply(
-      X = 1:nrow(pairLR),
+    x <- future.apply::future_sapply(
+      X = 1:nrun,
       FUN = function(x) {
+        Sys.sleep(1/nrun)
+        p(sprintf("(Step 2) %g of %g", x, nrun)) # Use with_progress() to see progress bar in client-side
         if (all(unlist(pairLR[x,], use.names = F) %in% c(features.sig, rownames(complexSubunits.sig)))) {
           return(x)
         }

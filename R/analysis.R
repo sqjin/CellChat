@@ -190,10 +190,9 @@ netAnalysis_contribution <- function(object, signaling, signaling.name = NULL, s
 #' @param net compute the centrality measures on a specific signaling network given by a 2 or 3 dimemsional array net
 #' @param net.name a character vector giving the name of signaling networks
 #' @param thresh threshold of the p-value for determining significant interaction
-#' @importFrom future nbrOfWorkers
 #' @importFrom methods slot
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #'
 #' @return
 #' @export
@@ -211,17 +210,16 @@ netAnalysis_computeCentrality <- function(object = NULL, slot.name = "netP", net
   }
   if (length(dim(net)) == 3) {
     nrun <- dim(net)[3]
-    my.sapply <- ifelse(
-      test = future::nbrOfWorkers() == 1,
-      yes = pbapply::pbsapply,
-      no = future.apply::future_sapply
-    )
-    centr.all = my.sapply(
+    p <- progressr::progressor(nrun)
+    centr.all <- future.apply::future_sapply(
       X = 1:nrun,
       FUN = function(x) {
+	Sys.sleep(1/nrun)
+        p(sprintf("%g of %g", x, nrun)) # Use with_progress() to see progress bar in client-side
         net0 <- net[ , , x]
-        return(computeCentralityLocal(net0))
+	computeCentralityLocal(net0)
       },
+      future.seed = TRUE,
       simplify = FALSE
     )
   } else {
@@ -705,9 +703,9 @@ netEmbedding <- function(object, slot.name = "netP", type = c("functional","stru
 #' @param nCores number of workers when doing parallel
 #' @param k.eigen the number of eigenvalues used when doing spectral clustering
 #' @importFrom methods slot
-#' @importFrom future nbrOfWorkers plan
+#' @importFrom future plan
 #' @importFrom future.apply future_sapply
-#' @importFrom pbapply pbsapply
+#' @importFrom progressr progressor
 #' @return
 #' @export
 #'
@@ -733,28 +731,35 @@ netClustering <- function(object, slot.name = "netP", type = c("functional","str
     } else {
       N <- nrow(data.use)
       kRange <- seq(2,min(N-1, 10),by = 1)
+      kN <- length(kRange)
+      nCores <- as.integer(nCores)
       if (do.parallel) {
-        future::plan("multiprocess", workers = nCores)
+        if (.Platform$OS.type == "windows") {
+          future::plan("multisession", workers = nCores)
+	} else {
+          future::plan("multicore", workers = nCores)
+	}
         options(future.globals.maxSize = 1000 * 1024^2)
+      } else {
+        future::plan("sequential")
       }
-      my.sapply <- ifelse(
-        test = future::nbrOfWorkers() == 1,
-        yes = pbapply::pbsapply,
-        no = future.apply::future_sapply
-      )
-      results = my.sapply(
-        X = 1:length(kRange),
+      message(sprintf("future plan is '%s'", as.character(attr(future::plan(), "call"))[2]))
+      p <- progressr::progressor(kN)
+      results <- future.apply::future_sapply(
+        X = 1:kN,
         FUN = function(x) {
-          idents <- kmeans(data.use,kRange[x],nstart=10)$cluster
+          Sys.sleep(1/kN)
+          p(sprintf("%g of %g", x, kN)) # Use with_progress() to see progress bar in client-side
+          idents <- kmeans(data.use, kRange[x], nstart = 10)$cluster
           clusIndex <- idents
-          #adjMat0 <- as.numeric(outer(clusIndex, clusIndex, FUN = "==")) - outer(1:N, 1:N, "==")
           adjMat0 <- Matrix::Matrix(as.numeric(outer(clusIndex, clusIndex, FUN = "==")), nrow = N, ncol = N)
-          return(list(adjMat = adjMat0, ncluster = length(unique(idents))))
+          list(adjMat = adjMat0, ncluster = length(unique(idents)))
         },
+        future.seed = TRUE,
         simplify = FALSE
       )
       adjMat <- lapply(results, "[[", 1)
-      CM <- Reduce('+', adjMat)/length(kRange)
+      CM <- Reduce('+', adjMat)/kN
       res <- computeEigengap(as.matrix(CM))
       numCluster <- res$upper_bound
       clusters = kmeans(data.use,numCluster,nstart=10)$cluster
