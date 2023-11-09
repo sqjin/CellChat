@@ -13,6 +13,7 @@ netVisual_heatmap(
   color.use = NULL,
   color.heatmap = c("#2166ac", "#b2182b"),
   title.name = NULL,
+  legend.title = NULL,
   width = NULL,
   height = NULL,
   font.size = 8,
@@ -43,9 +44,11 @@ netVisual_heatmap(
 
 \item{title.name}{the name of the title}
 
-\item{width}{width of heatmap}
+\item{legend.title}{the title of the heatmap legend}
 
-\item{height}{height of heatmap}
+\item{width}{width of the heatmap bidy, should be a fixed `unit` object}
+
+\item{height}{height of the heatmap body, should be a fixed `unit` object}
 
 \item{font.size}{fontsize in heatmap}
 
