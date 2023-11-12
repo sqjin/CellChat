@@ -3861,9 +3861,9 @@ pieChart <- function(df, label.size = 2.5, color.use = NULL, title = "") {
 #' @export
 #'
 #' @examples
-
 plotGeneExpression <- function(object, features = NULL, signaling = NULL, enriched.only = TRUE, type = c("violin", "dot","bar"), color.use = NULL, group.by = NULL, ...) {
   type <- match.arg(type)
+  .error_if_no_Seurat() # Check Seurat installation
   meta <- object@meta
   if (is.list(object@idents)) {
     meta$group.cellchat <- object@idents$joint
@@ -3933,9 +3933,11 @@ plotGeneExpression <- function(object, features = NULL, signaling = NULL, enrich
 #'
 #' @examples
 #' @import ggplot2
-dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.direction = 1,  color.use = c("#F8766D","#00BFC4"), scale = TRUE, col.min = -2.5, col.max = 2.5, dot.scale = 6, assay = "RNA",
+dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.direction = 1,  color.use = c("#F8766D","#00BFC4"), 
+                    scale = TRUE, col.min = -2.5, col.max = 2.5, dot.scale = 6, assay = "RNA",
                     idents = NULL, group.by = NULL, split.by = NULL, legend.width = 0.5,
                     angle.x = 45, hjust.x = 1, angle.y = 0, hjust.y = 0.5, show.legend = TRUE, ...) {
+  .error_if_no_Seurat() # Check Seurat installation
 
   gg <- Seurat::DotPlot(object, features = features, assay = assay, cols = color.use,
                         scale = scale, col.min = col.min, col.max = col.max, dot.scale = dot.scale,
@@ -3989,14 +3991,16 @@ dotPlot <- function(object, features, rotation = TRUE, colormap = "OrRd", color.
 #'
 #' @examples
 #' @import ggplot2
-#' @importFrom  patchwork wrap_plots
+#' @importFrom patchwork wrap_plots
 StackedVlnPlot<- function(object, features, idents = NULL, split.by = NULL,
                           color.use = NULL, colors.ggplot = FALSE,show.median = FALSE, median.size = 1,
                           angle.x = 90, vjust.x = NULL, hjust.x = NULL, show.text.y = TRUE, line.size = NULL,
                           pt.size = 0,
                           plot.margin = margin(0, 0, 0, 0, "cm"),
                           ...) {
+  .error_if_no_Seurat() # Check Seurat installation
   options(warn=-1)
+
   if (is.null(color.use)) {
     numCluster <- length(levels(Seurat::Idents(object)))
     if (colors.ggplot) {
@@ -4047,7 +4051,6 @@ StackedVlnPlot<- function(object, features, idents = NULL, split.by = NULL,
 #' @param plot.margin adjust the white space between each plot
 #' @param ... pass any arguments to VlnPlot in Seurat
 #' @import ggplot2
-#'
 modify_vlnplot<- function(object,
                           features,
                           idents = NULL,
@@ -4060,8 +4063,10 @@ modify_vlnplot<- function(object,
                           pt.size = 0,
                           plot.margin = margin(0, 0, 0, 0, "cm"),
                           ...) {
+  .error_if_no_Seurat() # Check Seurat installation
   options(warn=-1)
-  p<- Seurat::VlnPlot(object, features = features, cols = cols, pt.size = pt.size, idents = idents, split.by = split.by,  ... )  +
+
+  p <- Seurat::VlnPlot(object, features = features, cols = cols, pt.size = pt.size, idents = idents, split.by = split.by,  ... ) +
     xlab("") + ylab(features) + ggtitle("")
   if (show.median) {
     p <- p + stat_summary(fun.y=median, geom="point", shape=3, size=median.size)
@@ -4118,8 +4123,9 @@ extract_max<- function(p){
 barPlot <- function(object, features, group.by = NULL, split.by = NULL, color.use = NULL, method = c("truncatedMean", "triMean","median"),trim = 0.1, assay = "RNA",
                     x.lab.rot = FALSE, ncol = 1, ...) {
   method <- match.arg(method)
+  .error_if_no_Seurat() # Check Seurat installation
   if (is.null(group.by)) {
-    labels = Idents(object)
+    labels = Seurat::Idents(object)
   } else {
     labels = object@meta.data[,group.by]
   }
