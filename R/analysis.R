@@ -2250,6 +2250,8 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
 #' @param font.size.title font size of the title
 #' @param cluster.rows whether cluster rows
 #' @param cluster.cols whether cluster columns
+#' @param remove.isolate whether removing the isolate cell groups without any signaling role
+#' @param return.receiver whether return the vertex.receiver, a set with indexes of use for applying when applying \code{\link{netVisual_aggregate}}
 #' @importFrom methods slot
 #' @importFrom grDevices colorRampPalette
 #' @importFrom RColorBrewer brewer.pal
@@ -2262,7 +2264,7 @@ subsetCommunication_internal <- function(net, LR, cells.level, slot.name = "net"
 #' @examples
 netAnalysis_signalingRole_network <- function(object, signaling, slot.name = "netP", measure = c("outdeg","indeg","flowbet","info"), measure.name = c("Sender","Receiver","Mediator","Influencer"),
                                     color.use = NULL, color.heatmap = "BuGn",
-                                    width = 6.5, height = 1.4, font.size = 8, font.size.title = 10, cluster.rows = FALSE, cluster.cols = FALSE) {
+                                    width = 6.5, height = 1.4, font.size = 8, font.size.title = 10, cluster.rows = FALSE, cluster.cols = FALSE, remove.isolate=NULL, return.receiver=NULL) {
   if (length(slot(object, slot.name)$centr) == 0) {
     stop("Please run `netAnalysis_computeCentrality` to compute the network centrality scores! ")
   }
@@ -2287,6 +2289,10 @@ netAnalysis_signalingRole_network <- function(object, signaling, slot.name = "ne
 
     df<- data.frame(group = colnames(mat)); rownames(df) <- colnames(mat)
     cell.cols.assigned <- setNames(color.use, unique(as.character(df$group)))
+    if(remove.isolate){ 
+      i <- (colSums(mat, na.rm=T) != 0)
+      mat = mat[,i]
+    }
     col_annotation <- HeatmapAnnotation(df = df, col = list(group = cell.cols.assigned),which = "column",
                                         show_legend = FALSE, show_annotation_name = FALSE,
                                         simple_anno_size = grid::unit(0.2, "cm"))
@@ -2301,7 +2307,14 @@ netAnalysis_signalingRole_network <- function(object, signaling, slot.name = "ne
                                               border = NA, at = c(round(min(mat, na.rm = T), digits = 1), round(max(mat, na.rm = T), digits = 1)),
                                               legend_height = unit(20, "mm"),labels_gp = gpar(fontsize = 8),grid_width = unit(2, "mm"))
     )
-    draw(ht1)
+    if(return.receiver){
+      vertex.receiver <- which(colnames(mat) %in%colnames(mat0))
+      df <- as.data.frame(mat[2,])
+      colnames(df) <- "values_receiver"
+      return(list(vertex.receiver=vertex.receiver, heatmap.obj = ht1, values_receiver=df))
+    } else {
+      draw(ht1)
+    }
   }
 }
 
