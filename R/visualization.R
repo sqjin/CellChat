@@ -4153,6 +4153,7 @@ barPlot <- function(object, features, group.by = NULL, split.by = NULL, color.us
     dataavg <- aggregate(t(data[features, ]), list(labels) , FUN = FunMean)
     dataavg <- t(dataavg[,-1])
     colnames(dataavg) <- levels(labels)
+    dataavg <- as.data.frame(dataavg)
     dataavg$gene = rownames(dataavg)
     df1 = reshape2::melt(dataavg, id.vars = c("gene"))
     colnames(df1) <- c("gene","labels","value")
