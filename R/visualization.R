@@ -1653,6 +1653,11 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     }
   }
   net <- net.diff
+  if(measure %in% c("count", "weight", "count.merged", "weight.merged")) {
+    if (is.null(color.use)) {
+      color.use <- scPalette(length(colnames(net.diff)))
+    }
+  }
   if ((!is.null(sources.use)) | (!is.null(targets.use))) {
     df.net <- reshape2::melt(net, value.name = "value")
     colnames(df.net)[1:2] <- c("source","target")
@@ -1683,6 +1688,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     idx <- intersect(idx1, idx2)
     net <- net[-idx, ]
     net <- net[, -idx]
+    color.use <-color.use[-idx]
   }
 
   net[abs(net) < stats::quantile(abs(net), probs = 1-top, na.rm= T)] <- 0
@@ -1695,15 +1701,15 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
   }else{
     coords_scale<-coords
   }
-  if (is.null(color.use)) {
-    color.use = scPalette(length(igraph::V(g)))
-  }
   if (is.null(vertex.weight.max)) {
     vertex.weight.max <- max(vertex.weight)
   }
   vertex.weight <- vertex.weight/vertex.weight.max*vertex.size.max+5
 
   loop.angle<-ifelse(coords_scale[igraph::V(g),1]>0,-atan(coords_scale[igraph::V(g),2]/coords_scale[igraph::V(g),1]),pi-atan(coords_scale[igraph::V(g),2]/coords_scale[igraph::V(g),1]))
+  if (sum(edge.start[, 2] == edge.start[, 1]) != 0) {
+    loop.angle[which(edge.start[,2]==edge.start[,1])] <- loop.angle[edge.start[which(edge.start[,2]==edge.start[,1]),1]]
+  }
   igraph::V(g)$size<-vertex.weight
   igraph::V(g)$color<-color.use[igraph::V(g)]
   igraph::V(g)$frame.color <- color.use[igraph::V(g)]
@@ -1733,10 +1739,6 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
     igraph::E(g)$width<-0.3+edge.width.max*igraph::E(g)$weight
   }
 
-
-  if(sum(edge.start[,2]==edge.start[,1])!=0){
-    igraph::E(g)$loop.angle[which(edge.start[,2]==edge.start[,1])]<-loop.angle[edge.start[which(edge.start[,2]==edge.start[,1]),1]]
-  }
   radian.rescale <- function(x, start=0, direction=1) {
     c.rotate <- function(x) (x + start) %% (2 * pi) * direction
     c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
@@ -1744,7 +1746,7 @@ netVisual_diffInteraction <- function(object, comparison = c(1,2), measure = c("
   label.locs <- radian.rescale(x=1:length(igraph::V(g)), direction=-1, start=0)
   label.dist <- vertex.weight/max(vertex.weight)+2
   plot(g,edge.curved=edge.curved,vertex.shape=shape,layout=coords_scale,margin=margin, vertex.label.dist=label.dist,
-       vertex.label.degree=label.locs, vertex.label.family="Helvetica", edge.label.family="Helvetica") # "sans"
+       vertex.label.degree=label.locs, vertex.label.family="Helvetica", edge.label.family="Helvetica", edge.loop.angle=loop.angle) # "sans"
   if (!is.null(title.name)) {
     text(0,1.5,title.name, cex = 1.1)
   }
